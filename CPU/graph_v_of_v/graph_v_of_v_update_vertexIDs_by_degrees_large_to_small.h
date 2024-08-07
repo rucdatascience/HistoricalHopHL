@@ -1,5 +1,5 @@
 #pragma once
-#include <GPU/graph_v_of_v/graph_v_of_v.h>
+#include <CPU/graph_v_of_v/graph_v_of_v.h>
 #include <unordered_map>
 #include <algorithm>
 using namespace std;
@@ -46,7 +46,7 @@ graph_v_of_v<weight_type> graph_v_of_v_update_vertexIDs_by_degrees_large_to_smal
 	int N = input_graph.ADJs.size();
 
 	vector<int> new_is_mock(N);
-
+	/* store vertices sorted in descending order by degree */
 	vector<pair<int, int>> sorted_vertices;
 	for (int i = 0; i < N; i++) {
 		sorted_vertices.push_back({ i, input_graph.ADJs[i].size() });
@@ -98,10 +98,10 @@ graph_v_of_v<weight_type> graph_v_of_v_update_vertexIDs_by_degrees_large_to_smal
 	//	}
 	//}
 
-
+	/* store the rank of vertices and re-rank the is_mock list */
 	vector<int> vertexID_old_to_new(N);
 	for (int i = 0; i < N; i++) {
-		vertexID_old_to_new[sorted_vertices[i].first] = i;
+		vertexID_old_to_new[sorted_vertices[i].first] = i;//v[v_old] = v_new
 		new_is_mock[i] = is_mock[sorted_vertices[i].first];
 	}
 

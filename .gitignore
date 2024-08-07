@@ -1,4 +1,4 @@
 .vscode/
 
-GPU/**.exe
-GPU/**.txt
+**/**.exe
+**/try*.cpp

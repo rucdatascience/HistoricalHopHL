@@ -1,5 +1,5 @@
 #pragma once
-#include <GPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_PPR.h>
+#include <CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_PPR.h>
 
 #define weightTYPE int
 
@@ -65,12 +65,14 @@ public:
 
     void print_L()
     {
+        int index = 0;
         cout << "print_L: (hub_vertex, hop, distance)" << endl;
         for (auto &xx : L)
         {
+            cout <<"vertex "<< index++ << ": ";
             for (auto &yy : xx)
             {
-                cout << "(" << yy.hub_vertex << "," << yy.hop << "," << yy.distance << ") ";
+                cout << "(" << yy.hub_vertex << "," << yy.hop << "," << yy.distance << ")";
             }
             cout << endl;
         }
@@ -146,6 +148,10 @@ string reach_limit_time_string = "reach limit time";
 long long int global_query_times = 0;
 long long int label_operation_times = 0;
 
+/**
+ * ort the vertices with the following priorities: first by vertex ID, 
+ * then by the number of hops, and finally by distance, all in ascending order.
+ */
 bool compare_hop_constrained_two_hop_label(hop_constrained_two_hop_label &i, hop_constrained_two_hop_label &j)
 {
     if (i.hub_vertex != j.hub_vertex)

@@ -10,7 +10,7 @@ a cpp file (try.cpp) for running the following example code:
 #include <fstream>
 using namespace std;
 
-#include <GPU/graph_v_of_v/graph_v_of_v.h>
+#include <CPU/graph_v_of_v/graph_v_of_v.h>
 
 
 int main()
@@ -36,9 +36,9 @@ rm A
 #include <vector>
 #include <cstring>
 #include <fstream>
-#include <GPU/text_mining/parse_string.h> 
-#include <GPU/tool_functions/sorted_vector_binary_operations.h>
-#include <GPU/text_mining/binary_save_read_vector_of_vectors.h>
+#include <CPU/text_mining/parse_string.h> 
+#include <CPU/tool_functions/sorted_vector_binary_operations.h>
+#include <CPU/text_mining/binary_save_read_vector_of_vectors.h>
 
 template <typename weight_type>
 class ARRAY_graph;

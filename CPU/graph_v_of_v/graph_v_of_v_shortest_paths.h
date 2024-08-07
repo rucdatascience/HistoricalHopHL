@@ -5,7 +5,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <boost/heap/fibonacci_heap.hpp> 
-#include <GPU/graph_v_of_v/graph_v_of_v.h>
+#include <CPU/graph_v_of_v/graph_v_of_v.h>
 
 using namespace std;
 
