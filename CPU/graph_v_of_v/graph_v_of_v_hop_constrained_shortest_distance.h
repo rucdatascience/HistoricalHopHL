@@ -36,4 +36,4 @@ void graph_v_of_v_hop_constrained_shortest_distance(graph_v_of_v<T>& instance_gr
 		}
 		h++;
 	}
-}
+};

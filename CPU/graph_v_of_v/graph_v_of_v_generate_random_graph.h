@@ -6,13 +6,14 @@ may not be connected.*/
 
 template <typename weight_type>
 graph_v_of_v<weight_type> graph_v_of_v_generate_random_graph(long long int V, long long int E, double ec_min, double ec_max,
-	int input_precision, boost::random::mt19937& boost_random_time_seed) { // must use long long int for large V E
+															 int input_precision, boost::random::mt19937 &boost_random_time_seed)
+{ // must use long long int for large V E
 
 	/*time complexity: O(|V||E|)*/
 
 	/* randomly generate the weight of edge */
 	double precision = std::pow(10, input_precision);
-	boost::random::uniform_int_distribution<> dist_ec{ static_cast<int>(ec_min* precision), static_cast<int>(ec_max* precision) };
+	boost::random::uniform_int_distribution<> dist_ec{static_cast<int>(ec_min * precision), static_cast<int>(ec_max * precision)};
 
 	/*time complexity: O(|V|)*/
 	graph_v_of_v<weight_type> random_graph(V); // generate vertices
@@ -20,54 +21,62 @@ graph_v_of_v<weight_type> graph_v_of_v_generate_random_graph(long long int V, lo
 	/*add edges to random_graph*/
 	long long int max_E = V * (V - 1) / 2; // must use long long int for large V
 	/* If this graph is a complete graph  */
-	if (E == max_E) { // complete graphs
+	if (E == max_E)
+	{ // complete graphs
 		/*time complexity: O(|V|+|E|)*/
-		for (int i = 0; i < V; i++) {
-			for (int j = 0; j < i; j++) {
+		for (int i = 0; i < V; i++)
+		{
+			for (int j = 0; j < i; j++)
+			{
 				weight_type new_cost = (weight_type)dist_ec(boost_random_time_seed) / precision; // generate ec
 				random_graph.add_edge(i, j, new_cost);
 			}
 		}
 	}
 	/* the number of e is a wrong value*/
-	else if (E > max_E) {
+	else if (E > max_E)
+	{
 		std::cout << "E: " << E << std::endl;
 		std::cout << "V * (V - 1) / 2: " << max_E << std::endl;
 		std::cout << "E > V * (V - 1) / 2 in graph_v_of_v_generate_random_graph!" << '\n';
 		exit(1);
 	}
-	else { // incomplete graphs
+	else
+	{ // incomplete graphs
 
 		/*time complexity: O(|V|)*/
 		/* init a vector to store the set of vertices that may potentially have edges added */
 		std::vector<int> not_full_vertices; // vertices without a full degree
-		for (int i = 0; i < V; i++) {
+		for (int i = 0; i < V; i++)
+		{
 			not_full_vertices.push_back(i);
 		}
 
 		/*time complexity: O(|V||E|)*/
 		int edge_num = 0;
-		while (edge_num < E) {
-			boost::random::uniform_int_distribution<> dist_id
-			{ static_cast<int>(0), static_cast<int>(not_full_vertices.size() - 1) };
+		while (edge_num < E)
+		{
+			boost::random::uniform_int_distribution<> dist_id{static_cast<int>(0), static_cast<int>(not_full_vertices.size() - 1)};
 			int RAND = dist_id(boost_random_time_seed); // generate int random number  0, not_full_vertices.size()-1
-			if (random_graph.degree(not_full_vertices[RAND]) < V - 1) { // randomly select a vertex and this is a vertex without a full degree
+			if (random_graph.degree(not_full_vertices[RAND]) < V - 1)
+			{ // randomly select a vertex and this is a vertex without a full degree
 
 				/*time complexity: O(|V|)*/
 				/* generate an increasing vector<int> from zero */
 				std::vector<int> unchecked(V);
 				std::iota(std::begin(unchecked), std::end(unchecked), 0);
 				bool added = false;
-				while (added == false) {
+				while (added == false)
+				{
 					/* set the range of random numbers for edges */
-					boost::random::uniform_int_distribution<> dist_id2
-					{ static_cast<int>(0), static_cast<int>(unchecked.size() - 1) };
+					boost::random::uniform_int_distribution<> dist_id2{static_cast<int>(0), static_cast<int>(unchecked.size() - 1)};
 					/* randomly select a edge */
 					int x = dist_id2(boost_random_time_seed);
 					int j = unchecked[x];
 					/* if this edge does not point to itself (RAND) and does not exist in the graph*/
 					if (not_full_vertices[RAND] != j &&
-						random_graph.contain_edge(not_full_vertices[RAND], j) == 0) {
+						random_graph.contain_edge(not_full_vertices[RAND], j) == 0)
+					{
 						// This edge does not exist
 						/* calculate the weight */
 						weight_type new_cost = (weight_type)dist_ec(boost_random_time_seed) / precision; // generate ec
@@ -77,65 +86,65 @@ graph_v_of_v<weight_type> graph_v_of_v_generate_random_graph(long long int V, lo
 						added = true;
 						break; // break after adding one edge
 					}
-					else {
+					else
+					{
 						unchecked.erase(unchecked.begin() + x);
 					}
 				}
-
-
-
-
 			}
-			else { // this is a vertex with a full degree
+			else
+			{ // this is a vertex with a full degree
 				not_full_vertices.erase(not_full_vertices.begin() + RAND);
 			}
 		}
-
-
 	}
 
 	return random_graph;
 }
 
-vector<graph_v_of_v<int>> generate_in_same_edge_different_weight(int v_num,int e_num,int changeNum, int weightUpperLimit, int weightLowerLimit, int maintainPercent)
+vector<graph_v_of_v<int>> generate_in_same_edge_different_weight(int v_num, int e_num, int changeNum, int weightUpperLimit, int weightLowerLimit, int maintainPercent)
 {
-	boost::random::mt19937 boost_random_time_seed{ static_cast<std::uint32_t>(std::time(0)) };
-    int V = v_num, E = e_num;
-    if (weightLowerLimit > weightUpperLimit || weightLowerLimit < 0 || weightUpperLimit < 0)
-    {
-        cout << "weightLowerLimit should be greater than 0 and weighUpperLimit shoule be greater 0 and the weightLowerLimit should be less than weithUpperLimit"
-             << "weightUpperLimit is :" << weightUpperLimit
-             << "weightLowerLimit is :" << weightLowerLimit << endl;
-        exit(1);
-    }
-    if (maintainPercent > 10 || maintainPercent < 0)
-    {
-        cout << "maintainPercent should be between 0 and 10: " << maintainPercent << endl;
-        exit(1);
-    }
-    vector<graph_v_of_v<int>> res;
-    // maintain == 1.random number 3 means the need to change.maintain ==0 every number will change the weight.
-    uniform_int_distribution<> dis(1, 10);
-    uniform_int_distribution<> weight_dis(weightLowerLimit, weightUpperLimit);
-    graph_v_of_v<int> instance_graph;
-    instance_graph = graph_v_of_v_generate_random_graph<int>(V, E, weightLowerLimit, weightUpperLimit, 1, boost_random_time_seed);
-    res.push_back(instance_graph);
-    int index = 0;
-    while (index < changeNum)
-    {
-        for (auto &vertices : instance_graph.ADJs)
-        {
-            for (auto &edges : vertices)
-            {
-                if (dis(boost_random_time_seed) > maintainPercent)
-                {
-                    edges.second = weight_dis(boost_random_time_seed);
-                }
-            }
-        }
-        res.push_back(instance_graph);
-        ++index;
-    }
+	boost::random::mt19937 boost_random_time_seed{static_cast<std::uint32_t>(std::time(0))};
+	int V = v_num, E = e_num;
+	if (weightLowerLimit > weightUpperLimit || weightLowerLimit < 0 || weightUpperLimit < 0)
+	{
+		cout << "weightLowerLimit should be greater than 0 and weighUpperLimit shoule be greater 0 and the weightLowerLimit should be less than weithUpperLimit"
+			 << "weightUpperLimit is :" << weightUpperLimit
+			 << "weightLowerLimit is :" << weightLowerLimit << endl;
+		exit(1);
+	}
+	if (maintainPercent > 10 || maintainPercent < 0)
+	{
+		cout << "maintainPercent should be between 0 and 10: " << maintainPercent << endl;
+		exit(1);
+	}
+	vector<graph_v_of_v<int>> res;
+	// maintain == 1.random number 3 means the need to change.maintain ==0 every number will change the weight.
+	uniform_int_distribution<> dis(1, 10);
+	uniform_int_distribution<> weight_dis(weightLowerLimit, weightUpperLimit);
+	graph_v_of_v<int> instance_graph;
+	instance_graph = graph_v_of_v_generate_random_graph<int>(V, E, weightLowerLimit, weightUpperLimit, 1, boost_random_time_seed);
+	res.push_back(instance_graph);
+	int index = 0;
+	int N = instance_graph.ADJs.size();
+	while (index < changeNum)
+	{
+		for (int i = 0; i < N; i++)
+		{
+			auto &vertices = instance_graph.ADJs[i];
+			for (auto &edges : vertices)
+			{
+				if (edges.first > i && dis(boost_random_time_seed) > maintainPercent)
+				{
+					edges.second = weight_dis(boost_random_time_seed);
+					int index = sorted_vector_binary_operations_search_position(instance_graph.ADJs[edges.first], i);
+					instance_graph.ADJs[edges.first][index].second = edges.second;
+				}
+			}
+		}
+		res.push_back(instance_graph);
+		++index;
+	}
 
-    return res;
+	return res;
 }

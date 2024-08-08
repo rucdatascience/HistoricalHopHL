@@ -15,6 +15,7 @@ public:
 	weight_type weight;
 	int startTimeLabel;
 	int endTimeLabel;
+	EdgeInfo() : vertex(-1) {}
 	EdgeInfo(int vertex, weight_type weight, int startTimeLabel, int endTimeLabel)
 		: vertex(vertex), weight(weight), startTimeLabel(startTimeLabel), endTimeLabel(endTimeLabel) {}
 	bool operator>(int v_id) const
@@ -78,11 +79,11 @@ public:
 
 	this class is for undirected and edge-weighted-time-span-label graph
 	*/
-	std::vector<std::vector<EdgeInfo<weight_type>>> ADJs;
-
+	std::vector<std::vector<EdgeInfo<weight_type> *>> ADJs;
+	std::vector<std::vector<EdgeInfo<weight_type> *>> preLabels;
 	/*constructors*/
 	graph_v_of_v_with_time_span() {}
-	graph_v_of_v_with_time_span(int n)
+	graph_v_of_v_with_time_span(int n) : ADJs(n), preLabels(n, std::vector<EdgeInfo<weight_type> *>(n, nullptr))
 	{
 		ADJs.resize(n); // initialize n vertices
 	}
@@ -94,7 +95,16 @@ public:
 	{
 		return ADJs[i];
 	}
-
+	~graph_v_of_v_with_time_span()
+	{
+		for (auto &adjList : ADJs)
+		{
+			for (auto edge : adjList)
+			{
+				delete edge;
+			}
+		}
+	}
 	/*class member functions*/
 	inline void add_edge(int, int, weight_type, int);
 	inline void add_graph_time(graph_v_of_v<weight_type>, int);
@@ -108,48 +118,49 @@ public:
 template <typename weight_type>
 void graph_v_of_v_with_time_span<weight_type>::add_edge(int e1, int e2, weight_type ec, int time)
 {
-
-	/*we assume that the size of g is larger than e1 or e2;
-	 this function can update edge weight; there will be no redundent edge*/
-
-	/*
-	Add the edges (e1,e2) and (e2,e1) with the weight ec
-	When the edge exists, it will update its weight.
-	Time complexity:
-		O(log n) When edge already exists in graph
-		O(n) When edge doesn't exist in graph
-	*/
-	int index = sorted_vector_binary_operations(this->ADJs[e1], e2);
-	/* e2 is the target vertex, and its weight has not changed,and its endTime being the previous time , which means we only need to extend the range of the timespan */
-	if (this->ADJs[e1].size() != index && this->ADJs[e1][index].vertex == e2 && this->ADJs[e1][index].weight == ec && this->ADJs[e1][index].endTimeLabel == time - 1)
+	if (preLabels[e1][e2] != nullptr && preLabels[e1][e2]->endTimeLabel == time - 1 && preLabels[e1][e2]->weight == ec)
 	{
-		this->ADJs[e1][index].endTimeLabel = time;
-	}
-	else if (this->ADJs[e1].size() == index || this->ADJs[e1][index].vertex != e2)
-	{
-		EdgeInfo<weight_type> edgeInfo(e2, ec, time, time);
-		this->ADJs[e1].insert(ADJs[e1].begin() + index, edgeInfo);
+		preLabels[e1][e2]->endTimeLabel = time;
+		preLabels[e2][e1]->endTimeLabel = time;
 	}
 	else
 	{
-		EdgeInfo<weight_type> edgeInfo(e2, ec, time, time);
-		this->ADJs[e1].insert(this->ADJs[e1].begin() + index + 1, edgeInfo);
+		EdgeInfo<weight_type> *edgeInfoE1 = new EdgeInfo<weight_type>(e2, ec, time, time);
+		this->ADJs[e1].push_back(edgeInfoE1);
+		EdgeInfo<weight_type> *edgeInfoE2 = new EdgeInfo<weight_type>(e1, ec, time, time);
+		this->ADJs[e2].push_back(edgeInfoE2);
+		preLabels[e1][e2] = edgeInfoE1;
+		preLabels[e2][e1] = edgeInfoE2;
 	}
-	index = sorted_vector_binary_operations(this->ADJs[e2], e1);
-	if (this->ADJs[e2].size() != index && this->ADJs[e2][index].vertex == e1 && this->ADJs[e2][index].weight == ec && this->ADJs[e2][index].endTimeLabel == time - 1)
-	{
-		this->ADJs[e2][index].endTimeLabel = time;
-	}
-	else if (this->ADJs[e2].size() == index || this->ADJs[e2][index].vertex != e1)
-	{
-		EdgeInfo<weight_type> edgeInfo(e1, ec, time, time);
-		this->ADJs[e2].insert(ADJs[e2].begin() + index, edgeInfo);
-	}
-	else
-	{
-		EdgeInfo<weight_type> edgeInfo(e1, ec, time, time);
-		this->ADJs[e2].insert(ADJs[e2].begin() + index + 1, edgeInfo);
-	}
+	// if (this->ADJs[e1].size() != index && this->ADJs[e1][index].vertex == e2 && this->ADJs[e1][index].weight == ec && this->ADJs[e1][index].endTimeLabel == time - 1)
+	// {
+	// 	this->ADJs[e1][index].endTimeLabel = time;
+	// }
+	// else if (this->ADJs[e1].size() == index || this->ADJs[e1][index].vertex != e2)
+	// {
+	// 	EdgeInfo<weight_type> edgeInfo(e2, ec, time, time);
+	// 	this->ADJs[e1].insert(ADJs[e1].begin() + index, edgeInfo);
+	// }
+	// else
+	// {
+	// 	EdgeInfo<weight_type> edgeInfo(e2, ec, time, time);
+	// 	this->ADJs[e1].insert(this->ADJs[e1].begin() + index + 1, edgeInfo);
+	// }
+	// index = sorted_vector_binary_operations(this->ADJs[e2], e1);
+	// if (this->ADJs[e2].size() != index && this->ADJs[e2][index].vertex == e1 && this->ADJs[e2][index].weight == ec && this->ADJs[e2][index].endTimeLabel == time - 1)
+	// {
+	// 	this->ADJs[e2][index].endTimeLabel = time;
+	// }
+	// else if (this->ADJs[e2].size() == index || this->ADJs[e2][index].vertex != e1)
+	// {
+	// 	EdgeInfo<weight_type> edgeInfo(e1, ec, time, time);
+	// 	this->ADJs[e2].insert(ADJs[e2].begin() + index, edgeInfo);
+	// }
+	// else
+	// {
+	// 	EdgeInfo<weight_type> edgeInfo(e1, ec, time, time);
+	// 	this->ADJs[e2].insert(ADJs[e2].begin() + index + 1, edgeInfo);
+	// }
 }
 
 template <typename weight_type>
@@ -193,19 +204,19 @@ int graph_v_of_v_with_time_span<weight_type>::search_shortest_path_in_period_tim
 		std::cout << "u and v shoule be between 0 and N" << endl;
 		return -1;
 	}
+	int N = this->ADJs.size();
+	/**
+	 * i -> vertex
+	 * j -> index of time_span
+	 * pair->time_span
+	 */
+	vector<vector<pair<int, int>>> visited(N);
 	/* a class contains information about destination vertex, hop count, and cost in the priority queue */
 	boost::heap::fibonacci_heap<NodeWithTimeSpan<weight_type>, boost::heap::compare<compare_node>> queue;
 	NodeWithTimeSpan node(u, 0, startTime, endTime);
 	queue.push(node);
 	int res = -1;
 
-	vector<vector<int>> visited;
-	int N = this->ADJs.size();
-	visited.resize(N);
-	for (int i = 0; i < N; i++)
-	{
-		visited[i].resize(endTime - startTime + 1);
-	}
 	while (queue.size() > 0)
 	{
 		node = queue.top();
@@ -218,29 +229,66 @@ int graph_v_of_v_with_time_span<weight_type>::search_shortest_path_in_period_tim
 		int curWeight = node.weight;
 		int startTimeLabel = node.startTimeLabel;
 		int endTimeLabel = node.endTimeLabel;
-		if (visited[vertexBase][startTimeLabel] != 0 && visited[vertexBase][endTimeLabel] != 0)
+		/* the edges with uncalculated results */
+		vector<pair<int, int>> temp;
+		vector<pair<int, int>> iteraotr_items;
+		int pre = startTimeLabel, after = endTimeLabel;
+		int index = startTimeLabel;
+		int i = 0;
+		int len = visited[vertexBase].size();
+
+		while (i < len && visited[vertexBase][i].second < startTimeLabel)
+		{
+			temp.push_back(visited[vertexBase][i]);
+			++i;
+		}
+		if (i < len && startTimeLabel >= visited[vertexBase][i].first && endTimeLabel <= visited[vertexBase][i].second)
 		{
 			continue;
 		}
-		for (int index = startTimeLabel - startTime; index <= endTimeLabel - startTime; index++)
+		while (i < len && visited[vertexBase][i].first <= endTimeLabel)
 		{
-			visited[vertexBase][index] = 1;
+			if (index < visited[vertexBase][i].first)
+			{
+				iteraotr_items.push_back({index, visited[vertexBase][i].first - 1});
+			}
+			index = visited[vertexBase][i].second + 1;
+			pre = min(pre, visited[vertexBase][i].first);
+			after = max(after, visited[vertexBase][i].second);
+			++i;
 		}
+		if (i == len && index <= endTimeLabel)
+		{
+			iteraotr_items.push_back({index, endTimeLabel});
+		}
+		else if (i < len)
+		{
+			iteraotr_items.push_back({index, visited[vertexBase][i].first});
+		}
+		temp.push_back({pre, after});
+		while (i < len)
+		{
+			temp.push_back(visited[vertexBase][i]);
+			i++;
+		}
+		visited[vertexBase] = temp;
 		for (const auto &edges : this->ADJs[vertexBase])
 		{
-			if (!(edges.startTimeLabel > endTimeLabel || edges.endTimeLabel < startTimeLabel))
+			for (const auto &dfs_time_span : iteraotr_items)
 			{
-				node.vertex = edges.vertex;
-				node.weight = curWeight + edges.weight;
-				node.startTimeLabel = max(edges.startTimeLabel, startTime);
-				node.endTimeLabel = min(edges.endTimeLabel, endTimeLabel);
-				queue.push(node);
+				if (!(edges->startTimeLabel > dfs_time_span.second || edges->endTimeLabel < dfs_time_span.first))
+				{
+					node.vertex = edges->vertex;
+					node.weight = curWeight + edges->weight;
+					node.startTimeLabel = max(edges->startTimeLabel, dfs_time_span.first);
+					node.endTimeLabel = min(edges->endTimeLabel, dfs_time_span.second);
+					queue.push(node);
+				}
 			}
 		}
 	}
 	return res;
 }
-
 template <typename weight_type>
 void graph_v_of_v_with_time_span<weight_type>::print()
 {
@@ -252,7 +300,7 @@ void graph_v_of_v_with_time_span<weight_type>::print()
 		int v_size = ADJs[i].size();
 		for (int j = 0; j < v_size; j++)
 		{
-			std::cout << "<" << ADJs[i][j].vertex << "," << ADJs[i][j].weight << "," << ADJs[i][j].startTimeLabel << "," << ADJs[i][j].endTimeLabel << "> ";
+			std::cout << "<" << ADJs[i][j]->vertex << "," << ADJs[i][j]->weight << "," << ADJs[i][j]->startTimeLabel << "," << ADJs[i][j]->endTimeLabel << "> ";
 		}
 		std::cout << std::endl;
 	}
