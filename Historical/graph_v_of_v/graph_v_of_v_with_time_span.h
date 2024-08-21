@@ -5,6 +5,7 @@
 #include <vector>
 #include "CPU/tool_functions/sorted_vector_binary_operations.h"
 #include "CPU/graph_v_of_v/graph_v_of_v.h"
+#include "CPU/graph_v_of_v/graph_v_of_v_update_vertexIDs_by_degrees_large_to_small.h"
 #include <boost/heap/fibonacci_heap.hpp>
 
 template <typename weight_type> // weight_type may be int, long long int, float, double...
@@ -151,16 +152,17 @@ void graph_v_of_v_with_time_span<weight_type>::print()
 	int size = this->ADJs.size();
 	for (int i = 0; i < size; i++)
 	{
-		std::cout << "Vertex " << i << " Adj List: ";
+		std::cout << "Vertex " << i << " Adj List: " << endl;
 		for (const auto &edges : ADJs[i])
 		{
 			int v_id = edges.first;
+			cout << "\t";
 			for (const auto &info : edges.second)
 			{
 				std::cout << "<" << v_id << "," << info.weight << "," << info.startTimeLabel << "," << info.endTimeLabel << "> ";
 			}
+			cout << endl;
 		}
-		std::cout << std::endl;
 	}
 	std::cout << "graph_v_of_v_with_time_span_print END" << std::endl;
 }
@@ -181,6 +183,12 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 	boost::random::mt19937 boost_random_time_seed{static_cast<std::uint32_t>(std::time(0))};
 	graph_v_of_v<weight_type> instance_graph;
 	instance_graph = graph_v_of_v_generate_random_graph<weight_type>(this->v_num, this->e_num, this->weight_dis.min(), this->weight_dis.max(), 1, boost_random_time_seed);
+	vector<int> is_mock(instance_graph.size());
+	for (int i = 0; i < instance_graph.size(); i++)
+	{
+		is_mock[i] = false;
+	}
+	instance_graph = graph_v_of_v_update_vertexIDs_by_degrees_large_to_small_mock(instance_graph, is_mock);
 	add_graph_time(instance_graph, 0);
 	vector<graph_v_of_v<weight_type>> res;
 	res.push_back(instance_graph);
@@ -290,10 +298,14 @@ template <typename weight_type>
 int dijkstra_iterator(vector<graph_v_of_v<weight_type>> list, int u, int v)
 {
 	int res = INT_MAX;
+	auto start_time = std::chrono::high_resolution_clock::now();
 	for (graph_v_of_v<int> graph : list)
 	{
 		res = min(res, dijkstra(graph, u, v));
 		// cout << "dijkstra" << res << endl;
 	}
+	auto endTime = std::chrono::high_resolution_clock::now();
+	double runtime_n_iterate_dijkstra = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - start_time).count() / 1e9;
+	std::cout << runtime_n_iterate_dijkstra << endl;
 	return res;
 }
