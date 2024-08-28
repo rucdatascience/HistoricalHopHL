@@ -124,6 +124,7 @@ void HSDL_thread_function(int v_k)
 
 	/* store the Temp L and dist_hop in current thread*/
 	vector<int> Temp_L_vk_changes, dist_hop_changes;
+	/* Temp_L_vk stores the dest_vertex_id and distance and hop */
 	auto &Temp_L_vk = Temp_L_vk_599[used_id];
 	auto &dist_hop = dist_hop_599[used_id]; // record the minimum distance (and the corresponding hop) of a searched vertex in Q
 	vector<pair<int, int>> Q_handle_priorities_changes;
@@ -147,7 +148,7 @@ void HSDL_thread_function(int v_k)
 	mtx_599[v_k].lock();
 	L_temp_599[v_k].push_back(node);
 	new_label_num++;
-	/* Temp_L_vk stores the dest_vertex_id and distance and hop */
+	/* root is vk-> vk->obj info -> vector<obj> -> index-> vertexId obj-><distance,hop> */
 	for (auto &xx : L_temp_599[v_k])
 	{
 		int L_vk_vertex = xx.hub_vertex;
@@ -798,7 +799,6 @@ void hop_constrained_two_hop_labels_generation(graph_v_of_v<int> &input_graph, h
 
 	//----------------------------------------------- step 4: canonical_repair---------------------------------------------------------------
 	begin = std::chrono::high_resolution_clock::now();
-
 	if (case_info.use_canonical_repair)
 	{
 		hop_constrained_clean_L(case_info, num_of_threads);

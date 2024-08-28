@@ -6,6 +6,7 @@
 #include "CPU/tool_functions/sorted_vector_binary_operations.h"
 #include "CPU/graph_v_of_v/graph_v_of_v.h"
 #include "CPU/graph_v_of_v/graph_v_of_v_update_vertexIDs_by_degrees_large_to_small.h"
+#include "CPU/graph_v_of_v/graph_v_of_v_generate_random_graph.h"
 #include <boost/heap/fibonacci_heap.hpp>
 
 template <typename weight_type> // weight_type may be int, long long int, float, double...
@@ -24,11 +25,11 @@ public:
 	}
 };
 template <typename weight_type>
-struct compare_pair
+struct compare_tuple
 {
-	bool operator()(const pair<int, weight_type> &lhs, const pair<int, weight_type> &rhs) const
+	bool operator()(const tuple<int, weight_type, int> &lhs, const tuple<int, weight_type, int> &rhs) const
 	{
-		return lhs.second > rhs.second;
+		return get<1>(lhs) > get<1>(rhs);
 	}
 };
 
@@ -68,7 +69,7 @@ public:
 		return ADJs[i];
 	}
 	/*class member functions*/
-	inline weight_type search_shortest_path_in_period_time_naive(int, int, int, int);
+	inline weight_type search_shortest_path_in_period_time_naive(int u, int v, int k, int startTime, int endTime);
 
 	inline void print();
 	inline vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int maintain_percent);
@@ -97,31 +98,38 @@ private:
  * 	@endTime
  */
 template <typename weight_type>
-weight_type graph_v_of_v_with_time_span<weight_type>::search_shortest_path_in_period_time_naive(int u, int v, int startTime, int endTime)
+weight_type graph_v_of_v_with_time_span<weight_type>::search_shortest_path_in_period_time_naive(int u, int v, int k, int startTime, int endTime)
 {
 	double res = __DBL_MAX__;
 	int N = this->v_num;
 	std::vector<double> dist(N);
 	std::vector<bool> visited(N);
-	boost::heap::fibonacci_heap<pair<int, double>, boost::heap::compare<compare_pair<weight_type>>> queue;
+	boost::heap::fibonacci_heap<tuple<int, double, int>, boost::heap::compare<compare_tuple<weight_type>>> queue;
 	for (int queryTime = startTime; queryTime <= endTime; queryTime++)
 	{
 		dist.assign(N, __DBL_MAX__);
 		visited.assign(N, false);
 		queue.clear();
 		dist[u] = 0;
-		queue.push({u, 0});
+		queue.push({u, 0, 0});
 		while (queue.size() > 0)
 		{
-			int vertexBase = queue.top().first;
+			int hop = get<2>(queue.top());
+			int vertexBase = get<0>(queue.top());
 			queue.pop();
 			if (vertexBase == v)
 			{
 				res = min(res, dist[vertexBase]);
+				break;
 			}
 			if (visited[vertexBase])
 				continue;
 			visited[vertexBase] = true;
+
+			if (hop == k)
+			{
+				continue;
+			}
 
 			for (const auto &vertices : this->ADJs[vertexBase])
 			{
@@ -133,14 +141,14 @@ weight_type graph_v_of_v_with_time_span<weight_type>::search_shortest_path_in_pe
 						if (dist[vertexBase] + edge_info_time_span.weight < dist[next])
 						{
 							dist[next] = dist[vertexBase] + edge_info_time_span.weight;
-							queue.push({next, dist[next]});
+							queue.push({next, dist[next], hop + 1});
 						}
 						break;
 					}
 				}
 			}
 		}
-		// cout << "naive" << res << endl;
+		cout << "naive" << res << endl;
 	}
 	return res == __DBL_MAX__ ? -1 : res;
 }
@@ -260,16 +268,18 @@ void graph_v_of_v_with_time_span<weight_type>::add_graph_time(graph_v_of_v<weigh
 }
 
 template <typename weight_type>
-weight_type dijkstra(graph_v_of_v<weight_type> graph, int u, int v)
+weight_type dijkstra(graph_v_of_v<weight_type> graph, int u, int v, int k)
 {
 	std::vector<double> dist(graph.size(), __DBL_MAX__);
 	std::vector<bool> visited(graph.size(), false);
-	boost::heap::fibonacci_heap<pair<int, weight_type>, boost::heap::compare<compare_pair<weight_type>>> queue;
+	boost::heap::fibonacci_heap<tuple<int, weight_type, int>, boost::heap::compare<compare_tuple<weight_type>>> queue;
 	dist[u] = 0;
-	queue.push({u, 0});
+	queue.push({u, 0, 0});
 	while (queue.size() > 0)
 	{
-		int vertexBase = queue.top().first;
+		tuple<int,weight_type,int> top = queue.top();
+		int hop = get<2>(top);
+		int vertexBase = get<0>(top);
 		queue.pop();
 		if (vertexBase == v)
 		{
@@ -278,7 +288,10 @@ weight_type dijkstra(graph_v_of_v<weight_type> graph, int u, int v)
 		if (visited[vertexBase])
 			continue;
 		visited[vertexBase] = true;
-
+		if (hop == k)
+		{
+			continue;
+		}
 		for (const auto &edge : graph[vertexBase])
 		{
 			int next = edge.first;
@@ -287,7 +300,7 @@ weight_type dijkstra(graph_v_of_v<weight_type> graph, int u, int v)
 			if (dist[vertexBase] + weight < dist[next])
 			{
 				dist[next] = dist[vertexBase] + weight;
-				queue.push({next, dist[next]});
+				queue.push({next, dist[next], hop + 1});
 			}
 		}
 	}
@@ -295,14 +308,14 @@ weight_type dijkstra(graph_v_of_v<weight_type> graph, int u, int v)
 }
 
 template <typename weight_type>
-int dijkstra_iterator(vector<graph_v_of_v<weight_type>> list, int u, int v)
+int dijkstra_iterator(vector<graph_v_of_v<weight_type>> list, int u, int v, int k)
 {
 	int res = INT_MAX;
 	auto start_time = std::chrono::high_resolution_clock::now();
 	for (graph_v_of_v<int> graph : list)
 	{
-		res = min(res, dijkstra(graph, u, v));
-		// cout << "dijkstra" << res << endl;
+		res = min(res, dijkstra(graph, u, v, k));
+		cout << "dijkstra" << res << endl;
 	}
 	auto endTime = std::chrono::high_resolution_clock::now();
 	double runtime_n_iterate_dijkstra = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - start_time).count() / 1e9;

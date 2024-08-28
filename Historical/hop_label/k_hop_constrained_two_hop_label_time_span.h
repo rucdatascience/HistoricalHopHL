@@ -93,7 +93,9 @@ void graph_hop_constrained_two_hop_label_time_span::add_new_hop_label(vector<vec
                     (*it).push_back(hop_constrained_two_hop_label_time_span(labels[i][j].hub_vertex, labels[i][j].hop, labels[i][j].distance, time, time));
                 }
                 ++j;
-            }else{
+            }
+            else
+            {
                 ++it;
             }
         }
@@ -132,48 +134,44 @@ int graph_hop_constrained_two_hop_label_time_span::test_query_method(int source,
         else
         {
             int i = 0, j = 0;
+
             vector<hop_constrained_two_hop_label_time_span> &source_L = (*it_source);
             vector<hop_constrained_two_hop_label_time_span> &target_L = (*it_target);
             int max_i = source_L.size(), max_j = target_L.size();
             while (i < max_i && j < max_j)
             {
-                if (source_L[i].start_time_label > end_time || target_L[j].start_time_label > end_time)
-                {
-                    break;
-                }
-                if (source_L[i].end_time_label < start_time)
-                {
-                    ++i;
-                    continue;
-                }
-                if (target_L[j].end_time_label < start_time)
-                {
-                    ++j;
-                    continue;
-                }
-                if (source_L[i].start_time_label > target_L[j].end_time_label)
-                {
-                    ++j;
-                }
-                else if (source_L[i].end_time_label < target_L[j].start_time_label)
+                int i_num = 0, j_num = 0;
+                while (!(source_L[i].start_time_label <= end_time && source_L[i].end_time_label >= start_time))
                 {
                     ++i;
                 }
-                else
+                while (i + i_num < max_i && source_L[i + i_num].start_time_label <= end_time && source_L[i + i_num].end_time_label >= start_time)
                 {
-                    if (source_L[i].hop + target_L[j].hop <= k)
+                    ++i_num;
+                }
+                while (!(target_L[j].start_time_label <= end_time && target_L[j].end_time_label >= start_time))
+                {
+                    ++j;
+                }
+                while (j + j_num < max_j && target_L[j + j_num].start_time_label <= end_time && target_L[j + j_num].end_time_label >= start_time)
+                {
+                    ++j_num;
+                }
+                for (int index_i = 0; index_i < i_num; index_i++)
+                {
+                    for (int index_j = 0; index_j < j_num; index_j++)
                     {
-                        res = min(res, source_L[i].distance + target_L[j].distance);
-                    }
-                    if (source_L[i].end_time_label > target_L[j].end_time_label && j + 1 < max_j)
-                    {
-                        ++j;
-                    }
-                    else
-                    {
-                        ++i;
+                        if (max(source_L[i + index_i].start_time_label, target_L[j + index_j].start_time_label) <= min(source_L[i + index_i].end_time_label, target_L[j + index_j].end_time_label))
+                        {
+                            if (source_L[i + index_i].hop + target_L[j + index_j].hop <= k)
+                            {
+                                res = min(res, source_L[i + index_i].distance + target_L[j + index_j].distance);
+                            }
+                        }
                     }
                 }
+                i += i_num;
+                j += j_num;
             }
             ++it_target;
         }
