@@ -36,7 +36,7 @@ struct compare_tuple
 /**
  * define a graph where each edge has an associated time span
  */
-template <typename weight_type> // weight_type may be int, long long int, float, double...
+ template <typename weight_type> // weight_type may be int, long long int, float, double...
 class graph_v_of_v_with_time_span
 {
 public:
