@@ -8,7 +8,7 @@
 #include "CPU/graph_v_of_v/graph_v_of_v_update_vertexIDs_by_degrees_large_to_small.h"
 #include "CPU/graph_v_of_v/graph_v_of_v_generate_random_graph.h"
 #include <boost/heap/fibonacci_heap.hpp>
-
+#include "Historical/hop_label/k_hop_constrained_two_hop_label_time_span.h"
 template <typename weight_type> // weight_type may be int, long long int, float, double...
 class EdgeInfo
 {
@@ -36,7 +36,7 @@ struct compare_tuple
 /**
  * define a graph where each edge has an associated time span
  */
- template <typename weight_type> // weight_type may be int, long long int, float, double...
+template <typename weight_type> // weight_type may be int, long long int, float, double...
 class graph_v_of_v_with_time_span
 {
 public:
@@ -72,7 +72,7 @@ public:
 	inline weight_type search_shortest_path_in_period_time_naive(int u, int v, int k, int startTime, int endTime);
 
 	inline void print();
-	inline vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int maintain_percent);
+	inline vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int maintain_percent, graph_hop_constrained_two_hop_label_time_span &two_hop_label_with_time_span);
 
 private:
 	/* the maximum of time*/
@@ -176,7 +176,7 @@ void graph_v_of_v_with_time_span<weight_type>::print()
 }
 
 template <typename weight_type>
-vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int maintain_percent)
+vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int maintain_percent, graph_hop_constrained_two_hop_label_time_span &two_hop_label_with_time_span)
 {
 	if (maintain_percent > 10 || maintain_percent < 0)
 	{
@@ -197,6 +197,17 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 		is_mock[i] = false;
 	}
 	instance_graph = graph_v_of_v_update_vertexIDs_by_degrees_large_to_small_mock(instance_graph, is_mock);
+	// initialize the 2-hop label with time span
+	hop_constrained_case_info mm;
+	mm.upper_k = 5;
+	mm.max_bit_size = 6e9;
+	mm.use_2M_prune = 1;
+	mm.use_rank_prune = 1; // set true
+	mm.use_2023WWW_generation = 0;
+	mm.use_canonical_repair = 0;
+	mm.max_run_time_seconds = 1e2;
+	mm.thread_num = 1;
+	two_hop_label_with_time_span.initiate_2_hop_label(instance_graph, mm);
 	add_graph_time(instance_graph, 0);
 	vector<graph_v_of_v<weight_type>> res;
 	res.push_back(instance_graph);
@@ -212,11 +223,17 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 			{
 				if (edges.first > i && dis(boost_random_time_seed) > maintain_percent)
 				{
-					edges.second = weight_dis(boost_random_time_seed);
-					int to_position = sorted_vector_binary_operations_search_position(instance_graph.ADJs[edges.first], i);
-					instance_graph.ADJs[edges.first][to_position].second = edges.second;
-					add_edge(i, edges.first, edges.second, index);
-					add_edge(edges.first, i, edges.second, index);
+					auto next_value = weight_dis(boost_random_time_seed);
+					if (edges.second > next_value)
+					{
+						edges.second = next_value;
+						int to_position = sorted_vector_binary_operations_search_position(instance_graph.ADJs[edges.first], i);
+						instance_graph.ADJs[edges.first][to_position].second = edges.second;
+						add_edge(i, edges.first, edges.second, index);
+						add_edge(edges.first, i, edges.second, index);
+						// insert-GST
+						two_hop_label_with_time_span.add_new_edge_or_weight_decrease(i, edges.first, next_value);
+					}
 				}
 			}
 		}
@@ -277,7 +294,7 @@ weight_type dijkstra(graph_v_of_v<weight_type> graph, int u, int v, int k)
 	queue.push({u, 0, 0});
 	while (queue.size() > 0)
 	{
-		tuple<int,weight_type,int> top = queue.top();
+		tuple<int, weight_type, int> top = queue.top();
 		int hop = get<2>(top);
 		int vertexBase = get<0>(top);
 		queue.pop();

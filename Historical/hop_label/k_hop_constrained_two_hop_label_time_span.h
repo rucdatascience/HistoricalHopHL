@@ -72,7 +72,6 @@ class graph_hop_constrained_two_hop_label_time_span
 
 private:
     int current_time = 0;
-    // 邻接表 一次性赋值 后续考虑修改的问题
     vector<vector<pair<int, int>>> AJDS;
     void get_affect_label(int u, int v, int weight, vector<compair_node> &CL);
 
@@ -98,10 +97,15 @@ public:
     inline void initiate_2_hop_label(graph_v_of_v<int> &graph, hop_constrained_case_info &case_info);
     inline void add_new_edge_or_weight_decrease(int change_sourece, int change_target, int weight);
     inline int test_query_method(int source, int target, int start_time, int end_time, int k);
+    inline void print_L();
 };
 
 inline long int graph_hop_constrained_two_hop_label_time_span::query(int u, int v, int hop)
 {
+    if (u == v)
+    {
+        return 0;
+    }
     long int res = std::numeric_limits<long int>().max();
     int i = 0, j = 0;
     int i_size = this->L[u].size();
@@ -146,7 +150,7 @@ inline void graph_hop_constrained_two_hop_label_time_span::get_affect_label(int 
 {
     for (const auto &label_list : L[change_sourece])
     {
-        if (label_list.back().hub_vertex < change_target)
+        if (label_list.back().hub_vertex > change_target)
         {
             continue;
         }
@@ -186,20 +190,21 @@ inline void graph_hop_constrained_two_hop_label_time_span::get_affect_label(int 
 
 inline void graph_hop_constrained_two_hop_label_time_span::diffuse(vector<compair_node> &CL)
 {
-    vector<pair<int, int>> H(this->L.size(), {-1, -1});
     boost::heap::fibonacci_heap<compair_node *, boost::heap::compare<compare_diffuse>> queue;
     auto start = CL.begin();
     auto end = CL.end();
     while (start < end)
-    {
+    {   
+        vector<pair<int, int>> H(this->L.size(), {-1, -1});
+        queue.clear();
         int v = (*start).hub;
         auto start_temp = start;
         while ((*start_temp).hub == v)
         {
             H[(*start_temp).vertex] = {(*start_temp).distance, (*start_temp).hop};
-            ++start_temp;
             compair_node temp = {(*start_temp).vertex, (*start_temp).hop, (*start_temp).distance};
             queue.push(&temp);
+            ++start_temp;
         }
         start = start_temp;
         while (!queue.empty())
@@ -209,24 +214,46 @@ inline void graph_hop_constrained_two_hop_label_time_span::diffuse(vector<compai
             int x = item->vertex;
             int hopxv = item->hop;
             int disxv = item->distance;
+            int index = 0;
             for (auto &label_list : L[x])
             {
-                if (label_list.back().hub_vertex == v)
+                if (label_list.back().hub_vertex < v)
                 {
-                    bool is_found = false;
-                    for (auto &label : label_list)
-                    {
-                        // TODO这里实际还是遍历了
-                        if (label.end_time_label == INT_MAX && label.hop >= hopxv && label.distance > disxv)
-                        {
-                            label.end_time_label = current_time - 1;
-                            is_found = true;
-                        }
-                    }
-                    if (is_found)
-                    {
-                        label_list.push_back(hop_constrained_two_hop_label_time_span(x, v, disxv, current_time));
-                    }
+                    ++index;
+                    continue;
+                }
+                else if (label_list.back().hub_vertex == v)
+                {
+                    /**
+                     * There are four situations regarding the old value compared to the new value:
+                     * h large, d large: The old value is redundant; it can be retained but will never be considered as a result.
+                     * h large, d small: The old value should be retained as it contains the correct answer.
+                     * h small, d large: The old value should be retained as it contains the correct answer.
+                     * h small, d small: The new value is redundant. It can be retained but will not be the part of result and might even be deleted.
+                     */
+                    // bool is_found = false;
+                    // for (auto &label : label_list)
+                    // {
+                    //     // TODO这里实际还是遍历了
+                    //     if (label.end_time_label == INT_MAX && label.hop >= hopxv && label.distance > disxv)
+                    //     {
+                    //         label.end_time_label = current_time - 1;
+                    //         is_found = true;
+                    //     }
+                    // }
+                    // if (is_found)
+                    // {
+                    //     label_list.push_back(hop_constrained_two_hop_label_time_span(x, v, disxv, current_time));
+                    // }
+                    label_list.push_back(hop_constrained_two_hop_label_time_span(v, hopxv, disxv, current_time));
+                    break;
+                }
+                else
+                {
+                    vector<hop_constrained_two_hop_label_time_span> temp;
+                    temp.push_back(hop_constrained_two_hop_label_time_span(v, hopxv, disxv, current_time));
+                    L[x].insert(L[x].begin() + index, temp);
+                    break;
                 }
             }
             // 这里没写k
@@ -234,37 +261,51 @@ inline void graph_hop_constrained_two_hop_label_time_span::diffuse(vector<compai
             for (std::pair<int, int> edge : this->AJDS[x])
             {
                 int xn = edge.first;
-                if (v > xn)
+                if (v < xn)
                 {
-                    if (H[xn].first != -1)
+                    if (H[xn].first == -1)
                     {
                         H[xn].first = query(xn, v, hopxv + 1);
                     }
                     int dis_x_xn = sorted_vector_binary_operations_search_weight(this->AJDS[xn], x);
-                    if (H[xn].first > disxv + this->AJDS[xn][x].second + dis_x_xn)
+                    if (H[xn].first > disxv + dis_x_xn)
                     {
-                        H[xn].first = disxv + this->AJDS[xn][x].second + dis_x_xn;
+                        H[xn].first = disxv + dis_x_xn;
                         H[xn].second = hopxv + 1;
+                        bool is_found = false;
                         for (const auto element : queue)
                         {
                             if (element->vertex == xn)
                             {
                                 element->hop = hopxv + 1;
-                                element->distance = disxv + this->AJDS[xn][x].second + dis_x_xn;
+                                element->distance = disxv + dis_x_xn;
+                                is_found = true;
                             }
+                        }
+                        if (!is_found)
+                        {
+                            compair_node temp = {xn, H[xn].second, H[xn].first};
+                            queue.push({&temp});
                         }
                     }
                     else
                     {
+                        bool is_found = false;
                         if (hopxv + 1 < H[xn].second)
                         {
                             for (const auto element : queue)
                             {
                                 if (element->vertex == xn)
                                 {
+                                    is_found = true;
                                     element->hop = hopxv + 1;
                                     element->distance = disxv + this->AJDS[xn][x].second + dis_x_xn;
                                 }
+                            }
+                            if (!is_found)
+                            {
+                                compair_node temp = {xn, hopxv + 1, disxv + this->AJDS[xn][x].second + dis_x_xn};
+                                queue.push({&temp});
                             }
                         }
                         // TODO PPR
@@ -273,10 +314,6 @@ inline void graph_hop_constrained_two_hop_label_time_span::diffuse(vector<compai
             }
         }
     }
-}
-
-void modify_value_in_q(boost::heap::fibonacci_heap<boost::heap::fibonacci_heap<tuple<int, int, int>, boost::heap::compare<compare_diffuse>>> &q, int value)
-{
 }
 
 inline void graph_hop_constrained_two_hop_label_time_span::initiate_2_hop_label(graph_v_of_v<int> &graph, hop_constrained_case_info &case_info)
@@ -306,12 +343,13 @@ inline void graph_hop_constrained_two_hop_label_time_span::initiate_2_hop_label(
 inline void graph_hop_constrained_two_hop_label_time_span::add_new_edge_or_weight_decrease(int change_sourece, int change_target, int weight)
 {
     vector<compair_node> CL;
+    sorted_vector_binary_operations_insert(this->AJDS[change_sourece], change_target, weight);
+    sorted_vector_binary_operations_insert(this->AJDS[change_target], change_sourece, weight);
     get_affect_label(change_sourece, change_target, weight, CL);
     get_affect_label(change_target, change_sourece, weight, CL);
     sort(CL.begin(), CL.end(), [](compair_node x, compair_node y)
          { return x.hub < y.hub; });
     diffuse(CL);
-    add_time();
 }
 
 int graph_hop_constrained_two_hop_label_time_span::test_query_method(int source, int target, int start_time, int end_time, int k)
@@ -378,4 +416,29 @@ int graph_hop_constrained_two_hop_label_time_span::test_query_method(int source,
     }
 
     return res;
+}
+
+inline void graph_hop_constrained_two_hop_label_time_span::print_L()
+{
+    /**
+     * i -> v
+     * j -> v_to_label_list
+     * k -> label_time_vector
+     */
+    vector<vector<vector<hop_constrained_two_hop_label_time_span>>> L;
+    int i = 0;
+    for (const auto &i_next_edge : this->L)
+    {
+        std::cout << "vertex" << i << " :" << std::endl;
+        for (const auto &i_j_edge : i_next_edge)
+        {
+            int j = i_j_edge.back().hub_vertex;
+            for (const auto &edge_by_time : i_j_edge)
+            {
+                std::cout << "\t(" << j << "," << edge_by_time.hop << "," << edge_by_time.distance << "," << edge_by_time.start_time_label << "," << edge_by_time.end_time_label << ")";
+            }
+            std::cout << std::endl;
+        }
+        ++i;
+    }
 }
