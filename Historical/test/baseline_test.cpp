@@ -3,7 +3,6 @@ using namespace std;
 #include "CPU/graph_v_of_v/graph_v_of_v_generate_random_graph.h"
 #include "Historical/graph_v_of_v/graph_v_of_v_with_time_span.h"
 
-
 int testBaseLineAndBaseline2()
 {
     // query param
@@ -16,14 +15,26 @@ int testBaseLineAndBaseline2()
     // int change_num = 5, maintain_percent = 7;
 
     // generate a larger random graph
-    int v_num = 10, e_num = 20;
+    int v_num = 20, e_num = 50;
     int upper = 100, lower = 1;
-    int change_num = 5, maintain_percent = 4;
+    int change_num = 5, maintain_percent = 3;
+
+    // initialize the 2-hop label with time span
+    hop_constrained_case_info mm;
+    mm.upper_k = k;
+    mm.max_bit_size = 6e9;
+    mm.use_2M_prune = 1;
+    mm.use_rank_prune = 1; // set true
+    mm.use_2023WWW_generation = 0;
+    mm.use_canonical_repair = 1;
+    mm.max_run_time_seconds = 1e2;
+    mm.thread_num = 1;
 
     graph_v_of_v_with_time_span<int> graphWithTimeSpan(v_num, e_num, upper, lower);
     graph_hop_constrained_two_hop_label_time_span two_hop_label_with_time_span(v_num);
-    vector<graph_v_of_v<int>> graphs = graphWithTimeSpan.graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(change_num, maintain_percent, two_hop_label_with_time_span);
+    vector<graph_v_of_v<int>> graphs = graphWithTimeSpan.graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(change_num, maintain_percent);
 
+    two_hop_label_with_time_span.process(graphs, mm);
     // print the graphs
     // for (graph_v_of_v<int> graph : graphs)
     // {
@@ -49,10 +60,20 @@ int testBaseLineAndBaseline2()
     double runtime_base_line_with_two_hop_label_test = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_base_line_two_hop_label_test - start_time_base_line_two_hop_label_test).count() / 1e9;
     std::cout << runtime_base_line_with_two_hop_label_test << std::endl;
     // // print the result
-    std::cout << res_n_iterate_dijkstra << ":" << res_base_line_with_span <<":" << res_two_hop_label<< std::endl;
+    std::cout << res_n_iterate_dijkstra << ":" << res_base_line_with_span << ":" << res_two_hop_label << std::endl;
 
     // debug
-    // int res_two_hop_label_debug = two_hop_label_with_time_span.test_query_method(source, target, queryStartTime, queryEndTime, 10);
+    two_hop_label_with_time_span.print_L_by_index(source);
+    two_hop_label_with_time_span.print_L_by_index(target);
+    for (auto &graph : subsequence)
+    {
+        hop_constrained_two_hop_labels_generation(graph, mm);
+        mm.print_L_vk(source);
+        mm.print_L_vk(target);
+        mm.clear_labels();
+    }
+    graph_hop_constrained_two_hop_label_time_span two_hop_label_with_time_span_debug(v_num);
+    two_hop_label_with_time_span_debug.process(graphs, mm);
     return 0;
 }
 int main()

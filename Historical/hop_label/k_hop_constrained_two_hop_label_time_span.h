@@ -85,7 +85,7 @@ public:
      */
     vector<vector<vector<hop_constrained_two_hop_label_time_span>>> L;
 
-    long int query(int u, int v, int hop);
+    long int query(int u, int v, int &hop);
 
     graph_hop_constrained_two_hop_label_time_span(int v) : L(v)
     {
@@ -95,12 +95,14 @@ public:
         ++current_time;
     }
     inline void initiate_2_hop_label(graph_v_of_v<int> &graph, hop_constrained_case_info &case_info);
+    inline void process(vector<graph_v_of_v<int>> graphs, hop_constrained_case_info &case_info);
     inline void add_new_edge_or_weight_decrease(int change_sourece, int change_target, int weight);
     inline int test_query_method(int source, int target, int start_time, int end_time, int k);
     inline void print_L();
+    inline void print_L_by_index(int);
 };
 
-inline long int graph_hop_constrained_two_hop_label_time_span::query(int u, int v, int hop)
+inline long int graph_hop_constrained_two_hop_label_time_span::query(int u, int v, int &hop)
 {
     if (u == v)
     {
@@ -110,6 +112,7 @@ inline long int graph_hop_constrained_two_hop_label_time_span::query(int u, int 
     int i = 0, j = 0;
     int i_size = this->L[u].size();
     int j_size = this->L[v].size();
+    int hop_upper = hop;
     while (i < i_size && j < j_size)
     {
         if (L[u][i].back().hub_vertex < L[v][j].back().hub_vertex)
@@ -134,9 +137,10 @@ inline long int graph_hop_constrained_two_hop_label_time_span::query(int u, int 
                     {
                         continue;
                     }
-                    if (label_u.hop + label_v.hop <= hop)
+                    if (label_u.hop + label_v.hop <= hop_upper)
                     {
-                        res = min(res, (long int)label_u.distance + label_v.distance);
+                        res = min(res, (long int)(label_u.distance + label_v.distance));
+                        hop = label_u.hop + label_v.hop;
                     }
                 }
             }
@@ -158,12 +162,15 @@ inline void graph_hop_constrained_two_hop_label_time_span::get_affect_label(int 
         {
             if (label.end_time_label == INT_MAX)
             {
-                if (this->query(label.hub_vertex, change_target, label.hop + 1) > label.distance + weight)
+                int hop_upper = label.hop + 1;
+                if (this->query(label.hub_vertex, change_target, hop_upper) > label.distance + weight)
                 {
                     CL.push_back({change_target, label.hub_vertex, label.hop + 1, label.distance + weight});
+                    break;
                 }
                 else
                 {
+                    bool is_found = false;
                     for (const auto &label_list_target : L[change_target])
                     {
                         if (label_list_target.back().hub_vertex != label.hub_vertex)
@@ -177,9 +184,17 @@ inline void graph_hop_constrained_two_hop_label_time_span::get_affect_label(int 
                                 if (label_target.end_time_label == INT_MAX && label_target.hop <= label.hop + 1 && label_target.distance > label.distance + weight)
                                 {
                                     CL.push_back({change_target, label.hub_vertex, label.hop + 1, label.distance + weight});
+                                    is_found = true;
+                                    break;
                                 }
                             }
+                            if(is_found){
+                                break;
+                            }
                         }
+                    }
+                    if(is_found){
+                        break;
                     }
                     // TODO 修改PPR
                 }
@@ -194,7 +209,7 @@ inline void graph_hop_constrained_two_hop_label_time_span::diffuse(vector<compai
     auto start = CL.begin();
     auto end = CL.end();
     while (start < end)
-    {   
+    {
         vector<pair<int, int>> H(this->L.size(), {-1, -1});
         queue.clear();
         int v = (*start).hub;
@@ -224,6 +239,9 @@ inline void graph_hop_constrained_two_hop_label_time_span::diffuse(vector<compai
                 }
                 else if (label_list.back().hub_vertex == v)
                 {
+                    /**
+                     * 感觉有问题 这里的假设
+                     */
                     /**
                      * There are four situations regarding the old value compared to the new value:
                      * h large, d large: The old value is redundant; it can be retained but will never be considered as a result.
@@ -265,7 +283,9 @@ inline void graph_hop_constrained_two_hop_label_time_span::diffuse(vector<compai
                 {
                     if (H[xn].first == -1)
                     {
-                        H[xn].first = query(xn, v, hopxv + 1);
+                        int hop_upper = hopxv + 1;
+                        H[xn].first = query(xn, v, hop_upper);
+                        H[xn].second = hop_upper;
                     }
                     int dis_x_xn = sorted_vector_binary_operations_search_weight(this->AJDS[xn], x);
                     if (H[xn].first > disxv + dis_x_xn)
@@ -273,19 +293,21 @@ inline void graph_hop_constrained_two_hop_label_time_span::diffuse(vector<compai
                         H[xn].first = disxv + dis_x_xn;
                         H[xn].second = hopxv + 1;
                         bool is_found = false;
-                        for (const auto element : queue)
+                        for (auto it = queue.begin(); it != queue.end(); ++it)
                         {
-                            if (element->vertex == xn)
+                            auto item = (*it);
+                            if (item->vertex == xn)
                             {
-                                element->hop = hopxv + 1;
-                                element->distance = disxv + dis_x_xn;
+                                item->hop = hopxv + 1;
+                                item->distance = disxv + dis_x_xn;
                                 is_found = true;
+                                break;
                             }
                         }
                         if (!is_found)
                         {
                             compair_node temp = {xn, H[xn].second, H[xn].first};
-                            queue.push({&temp});
+                            queue.push(&temp);
                         }
                     }
                     else
@@ -299,13 +321,13 @@ inline void graph_hop_constrained_two_hop_label_time_span::diffuse(vector<compai
                                 {
                                     is_found = true;
                                     element->hop = hopxv + 1;
-                                    element->distance = disxv + this->AJDS[xn][x].second + dis_x_xn;
+                                    element->distance = disxv + dis_x_xn;
                                 }
                             }
                             if (!is_found)
                             {
-                                compair_node temp = {xn, hopxv + 1, disxv + this->AJDS[xn][x].second + dis_x_xn};
-                                queue.push({&temp});
+                                compair_node temp = {xn, hopxv + 1, disxv + dis_x_xn};
+                                queue.push(&temp);
                             }
                         }
                         // TODO PPR
@@ -327,7 +349,7 @@ inline void graph_hop_constrained_two_hop_label_time_span::initiate_2_hop_label(
         {
             if (!this->L[index].empty() && this->L[index].back().back().hub_vertex == label.hub_vertex)
             {
-                this->L[index].back().push_back({hop_constrained_two_hop_label_time_span(label.hub_vertex, label.hop, label.distance, current_time)});
+                this->L[index].back().push_back(hop_constrained_two_hop_label_time_span(label.hub_vertex, label.hop, label.distance, current_time));
             }
             else
             {
@@ -340,16 +362,47 @@ inline void graph_hop_constrained_two_hop_label_time_span::initiate_2_hop_label(
     add_time();
 }
 
+inline void graph_hop_constrained_two_hop_label_time_span::process(vector<graph_v_of_v<int>> graphs, hop_constrained_case_info &info)
+{
+    this->initiate_2_hop_label(graphs[0], info);
+    for (int index = 1; index < graphs.size(); index++)
+    {
+        graph_v_of_v<int> &cur_graph = graphs[index];
+        for (int i = 0; i < cur_graph.ADJs.size(); i++)
+        {
+            for (int j = 0; j < cur_graph.ADJs[i].size(); j++)
+            {
+                if (i < cur_graph.ADJs[i][j].first && cur_graph.ADJs[i][j].second != graphs[index - 1].ADJs[i][j].second)
+                {
+                    std::cout << "vertex " << i << "-> vertex " << cur_graph.ADJs[i][j].first << " from " << graphs[index - 1].ADJs[i][j].second << " to " << cur_graph.ADJs[i][j].second << std::endl;
+                    add_new_edge_or_weight_decrease(i, cur_graph.ADJs[i][j].first, cur_graph.ADJs[i][j].second);
+                }
+            }
+        }
+    }
+}
+
 inline void graph_hop_constrained_two_hop_label_time_span::add_new_edge_or_weight_decrease(int change_sourece, int change_target, int weight)
 {
     vector<compair_node> CL;
     sorted_vector_binary_operations_insert(this->AJDS[change_sourece], change_target, weight);
     sorted_vector_binary_operations_insert(this->AJDS[change_target], change_sourece, weight);
+    auto time5 = std::chrono::high_resolution_clock::now();
     get_affect_label(change_sourece, change_target, weight, CL);
+    auto time6 = std::chrono::high_resolution_clock::now();
+    auto time7 = std::chrono::high_resolution_clock::now();
     get_affect_label(change_target, change_sourece, weight, CL);
-    sort(CL.begin(), CL.end(), [](compair_node x, compair_node y)
+    auto time8 = std::chrono::high_resolution_clock::now();
+    double section3 = std::chrono::duration_cast<std::chrono::nanoseconds>(time6 - time5).count() / 1e9;
+    double section4 = std::chrono::duration_cast<std::chrono::nanoseconds>(time8 - time7).count() / 1e9;
+    std::cout << "secton3 and section 4 time cost is " << section3 << ":" << section4 << std::endl;
+    sort(CL.begin(), CL.end(), [](auto x, auto y)
          { return x.hub < y.hub; });
+    auto time9 = std::chrono::high_resolution_clock::now();
     diffuse(CL);
+    auto time10 = std::chrono::high_resolution_clock::now();
+    double section5 = std::chrono::duration_cast<std::chrono::nanoseconds>(time10 - time9).count() / 1e9;
+    std::cout << "secton5 time cost is " << section5 << std::endl;
 }
 
 int graph_hop_constrained_two_hop_label_time_span::test_query_method(int source, int target, int start_time, int end_time, int k)
@@ -440,5 +493,25 @@ inline void graph_hop_constrained_two_hop_label_time_span::print_L()
             std::cout << std::endl;
         }
         ++i;
+    }
+}
+
+inline void graph_hop_constrained_two_hop_label_time_span::print_L_by_index(int index)
+{
+    /**
+     * i -> v
+     * j -> v_to_label_list
+     * k -> label_time_vector
+     */
+    auto i_next_edge = this->L[index];
+    std::cout << "vertex" << index << " :" << std::endl;
+    for (const auto &i_j_edge : i_next_edge)
+    {
+        int j = i_j_edge.back().hub_vertex;
+        for (const auto &edge_by_time : i_j_edge)
+        {
+            std::cout << "\t(" << j << "," << edge_by_time.hop << "," << edge_by_time.distance << "," << edge_by_time.start_time_label << "," << edge_by_time.end_time_label << ")";
+        }
+        std::cout << std::endl;
     }
 }
