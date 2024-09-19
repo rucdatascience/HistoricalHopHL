@@ -33,21 +33,25 @@ int main(int argc, char const *argv[])
     instance_graph.add_edge(5, 7, M);
     // 6-x
     instance_graph.add_edge(6, 8, M);
-    auto two_hop_label_with_time_span = graph_hop_constrained_two_hop_label_time_span(10);
-    hop_constrained_case_info mm;
-    mm.upper_k = 5;
-    mm.max_bit_size = 6e9;
-    mm.use_2M_prune = 1;
-    mm.use_rank_prune = 1; // set true
-    mm.use_2023WWW_generation = 0;
-    mm.use_canonical_repair = 0;
-    mm.max_run_time_seconds = 100;
-    mm.thread_num = 1;
-    two_hop_label_with_time_span.initiate_2_hop_label(instance_graph, mm);
-    two_hop_label_with_time_span.print_L();
-    two_hop_label_with_time_span.add_new_edge_or_weight_decrease(3, 5, 6);
-    two_hop_label_with_time_span.add_new_edge_or_weight_decrease(4, 6, 3);
-    two_hop_label_with_time_span.add_time();
-    std::cout << "after" << std::endl;
-    two_hop_label_with_time_span.print_L();
+    instance_graph.print();
+    instance_graph.txt_save("ss.txt");
+    instance_graph.txt_read("ss.txt");
+    instance_graph.print();
+    // auto two_hop_label_with_time_span = graph_hop_constrained_two_hop_label_time_span(10);
+    // hop_constrained_case_info mm;
+    // mm.upper_k = 5;
+    // mm.max_bit_size = 6e9;
+    // mm.use_2M_prune = 1;
+    // mm.use_rank_prune = 1; // set true
+    // mm.use_2023WWW_generation = 0;
+    // mm.use_canonical_repair = 0;
+    // mm.max_run_time_seconds = 100;
+    // mm.thread_num = 1;
+    // two_hop_label_with_time_span.initiate_2_hop_label(instance_graph, mm);
+    // two_hop_label_with_time_span.print_L();
+    // two_hop_label_with_time_span.add_new_edge_or_weight_decrease(3, 5, 6);
+    // two_hop_label_with_time_span.add_new_edge_or_weight_decrease(4, 6, 3);
+    // two_hop_label_with_time_span.add_time();
+    // std::cout << "after" << std::endl;
+    // two_hop_label_with_time_span.print_L();
 }
