@@ -7,7 +7,7 @@ int testBaseLineAndBaseline2()
 {
     // query param
     int source = 1, target = 4;
-    int queryStartTime = 1, queryEndTime = 1;
+    int queryStartTime = 1, queryEndTime = 9;
     int k = 10;
     // generate a random graph
     // int v_num = 6, e_num = 6;
@@ -15,7 +15,7 @@ int testBaseLineAndBaseline2()
     // int change_num = 5, maintain_percent = 7;
 
     // generate a larger random graph
-    int v_num = 50, e_num = 100;
+    int v_num = 5000, e_num = 10000;
     int upper = 20, lower = 1;
     int change_num = 10, maintain_percent = 3;
 

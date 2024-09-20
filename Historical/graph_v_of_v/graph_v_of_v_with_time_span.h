@@ -221,8 +221,8 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 					if (edges.second > next_value)
 					{
 						edges.second = next_value;
-						// int to_position = sorted_vector_binary_operations_search_position(instance_graph.ADJs[edges.first], i);
-						// instance_graph.ADJs[edges.first][to_position].second = edges.second;
+						int to_position = sorted_vector_binary_operations_search_position(instance_graph.ADJs[edges.first], i);
+						instance_graph.ADJs[edges.first][to_position].second = edges.second;
 						add_edge(i, edges.first, edges.second, index);
 						add_edge(edges.first, i, edges.second, index);
 					}
