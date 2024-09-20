@@ -7,7 +7,7 @@ int testBaseLineAndBaseline2()
 {
     // query param
     int source = 1, target = 4;
-    int queryStartTime = 1, queryEndTime = 9;
+    int queryStartTime = 1, queryEndTime = 1;
     int k = 10;
     // generate a random graph
     // int v_num = 6, e_num = 6;
@@ -15,9 +15,9 @@ int testBaseLineAndBaseline2()
     // int change_num = 5, maintain_percent = 7;
 
     // generate a larger random graph
-    int v_num = 5000, e_num = 10000;
+    int v_num = 10, e_num = 20;
     int upper = 20, lower = 1;
-    int change_num = 10, maintain_percent = 3;
+    int change_num = 1, maintain_percent = 3;
 
     // initialize the 2-hop label with time span
     hop_constrained_case_info mm;
@@ -31,7 +31,7 @@ int testBaseLineAndBaseline2()
     mm.thread_num = 1;
 
     bool use_save_read = true;
-    bool use_2_hop_label = false;
+    bool use_2_hop_label = true;
     graph_v_of_v_with_time_span<int> graph_with_time_span;
     vector<graph_v_of_v<int>> graphs;
     if (use_save_read)
@@ -53,6 +53,11 @@ int testBaseLineAndBaseline2()
     // graphWithTimeSpan.print();
 
     // dijkstra_iterator baseline 1
+    if (queryStartTime < 0 || queryEndTime < queryStartTime || queryEndTime > change_num)
+    {
+        std::cerr << "error query time" << std::endl;
+        return 1;
+    }
     vector<graph_v_of_v<int>> subsequence(graphs.begin() + queryStartTime, graphs.begin() + queryEndTime + 1);
     int res_n_iterate_dijkstra = dijkstra_iterator(subsequence, source, target, k);
 
