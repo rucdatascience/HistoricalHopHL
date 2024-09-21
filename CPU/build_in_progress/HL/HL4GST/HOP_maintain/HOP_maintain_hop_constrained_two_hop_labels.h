@@ -9,6 +9,7 @@ class hop_constrained_two_hop_label
 public:
     int hub_vertex, hop;
     weightTYPE distance;
+    int t_s, t_e;
     // hop_constrained_two_hop_label() {}
     // hop_constrained_two_hop_label(int _vertex, int _hop, int _dis)
     // {
@@ -16,6 +17,8 @@ public:
     //     hop = _hop;
     //     distance = _dis;
     // }
+    hop_constrained_two_hop_label()
+        : t_s(0), t_e(std::numeric_limits<int>::max()) {}
 };
 
 class hop_constrained_case_info
@@ -69,10 +72,10 @@ public:
         cout << "print_L: (hub_vertex, hop, distance)" << endl;
         for (auto &xx : L)
         {
-            cout <<"vertex "<< index++ << ": ";
+            cout << "vertex " << index++ << ": ";
             for (auto &yy : xx)
             {
-                cout << "(" << yy.hub_vertex << "," << yy.hop << "," << yy.distance << ")";
+                cout << "(" << yy.hub_vertex << "," << yy.hop << "," << yy.distance << "," << yy.t_s << "," << yy.t_e << ")";
             }
             cout << endl;
         }
@@ -149,7 +152,7 @@ long long int global_query_times = 0;
 long long int label_operation_times = 0;
 
 /**
- * ort the vertices with the following priorities: first by vertex ID, 
+ * ort the vertices with the following priorities: first by vertex ID,
  * then by the number of hops, and finally by distance, all in ascending order.
  */
 bool compare_hop_constrained_two_hop_label(hop_constrained_two_hop_label &i, hop_constrained_two_hop_label &j)
@@ -158,9 +161,17 @@ bool compare_hop_constrained_two_hop_label(hop_constrained_two_hop_label &i, hop
     {
         return i.hub_vertex < j.hub_vertex;
     }
+    else if (i.t_e != j.t_e)
+    {
+        return i.t_e > j.t_e;
+    }
     else if (i.hop != j.hop)
     {
         return i.hop < j.hop;
+    }
+    else if (i.t_s != j.t_s)
+    {
+        return i.t_s < j.t_s;
     }
     else
     {
@@ -168,53 +179,61 @@ bool compare_hop_constrained_two_hop_label(hop_constrained_two_hop_label &i, hop
     }
 }
 
-void insert_sorted_hop_constrained_two_hop_label(std::vector<hop_constrained_two_hop_label> &input_vector, int key, int hop_val, weightTYPE value)
+
+void insert_sorted_hop_constrained_two_hop_label(std::vector<hop_constrained_two_hop_label> &input_vector, int key, int hop, weightTYPE new_distance, int t)
 {
     label_operation_times++;
     int left = 0, right = input_vector.size() - 1;
-
-    hop_constrained_two_hop_label xx;
-    xx.hub_vertex = key;
-    xx.hop = hop_val;
-    xx.distance = value;
-
-    while (left <= right) // it will be skept when input_vector.size() == 0
-    {
-        int mid = left + ((right - left) / 2); // mid is between left and right (may be equal);
-        if (input_vector[mid].hub_vertex == key && input_vector[mid].hop == hop_val)
-        {
-            input_vector[mid] = xx;
-            return;
-        }
-        else if (compare_hop_constrained_two_hop_label(xx, input_vector[mid]))
-        {
-            right = mid - 1; // the elements after right are always either empty, or have larger keys than input key
-        }
-        else
-        {
-            left = mid + 1; // the elements before left are always either empty, or have smaller keys than input key
-        }
-    }
-
-    input_vector.insert(input_vector.begin() + left, xx);
-}
-
-weightTYPE search_sorted_hop_constrained_two_hop_label(std::vector<hop_constrained_two_hop_label> &input_vector, int key, int hop)
-{
-    label_operation_times++;
-    /*return true if key is in vector; time complexity O(log n)*/
-
-    int left = 0, right = input_vector.size() - 1;
-
+    
     while (left <= right)
     {
-        int mid = left + ((right - left) / 2); // mid is between left and right (may be equal);
+        int mid = left + ((right - left) / 2);
 
-        if (input_vector[mid].hub_vertex == key && input_vector[mid].hop == hop)
+        // Step 1: 先匹配 hub_vertex
+        if (input_vector[mid].hub_vertex == key)
         {
-            return input_vector[mid].distance;
+            // Step 2: 匹配 t_e 是否为无穷大
+            if (input_vector[mid].t_e == std::numeric_limits<int>::max())
+            {
+                // Step 3: 匹配 hop
+                if (input_vector[mid].hop == hop)
+                {
+                    // 找到匹配的标签，先生成旧标签，再更新
+                    hop_constrained_two_hop_label old_label = input_vector[mid];
+                    old_label.t_e = t; // 将旧标签的 t_e 设置为当前时间 t
+                    input_vector[mid].distance = new_distance;
+                    input_vector[mid].t_s = t; // 更新当前标签的 t_s
+
+                    // Step 4: 旧标签需要按排序规则插入
+                    int insert_pos = mid + 1;
+                    while (insert_pos < input_vector.size() &&
+                           (input_vector[insert_pos].hub_vertex == old_label.hub_vertex &&
+                            (input_vector[insert_pos].t_e > old_label.t_e ||
+                             (input_vector[insert_pos].t_e == old_label.t_e && input_vector[insert_pos].hop < old_label.hop))))
+                    {
+                        insert_pos++;
+                    }
+
+                    // 插入旧标签到合适的位置
+                    input_vector.insert(input_vector.begin() + insert_pos, old_label);
+                    
+                    return; // 更新完成，退出函数
+                }
+                else if (input_vector[mid].hop < hop)
+                {
+                    left = mid + 1;
+                }
+                else
+                {
+                    right = mid - 1;
+                }
+            }
+            else
+            {
+                right = mid - 1; // t_e 不是无穷大，继续向左找
+            }
         }
-        else if (input_vector[mid].hub_vertex > key || (input_vector[mid].hub_vertex == key && input_vector[mid].hop > hop))
+        else if (input_vector[mid].hub_vertex > key)
         {
             right = mid - 1;
         }
@@ -224,8 +243,69 @@ weightTYPE search_sorted_hop_constrained_two_hop_label(std::vector<hop_constrain
         }
     }
 
-    return std::numeric_limits<int>::max();
+    // Step 5: 如果没找到，则插入新标签
+    hop_constrained_two_hop_label new_label;
+    new_label.hub_vertex = key;
+    new_label.hop = hop;
+    new_label.distance = new_distance;
+    new_label.t_s = t;
+    new_label.t_e = std::numeric_limits<int>::max(); // 新标签的 t_e 是无穷大
+
+    // 找到插入点
+    input_vector.insert(input_vector.begin() + left, new_label); // 在 left 位置插入新标签
 }
+
+
+
+weightTYPE search_sorted_hop_constrained_two_hop_label(std::vector<hop_constrained_two_hop_label> &input_vector, int key, int hop)
+{
+    label_operation_times++;
+    int left = 0, right = input_vector.size() - 1;
+
+    while (left <= right)
+    {
+        int mid = left + ((right - left) / 2); // mid is between left and right (may be equal)
+
+        // Step 1: 先匹配 hub_vertex
+        if (input_vector[mid].hub_vertex == key)
+        {
+            // Step 2: 在匹配 hub_vertex 后，检查 t_e 是否为无穷大
+            if (input_vector[mid].t_e == std::numeric_limits<int>::max())
+            {
+                // Step 3: 再检查 hop
+                if (input_vector[mid].hop == hop)
+                {
+                    return input_vector[mid].distance; // 找到符合条件的标签，返回 distance
+                }
+                else if (input_vector[mid].hop < hop)
+                {
+                    left = mid + 1; // hop 太小，向右找
+                }
+                else
+                {
+                    right = mid - 1; // hop 太大，向左找
+                }
+            }
+            else
+            {
+                right = mid - 1; // t_e 不是无穷大，向左继续查找
+            }
+        }
+        else if (input_vector[mid].hub_vertex > key)
+        {
+            right = mid - 1; // hub_vertex 太大，向左找
+        }
+        else
+        {
+            left = mid + 1; // hub_vertex 太小，向右找
+        }
+    }
+
+    return std::numeric_limits<int>::max(); // 没找到符合条件的标签，返回无穷大
+}
+
+
+
 
 pair<weightTYPE, int> search_sorted_hop_constrained_two_hop_label_2(std::vector<hop_constrained_two_hop_label> &input_vector, int key, int hop)
 {
@@ -252,7 +332,8 @@ pair<weightTYPE, int> search_sorted_hop_constrained_two_hop_label_2(std::vector<
     return {std::numeric_limits<int>::max(), -1};
 }
 
-pair<weightTYPE, int> get_shortest_distance_hop_two_hop_label(std::vector<hop_constrained_two_hop_label> &input_vector, int key) {
+pair<weightTYPE, int> get_shortest_distance_hop_two_hop_label(std::vector<hop_constrained_two_hop_label> &input_vector, int key)
+{
 
     label_operation_times++;
     int idx = 0, right = input_vector.size() - 1;
@@ -275,9 +356,6 @@ pair<weightTYPE, int> get_shortest_distance_hop_two_hop_label(std::vector<hop_co
 
     return {mindis, hop_val};
 }
-
-
-
 
 class hop_constrained_affected_label
 {
@@ -439,7 +517,8 @@ weightTYPE hop_constrained_extract_distance(vector<vector<hop_constrained_two_ho
     return distance;
 }
 
-pair<weightTYPE, int> hop_constrained_extract_distance_and_hub(vector<vector<hop_constrained_two_hop_label>> &L, int source, int terminal, int hop_cst) {
+pair<weightTYPE, int> hop_constrained_extract_distance_and_hub(vector<vector<hop_constrained_two_hop_label>> &L, int source, int terminal, int hop_cst)
+{
     global_query_times++;
 
     /*return std::numeric_limits<int>::max() is not connected*/
@@ -469,12 +548,12 @@ pair<weightTYPE, int> hop_constrained_extract_distance_and_hub(vector<vector<hop
         {
 
             auto vector1_end = vector1_check_pointer;
-            while (vector1_check_pointer->hub_vertex == vector1_end->hub_vertex && vector1_end != pointer_L_s_end)
+            while (vector1_check_pointer->hub_vertex == vector1_end->hub_vertex && vector1_end->t_e == std::numeric_limits<int>::max() && vector1_end != pointer_L_s_end)
             {
                 vector1_end++;
             }
             auto vector2_end = vector2_check_pointer;
-            while (vector2_check_pointer->hub_vertex == vector2_end->hub_vertex && vector2_end != pointer_L_t_end)
+            while (vector2_check_pointer->hub_vertex == vector2_end->hub_vertex && vector2_end->t_e == std::numeric_limits<int>::max() && vector2_end != pointer_L_t_end)
             {
                 vector2_end++;
             }
@@ -563,7 +642,8 @@ weightTYPE hop_constrained_extract_distance_2(vector<hop_constrained_two_hop_lab
     return distance;
 }
 
-pair<weightTYPE, int> hop_constrained_extract_distance_and_hub_2(vector<hop_constrained_two_hop_label> &L_s, vector<hop_constrained_two_hop_label> &L_t, int hop_cst) {
+pair<weightTYPE, int> hop_constrained_extract_distance_and_hub_2(vector<hop_constrained_two_hop_label> &L_s, vector<hop_constrained_two_hop_label> &L_t, int hop_cst)
+{
 
     global_query_times++;
 

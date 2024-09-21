@@ -21,7 +21,7 @@ void WeightDecreaseMaintenance_improv_step1_batch(std::map<pair<int, int>, weigh
                 }
                 for (auto it : (*L)[v1])
                 {
-                    if (it.hub_vertex <= v2 && (long long int)it.distance + w_new < TwoM_value)
+                    if (it.hub_vertex <= v2 && (long long int)it.distance + w_new < TwoM_value && it.t_e == std::numeric_limits<int>::max())
                     {
                             auto query_result = hop_constrained_extract_distance_and_hub(*L, it.hub_vertex, v2, it.hop + 1); // query_result is {distance, common hub}
                             if ((long long int)query_result.first > (long long int)it.distance + w_new)
@@ -66,7 +66,7 @@ void WeightDecreaseMaintenance_improv_step1_batch(std::map<pair<int, int>, weigh
 }
 
 void DIFFUSE_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_constrained_two_hop_label>> *L, PPR_type *PPR, std::vector<hop_constrained_affected_label> &CL,
-                   ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int upper_k)
+                   ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int upper_k,int t)
 {
     std::map<hop_constrained_pair_label, weightTYPE> CL_edge_map;
     for (auto &it : CL)
@@ -107,7 +107,7 @@ void DIFFUSE_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_constrai
 
     for (auto &it : CL_map)
     {
-        results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, &instance_graph, PPR, upper_k]
+        results_dynamic.emplace_back(pool_dynamic.enqueue([t,it, L, &instance_graph, PPR, upper_k]
                                                           {
 			mtx_599_1.lock();
 			int current_tid = Qid_599_v2.front();
@@ -161,7 +161,7 @@ void DIFFUSE_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_constrai
 				weightTYPE d_old = search_sorted_hop_constrained_two_hop_label((*L)[x], v, xhv);
 				if (dx > 0 && dx < d_old)
 				{
-                    insert_sorted_hop_constrained_two_hop_label((*L)[x], v, xhv, dx);
+                    insert_sorted_hop_constrained_two_hop_label((*L)[x], v, xhv, dx,t);
 				}
 				mtx_599[x].unlock();
                 
@@ -280,7 +280,7 @@ void DIFFUSE_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_constrai
 }
 
 void HOP_WeightDecreaseMaintenance_improv_batch(graph_v_of_v<int> &instance_graph, hop_constrained_case_info &mm,
-                                                std::vector<pair<int, int>> &v, std::vector<int> &w_new, ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic) {
+                                                std::vector<pair<int, int>> &v, std::vector<int> &w_new, ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic,int t) {
 
     global_query_times = 0;
     label_operation_times = 0;
@@ -305,5 +305,5 @@ void HOP_WeightDecreaseMaintenance_improv_batch(graph_v_of_v<int> &instance_grap
     std::vector<hop_constrained_affected_label> CL;
 
     WeightDecreaseMaintenance_improv_step1_batch(w_new_map, &mm.L, &mm.PPR, &CL, pool_dynamic, results_dynamic);
-    DIFFUSE_batch(instance_graph, &mm.L, &mm.PPR, CL, pool_dynamic, results_dynamic, mm.upper_k);
+    DIFFUSE_batch(instance_graph, &mm.L, &mm.PPR, CL, pool_dynamic, results_dynamic, mm.upper_k,t);
 }
