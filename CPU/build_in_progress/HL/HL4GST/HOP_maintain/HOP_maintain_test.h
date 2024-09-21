@@ -156,6 +156,7 @@ int V, int weightIncrease_time, int weightDecrease_time, double weightChange_rat
         vector<pair<int, int>> selected_edge_vec;
         vector<int> selected_edge_weight_vec;
         vector<int> new_edge_weight_vec;
+        /* generate random vertex and weight which be stored to vector */
         if (!insert_and_delete_edge)
         {
             int ct = 0;

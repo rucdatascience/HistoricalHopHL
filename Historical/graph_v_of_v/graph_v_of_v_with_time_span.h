@@ -74,6 +74,9 @@ public:
 	inline void print();
 	inline vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int maintain_percent);
 
+	inline void txt_save(std::string save_name);
+	inline vector<graph_v_of_v<weight_type>> txt_read(std::string save_name);
+
 private:
 	/* the maximum of time*/
 	int time_max;
@@ -87,6 +90,8 @@ private:
 	inline void add_edge(int, int, weight_type, int);
 
 	inline void add_graph_time(graph_v_of_v<weight_type>, int);
+
+	inline void clear();
 };
 
 /*class member functions*/
@@ -185,7 +190,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 	}
 	if (change_num < 0)
 	{
-		cout << "the time_max should be greater than or equal to 0" << endl;
+		cout << "the change_num should be greater than or equal to 0" << endl;
 	}
 	this->time_max = change_num;
 	boost::random::mt19937 boost_random_time_seed{static_cast<std::uint32_t>(std::time(0))};
@@ -231,6 +236,120 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 }
 
 template <typename weight_type>
+inline void graph_v_of_v_with_time_span<weight_type>::txt_save(std::string save_name)
+{
+	std::ofstream outputFile;
+	outputFile.precision(10);
+	outputFile.setf(std::ios::fixed);
+	outputFile.setf(std::ios::showpoint);
+	outputFile.open(save_name);
+
+	outputFile << "|V|= " << this->v_num << std::endl;
+	outputFile << "|E|= " << this->e_num << std::endl;
+	outputFile << "|time|= " << this->time_max << std::endl;
+	outputFile << std::endl;
+
+	for (int index = 0; index <= this->time_max; index++)
+	{
+		outputFile << "time " << index << std::endl;
+		for (int i = 0; i < this->v_num; i++)
+		{
+			for (int j = 0; j < this->ADJs[i].size(); j++)
+			{
+				if (i < this->ADJs[i][j].first)
+				{
+					for (int k = 0; this->ADJs[i][j].second[k].startTimeLabel <= index; k++)
+					{
+						if (this->ADJs[i][j].second[k].startTimeLabel == index)
+						{
+							outputFile << "Edge " << i << " " << ADJs[i][j].first << " " << this->ADJs[i][j].second[k].weight << "\n";
+							break;
+						}
+					}
+				}
+			}
+		}
+		outputFile << std::endl;
+	}
+	outputFile << "EOF" << std::endl;
+	outputFile.close();
+}
+
+template <typename weight_type>
+inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::txt_read(std::string save_name)
+{
+	this->clear();
+	std::string line_content;
+	int current_time = -1;
+	vector<graph_v_of_v<weight_type>> res;
+	graph_v_of_v<weight_type> instance_graph;
+	std::ifstream myfile(save_name); // open the file
+	if (myfile.is_open())			 // if the file is opened successfully
+	{
+		while (getline(myfile, line_content)) // read file line by line
+		{
+			std::vector<std::string> Parsed_content = parse_string(line_content, " ");
+
+			if (!Parsed_content[0].compare("|V|=")) // when it's equal, compare returns 0
+			{
+				this->v_num = std::stoi(Parsed_content[1]);
+				instance_graph.ADJs.resize(this->v_num);
+				ADJs.resize(std::stoi(Parsed_content[1]));
+			}
+			else if (!Parsed_content[0].compare("|E|="))
+			{
+				this->e_num = std::stoi(Parsed_content[1]);
+			}
+			else if (!Parsed_content[0].compare("|time|="))
+			{
+				this->time_max = std::stoi(Parsed_content[1]);
+			}
+			else if (!Parsed_content[0].compare("time"))
+			{
+				current_time = std::stoi(Parsed_content[1]);
+			}
+			else if (!Parsed_content[0].compare("Edge"))
+			{
+				int v1 = std::stoi(Parsed_content[1]);
+				int v2 = std::stoi(Parsed_content[2]);
+				weight_type ec = std::stod(Parsed_content[3]);
+				if (current_time == 0)
+				{
+					// initiate the graph
+					instance_graph.add_edge(v1, v2, ec);
+				}
+				else
+				{
+					instance_graph.add_edge(v1, v2, ec);
+					add_edge(v1, v2, ec, current_time);
+					add_edge(v2, v1, ec, current_time);
+				}
+			}
+			else if (Parsed_content.size() == 1 && Parsed_content[0] == "")
+			{
+				if (current_time >= 0)
+				{
+					if (current_time == 0)
+					{
+						add_graph_time(instance_graph, current_time);
+					}
+					res.push_back(instance_graph);
+				}
+			}
+		}
+		myfile.close(); // close the file
+		return res;
+	}
+	else
+	{
+		std::cout << "Unable to open file " << save_name << std::endl
+				  << "Please check the file location or file name." << std::endl; // throw an error message
+		getchar();																  // keep the console window
+		exit(1);																  // end the program
+	}
+}
+
+template <typename weight_type>
 void graph_v_of_v_with_time_span<weight_type>::add_edge(int e1, int e2, weight_type ec, int time)
 {
 	/* initialize a graph with a time span */
@@ -269,6 +388,15 @@ void graph_v_of_v_with_time_span<weight_type>::add_graph_time(graph_v_of_v<weigh
 			this->add_edge(i, edges.first, edges.second, time);
 		}
 	}
+}
+
+template <typename weight_type>
+inline void graph_v_of_v_with_time_span<weight_type>::clear()
+{
+	vector<vector<pair<int, vector<EdgeInfo<weight_type>>>>>().swap(this->ADJs);
+	this->e_num = 0;
+	this->v_num = 0;
+	this->time_max = 0;
 }
 
 template <typename weight_type>
