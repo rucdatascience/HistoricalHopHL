@@ -1,14 +1,15 @@
 #pragma once
 
-#include <vector>
 #include <iostream>
-#include <vector>
+#include <chrono>
 #include "CPU/tool_functions/sorted_vector_binary_operations.h"
 #include "CPU/graph_v_of_v/graph_v_of_v.h"
 #include "CPU/graph_v_of_v/graph_v_of_v_update_vertexIDs_by_degrees_large_to_small.h"
 #include "CPU/graph_v_of_v/graph_v_of_v_generate_random_graph.h"
+#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_maintain_hop_constrained_two_hop_labels.h"
+#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_WeightDecreaseMaintenance_improv_batch.h"
+#include "CPU/tool_functions/ThreadPool.h"
 #include <boost/heap/fibonacci_heap.hpp>
-#include "Historical/hop_label/k_hop_constrained_two_hop_label_time_span.h"
 template <typename weight_type> // weight_type may be int, long long int, float, double...
 class EdgeInfo
 {
@@ -72,7 +73,7 @@ public:
 	inline weight_type search_shortest_path_in_period_time_naive(int u, int v, int k, int startTime, int endTime);
 
 	inline void print();
-	inline vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int maintain_percent);
+	inline vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int maintain_percent, hop_constrained_case_info &info);
 
 	inline void txt_save(std::string save_name);
 	inline vector<graph_v_of_v<weight_type>> txt_read(std::string save_name);
@@ -181,7 +182,7 @@ void graph_v_of_v_with_time_span<weight_type>::print()
 }
 
 template <typename weight_type>
-vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int maintain_percent)
+vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int maintain_percent, hop_constrained_case_info &case_info)
 {
 	if (maintain_percent > 10 || maintain_percent < 0)
 	{
@@ -202,6 +203,12 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 		is_mock[i] = false;
 	}
 	instance_graph = graph_v_of_v_update_vertexIDs_by_degrees_large_to_small_mock(instance_graph, is_mock);
+
+	// initialize the label
+	hop_constrained_two_hop_labels_generation(instance_graph, case_info);
+	ThreadPool pool_dynamic(case_info.thread_num);
+	std::vector<std::future<int>> results_dynamic;
+
 	add_graph_time(instance_graph, 0);
 	vector<graph_v_of_v<weight_type>> res;
 	res.push_back(instance_graph);
@@ -210,6 +217,8 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 	int N = instance_graph.ADJs.size();
 	while (index <= change_num)
 	{
+		vector<pair<int, int>> path;
+		vector<int> weight;
 		for (int i = 0; i < N; i++)
 		{
 			auto &vertices = instance_graph.ADJs[i];
@@ -218,6 +227,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 				if (edges.first > i && dis(boost_random_time_seed) > maintain_percent)
 				{
 					auto next_value = weight_dis(boost_random_time_seed);
+					// only edge weight decrease
 					if (edges.second > next_value)
 					{
 						edges.second = next_value;
@@ -225,9 +235,25 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 						instance_graph.ADJs[edges.first][to_position].second = edges.second;
 						add_edge(i, edges.first, edges.second, index);
 						add_edge(edges.first, i, edges.second, index);
+						// maintain the label
+						path.push_back({edges.first, i});
+						weight.push_back(next_value);
+						// 5 is batch_size,it should be definable
+						if (path.size() >= 10)
+						{
+							HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
+							vector<pair<int, int>>().swap(path);
+							vector<int>().swap(weight);
+						}
 					}
 				}
 			}
+		}
+		if (path.size() > 0)
+		{
+			HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
+			vector<pair<int, int>>().swap(path);
+			vector<int>().swap(weight);
 		}
 		res.push_back(instance_graph);
 		++index;

@@ -48,7 +48,7 @@ rm A
 
 // header files in the Boost library: https://www.boost.org/
 #include <boost/random.hpp>
-boost::random::mt19937 boost_random_time_seed{ static_cast<std::uint32_t>(std::time(0)) };
+boost::random::mt19937 boost_random_time_seed{static_cast<std::uint32_t>(std::time(0))};
 
 void add_vertex_groups(graph_v_of_v<int> &instance_graph, int group_num)
 {
@@ -144,7 +144,7 @@ void hop_constrained_check_correctness(hop_constrained_case_info &case_info, gra
 }
 
 void graph_change_and_label_maintenance(graph_v_of_v<int> &instance_graph, hop_constrained_case_info &case_info,
-int V, int weightIncrease_time, int weightDecrease_time, double weightChange_ratio, double &avg_maintain_time, int batch_size, int insert_and_delete_edge, int ec_min, int ec_max)
+                                        int V, int weightIncrease_time, int weightDecrease_time, double weightChange_ratio, double &avg_maintain_time, int batch_size, int insert_and_delete_edge, int ec_min, int ec_max)
 {
     ThreadPool pool_dynamic(case_info.thread_num);
     std::vector<std::future<int>> results_dynamic;
@@ -240,7 +240,7 @@ int V, int weightIncrease_time, int weightDecrease_time, double weightChange_rat
             auto begin = std::chrono::high_resolution_clock::now();
 
             /*maintain labels*/
-            //HOP_WeightIncrease2021_batch(instance_graph, case_info, selected_edge_vec, selected_edge_weight_vec, pool_dynamic, results_dynamic);
+            // HOP_WeightIncrease2021_batch(instance_graph, case_info, selected_edge_vec, selected_edge_weight_vec, pool_dynamic, results_dynamic);
             HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, selected_edge_vec, selected_edge_weight_vec, pool_dynamic, results_dynamic);
             //    cout << "1ec change " << selected_edge.first << " " << selected_edge.second << " " << new_ec << endl;
             //    mm.print_L();
@@ -307,9 +307,10 @@ int V, int weightIncrease_time, int weightDecrease_time, double weightChange_rat
             }
             auto begin = std::chrono::high_resolution_clock::now();
 
+            int t = 1;
             /*maintain labels*/
-            //HOP_WeightDecrease2021_batch(instance_graph, case_info, selected_edge_vec, new_edge_weight_vec, pool_dynamic, results_dynamic);
-            HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, selected_edge_vec, new_edge_weight_vec, pool_dynamic, results_dynamic);
+            // HOP_WeightDecrease2021_batch(instance_graph, case_info, selected_edge_vec, new_edge_weight_vec, pool_dynamic, results_dynamic);
+            HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, selected_edge_vec, new_edge_weight_vec, pool_dynamic, results_dynamic, t);
             //       cout << "2ec change " << selected_edge.first << " " << selected_edge.second << " " << new_ec << endl;
             //       mm.print_L();
             //       mm.print_PPR();

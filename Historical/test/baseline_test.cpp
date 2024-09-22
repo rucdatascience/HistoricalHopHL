@@ -2,6 +2,7 @@ using namespace std;
 #include <chrono>
 #include "CPU/graph_v_of_v/graph_v_of_v_generate_random_graph.h"
 #include "Historical/graph_v_of_v/graph_v_of_v_with_time_span.h"
+#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_maintain_hop_constrained_two_hop_labels.h"
 
 int testBaseLineAndBaseline2()
 {
@@ -15,9 +16,9 @@ int testBaseLineAndBaseline2()
     // int change_num = 5, maintain_percent = 7;
 
     // generate a larger random graph
-    int v_num = 10, e_num = 20;
+    int v_num = 100, e_num = 200;
     int upper = 20, lower = 1;
-    int change_num = 1, maintain_percent = 3;
+    int change_num = 2, maintain_percent = 3;
 
     // initialize the 2-hop label with time span
     hop_constrained_case_info mm;
@@ -29,8 +30,9 @@ int testBaseLineAndBaseline2()
     mm.use_canonical_repair = 1;
     mm.max_run_time_seconds = 1e2;
     mm.thread_num = 1;
+    initialize_global_values_dynamic_hop_constrained(v_num, mm.thread_num, mm.upper_k);
 
-    bool use_save_read = true;
+    bool use_save_read = false;
     bool use_2_hop_label = true;
     graph_v_of_v_with_time_span<int> graph_with_time_span;
     vector<graph_v_of_v<int>> graphs;
@@ -42,7 +44,7 @@ int testBaseLineAndBaseline2()
     else
     {
         graph_with_time_span = graph_v_of_v_with_time_span<int>(v_num, e_num, upper, lower);
-        graphs = graph_with_time_span.graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(change_num, maintain_percent);
+        graphs = graph_with_time_span.graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(change_num, maintain_percent, mm);
         graph_with_time_span.txt_save("time-graph.txt");
     }
     // print the graphs
@@ -70,33 +72,9 @@ int testBaseLineAndBaseline2()
     std::cout << res_n_iterate_dijkstra << ":" << res_base_line_with_span << std::endl;
     if (use_2_hop_label)
     {
-        graph_hop_constrained_two_hop_label_time_span two_hop_label_with_time_span(v_num);
-        two_hop_label_with_time_span.process(graphs, mm);
-        // (test) the dsp using 2-hop labeling with time_span
-        auto start_time_base_line_two_hop_label_test = std::chrono::high_resolution_clock::now();
-        int res_two_hop_label = two_hop_label_with_time_span.test_query_method(source, target, queryStartTime, queryEndTime, k);
-        auto end_time_base_line_two_hop_label_test = std::chrono::high_resolution_clock::now();
-        double runtime_base_line_with_two_hop_label_test = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_base_line_two_hop_label_test - start_time_base_line_two_hop_label_test).count() / 1e9;
-        std::cout << runtime_base_line_with_two_hop_label_test << std::endl;
-        // // print the result
-        std::cout << res_n_iterate_dijkstra << ":" << res_base_line_with_span << ":" << res_two_hop_label << std::endl;
-
-        // debug
-        two_hop_label_with_time_span.print_L_by_index(source);
-        two_hop_label_with_time_span.print_L_by_index(target);
-        for (auto &graph : graphs)
-        {
-            hop_constrained_two_hop_labels_generation(graph, mm);
-            mm.print_L();
-            mm.print_L_vk(source);
-            mm.print_L_vk(target);
-            mm.clear_labels();
-            graph.print();
-        }
-        graph_hop_constrained_two_hop_label_time_span two_hop_label_with_time_span_debug(v_num);
-        two_hop_label_with_time_span_debug.process(graphs, mm);
+        int res_by_hop = hop_constrained_extract_distance(mm.L, source, target, k, queryStartTime, queryEndTime);
+        std::cout << res_n_iterate_dijkstra << ":" << res_base_line_with_span << ":" << res_by_hop << std::endl;
     }
-
     return 0;
 }
 int main()
