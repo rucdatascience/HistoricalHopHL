@@ -7,8 +7,8 @@ using namespace std;
 int testBaseLineAndBaseline2()
 {
     // query param
-    int source = 1, target = 4;
-    int queryStartTime = 1, queryEndTime = 1;
+    int source = 10, target = 40;
+    int queryStartTime = 1, queryEndTime = 6;
     int k = 10;
     // generate a random graph
     // int v_num = 6, e_num = 6;
@@ -16,9 +16,9 @@ int testBaseLineAndBaseline2()
     // int change_num = 5, maintain_percent = 7;
 
     // generate a larger random graph
-    int v_num = 100, e_num = 200;
+    int v_num = 5000, e_num = 35000;
     int upper = 20, lower = 1;
-    int change_num = 2, maintain_percent = 3;
+    int change_num = 8, maintain_percent = 3;
 
     // initialize the 2-hop label with time span
     hop_constrained_case_info mm;
@@ -30,7 +30,6 @@ int testBaseLineAndBaseline2()
     mm.use_canonical_repair = 1;
     mm.max_run_time_seconds = 1e2;
     mm.thread_num = 1;
-    initialize_global_values_dynamic_hop_constrained(v_num, mm.thread_num, mm.upper_k);
 
     bool use_save_read = false;
     bool use_2_hop_label = true;
@@ -39,10 +38,11 @@ int testBaseLineAndBaseline2()
     if (use_save_read)
     {
         graph_with_time_span = graph_v_of_v_with_time_span<int>();
-        graphs = graph_with_time_span.txt_read("time-graph.txt");
+        graphs = graph_with_time_span.txt_read("time-graph.txt", mm);
     }
     else
     {
+        initialize_global_values_dynamic_hop_constrained(v_num, mm.thread_num, mm.upper_k);
         graph_with_time_span = graph_v_of_v_with_time_span<int>(v_num, e_num, upper, lower);
         graphs = graph_with_time_span.graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(change_num, maintain_percent, mm);
         graph_with_time_span.txt_save("time-graph.txt");
@@ -72,8 +72,9 @@ int testBaseLineAndBaseline2()
     std::cout << res_n_iterate_dijkstra << ":" << res_base_line_with_span << std::endl;
     if (use_2_hop_label)
     {
-        int res_by_hop = hop_constrained_extract_distance(mm.L, source, target, k, queryStartTime, queryEndTime);
-        std::cout << res_n_iterate_dijkstra << ":" << res_base_line_with_span << ":" << res_by_hop << std::endl;
+        // mm.print_L();
+        int res = mm.query(source, target, queryStartTime, queryEndTime, k);
+        std::cout << res_n_iterate_dijkstra << ":" << res_base_line_with_span << ":" << res << std::endl;
     }
     return 0;
 }

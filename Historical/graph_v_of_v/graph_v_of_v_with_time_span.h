@@ -76,7 +76,7 @@ public:
 	inline vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int maintain_percent, hop_constrained_case_info &info);
 
 	inline void txt_save(std::string save_name);
-	inline vector<graph_v_of_v<weight_type>> txt_read(std::string save_name);
+	inline vector<graph_v_of_v<weight_type>> txt_read(std::string save_name, hop_constrained_case_info &info);
 
 private:
 	/* the maximum of time*/
@@ -302,13 +302,18 @@ inline void graph_v_of_v_with_time_span<weight_type>::txt_save(std::string save_
 }
 
 template <typename weight_type>
-inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::txt_read(std::string save_name)
+inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::txt_read(std::string save_name, hop_constrained_case_info &case_info)
 {
 	this->clear();
 	std::string line_content;
 	int current_time = -1;
 	vector<graph_v_of_v<weight_type>> res;
 	graph_v_of_v<weight_type> instance_graph;
+	ThreadPool pool_dynamic(case_info.thread_num);
+	std::vector<std::future<int>> results_dynamic;
+	vector<pair<int, int>> path;
+	vector<int> weight;
+
 	std::ifstream myfile(save_name); // open the file
 	if (myfile.is_open())			 // if the file is opened successfully
 	{
@@ -321,6 +326,7 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 				this->v_num = std::stoi(Parsed_content[1]);
 				instance_graph.ADJs.resize(this->v_num);
 				ADJs.resize(std::stoi(Parsed_content[1]));
+				initialize_global_values_dynamic_hop_constrained(this->v_num, case_info.thread_num, case_info.upper_k);
 			}
 			else if (!Parsed_content[0].compare("|E|="))
 			{
@@ -349,15 +355,34 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 					instance_graph.add_edge(v1, v2, ec);
 					add_edge(v1, v2, ec, current_time);
 					add_edge(v2, v1, ec, current_time);
+					// TODO current modification operations are only decrease
+					// maintain the label
+					path.push_back({v1, v2});
+					weight.push_back(ec);
+
+					// 5 is batch_size,it should be definable
+					if (path.size() >= case_info.thread_num * 3)
+					{
+						HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, current_time);
+						vector<pair<int, int>>().swap(path);
+						vector<int>().swap(weight);
+					}
 				}
 			}
 			else if (Parsed_content.size() == 1 && Parsed_content[0] == "")
 			{
+				if (path.size() > 0)
+				{
+					HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, current_time);
+					vector<pair<int, int>>().swap(path);
+					vector<int>().swap(weight);
+				}
 				if (current_time >= 0)
 				{
 					if (current_time == 0)
 					{
-						add_graph_time(instance_graph, current_time);
+						hop_constrained_two_hop_labels_generation(instance_graph, case_info);
+						add_graph_time(instance_graph, 0);
 					}
 					res.push_back(instance_graph);
 				}

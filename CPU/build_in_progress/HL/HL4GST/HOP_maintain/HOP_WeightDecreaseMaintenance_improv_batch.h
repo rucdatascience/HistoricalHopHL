@@ -24,7 +24,7 @@ void WeightDecreaseMaintenance_improv_step1_batch(std::map<pair<int, int>, weigh
                 {
                     if (it.hub_vertex <= v2 && (long long int)it.distance + w_new < TwoM_value && it.t_e == std::numeric_limits<int>::max())
                     {
-                            auto query_result = hop_constrained_extract_distance_and_hub(*L, it.hub_vertex, v2, it.hop + 1,t,t); // query_result is {distance, common hub}
+                            auto query_result = hop_constrained_extract_distance_and_hub(*L, it.hub_vertex, v2, it.hop + 1); // query_result is {distance, common hub}
                             if ((long long int)query_result.first > (long long int)it.distance + w_new)
                             {
                                 mtx_599_1.lock();

@@ -102,6 +102,9 @@ public:
     {
         for (auto it = L[v_k].begin(); it != L[v_k].end(); it++)
         {
+            if(it->hop > 10){
+                break;
+            }
             cout << "<" << it->hub_vertex << "," << it->distance << "," << it->hop << ">";
         }
         cout << endl;
@@ -140,6 +143,47 @@ public:
 
         outputFile.close();
     }
+
+    long long int query(int source, int terminal, int t_s, int t_e, int hop_cst)
+    {
+        /*return std::numeric_limits<int>::max() is not connected*/
+
+        if (hop_cst < 0)
+        {
+            return std::numeric_limits<int>::max();
+        }
+        if (source == terminal)
+        {
+            return 0;
+        }
+        else if (hop_cst == 0)
+        {
+            return std::numeric_limits<int>::max();
+        }
+
+        int distance = std::numeric_limits<int>::max();
+        auto vector1_check_pointer = L[source].begin();
+        auto vector2_check_pointer = L[terminal].begin();
+        auto pointer_L_s_end = L[source].end(), pointer_L_t_end = L[terminal].end();
+
+        for (auto vector1_begin = vector1_check_pointer; vector1_begin != pointer_L_s_end; vector1_begin++)
+        {
+            // cout << "x (" << vector1_begin->hub_vertex << "," << vector1_begin->hop << "," << vector1_begin->distance << "," << vector1_begin->parent_vertex << ") " << endl;
+            for (auto vector2_begin = vector2_check_pointer; vector2_begin != pointer_L_t_end; vector2_begin++)
+            {
+                // cout << "y (" << vector2_begin->hub_vertex << "," << vector2_begin->hop << "," << vector2_begin->distance << "," << vector2_begin->parent_vertex << ") " << endl;
+                if (vector1_begin->hub_vertex == vector2_begin->hub_vertex && vector1_begin->hop + vector2_begin->hop <= hop_cst && max(vector1_begin->t_s, max(vector2_begin->t_s, t_s)) <= min(vector1_begin->t_e, min(vector2_begin->t_e, t_e)))
+                {
+                    long long int dis = (long long int)vector1_begin->distance + vector2_begin->distance;
+                    if (distance > dis)
+                    {
+                        distance = dis;
+                    }
+                }
+            }
+        }
+        return distance;
+    }
 };
 
 #include <chrono>
@@ -157,13 +201,13 @@ long long int label_operation_times = 0;
  */
 bool compare_hop_constrained_two_hop_label(hop_constrained_two_hop_label &i, hop_constrained_two_hop_label &j)
 {
-    if (i.hub_vertex != j.hub_vertex)
-    {
-        return i.hub_vertex < j.hub_vertex;
-    }
-    else if (i.t_e != j.t_e)
+    if (i.t_e != j.t_e)
     {
         return i.t_e > j.t_e;
+    }
+    else if (i.hub_vertex != j.hub_vertex)
+    {
+        return i.hub_vertex < j.hub_vertex;
     }
     else if (i.hop != j.hop)
     {
@@ -184,73 +228,96 @@ void insert_sorted_hop_constrained_two_hop_label(std::vector<hop_constrained_two
     label_operation_times++;
     int left = 0, right = input_vector.size() - 1;
 
+    // Step 1: 通过二分查找 t_e == std::numeric_limits<int>::max() 的标签
     while (left <= right)
     {
         int mid = left + ((right - left) / 2);
 
-        // Step 1: 先匹配 hub_vertex
-        if (input_vector[mid].hub_vertex == key)
+        // Step 2: 匹配 t_e 是否为无穷大
+        if (input_vector[mid].t_e == std::numeric_limits<int>::max())
         {
-            // Step 2: 匹配 t_e 是否为无穷大
-            if (input_vector[mid].t_e == std::numeric_limits<int>::max())
+            // Step 3: 继续匹配 hub_vertex
+            if (input_vector[mid].hub_vertex == key)
             {
-                // Step 3: 匹配 hop
+                // Step 4: 再匹配 hop
                 if (input_vector[mid].hop == hop)
                 {
-                    // 找到匹配的标签，先生成旧标签，再更新
+                    // 找到匹配的标签，进行 update(首先生成旧标签)
                     hop_constrained_two_hop_label old_label = input_vector[mid];
-                    old_label.t_e = t; // 将旧标签的 t_e 设置为当前时间 t
-                    input_vector[mid].distance = new_distance;
-                    input_vector[mid].t_s = t; // 更新当前标签的 t_s
+                    old_label.t_e = t; // 将旧标签的 t_e 更新为 t
 
-                    // Step 4: 旧标签需要按排序规则插入
-                    int insert_pos = mid + 1;
-                    while (insert_pos < input_vector.size() &&
-                           (input_vector[insert_pos].hub_vertex == old_label.hub_vertex &&
-                            (input_vector[insert_pos].t_e > old_label.t_e ||
-                             (input_vector[insert_pos].t_e == old_label.t_e && input_vector[insert_pos].hop < old_label.hop))))
+                    // 更新当前标签的 distance 和 t_s
+                    input_vector[mid].distance = new_distance;
+                    input_vector[mid].t_s = t;
+
+                    // Step 5: 插入旧标签，使用二分查找合适插入位置
+                    int insert_left = mid + 1, insert_right = input_vector.size() - 1;
+
+                    // 二分查找插入点，根据 t_e 降序、hub 升序、hop 升序
+                    while (insert_left <= insert_right)
                     {
-                        insert_pos++;
+                        int insert_mid = insert_left + ((insert_right - insert_left) / 2);
+
+                        if (input_vector[insert_mid].t_e < t)
+                        {
+                            insert_right = insert_mid - 1;
+                        }
+                        else if (input_vector[insert_mid].t_e == t)
+                        {
+                            if (input_vector[insert_mid].hub_vertex > key ||
+                                (input_vector[insert_mid].hub_vertex == key && input_vector[insert_mid].hop > hop))
+                            {
+                                insert_right = insert_mid - 1;
+                            }
+                            else
+                            {
+                                insert_left = insert_mid + 1;
+                            }
+                        }
+                        else
+                        {
+                            insert_left = insert_mid + 1;
+                        }
                     }
 
-                    // 插入旧标签到合适的位置
-                    input_vector.insert(input_vector.begin() + insert_pos, old_label);
+                    // 插入旧标签到正确位置
+                    input_vector.insert(input_vector.begin() + insert_left, old_label);
 
                     return; // 更新完成，退出函数
                 }
                 else if (input_vector[mid].hop < hop)
                 {
-                    left = mid + 1;
+                    left = mid + 1; // hop 太小，继续向右找
                 }
                 else
                 {
-                    right = mid - 1;
+                    right = mid - 1; // hop 太大，向左找
                 }
+            }
+            else if (input_vector[mid].hub_vertex < key)
+            {
+                left = mid + 1; // hub_vertex 太小，继续向右找
             }
             else
             {
-                right = mid - 1; // t_e 不是无穷大，继续向左找
+                right = mid - 1; // hub_vertex 太大，向左找
             }
-        }
-        else if (input_vector[mid].hub_vertex > key)
-        {
-            right = mid - 1;
         }
         else
         {
-            left = mid + 1;
+            right = mid - 1; // t_e 不是无穷大，向左继续查找
         }
     }
 
-    // Step 5: 如果没找到，则插入新标签
+    // Step 6: 如果没找到符合条件的标签，则插入新标签
     hop_constrained_two_hop_label new_label;
     new_label.hub_vertex = key;
     new_label.hop = hop;
     new_label.distance = new_distance;
     new_label.t_s = t;
-    new_label.t_e = std::numeric_limits<int>::max(); // 新标签的 t_e 是无穷大
+    new_label.t_e = std::numeric_limits<int>::max(); // 新标签 t_e 是无穷大
 
-    // 找到插入点
+    // 找到插入点，确保排序规则
     input_vector.insert(input_vector.begin() + left, new_label); // 在 left 位置插入新标签
 }
 
@@ -263,11 +330,11 @@ weightTYPE search_sorted_hop_constrained_two_hop_label(std::vector<hop_constrain
     {
         int mid = left + ((right - left) / 2); // mid is between left and right (may be equal)
 
-        // Step 1: 先匹配 hub_vertex
-        if (input_vector[mid].hub_vertex == key)
+        // Step 1: 先检查 t_e 是否为无穷大
+        if (input_vector[mid].t_e == std::numeric_limits<int>::max())
         {
-            // Step 2: 在匹配 hub_vertex 后，检查 t_e 是否为无穷大
-            if (input_vector[mid].t_e == std::numeric_limits<int>::max())
+            // Step 2: 匹配 hub_vertex
+            if (input_vector[mid].hub_vertex == key)
             {
                 // Step 3: 再检查 hop
                 if (input_vector[mid].hop == hop)
@@ -283,18 +350,18 @@ weightTYPE search_sorted_hop_constrained_two_hop_label(std::vector<hop_constrain
                     right = mid - 1; // hop 太大，向左找
                 }
             }
+            else if (input_vector[mid].hub_vertex < key)
+            {
+                left = mid + 1; // hub 太小，向右找
+            }
             else
             {
-                right = mid - 1; // t_e 不是无穷大，向左继续查找
+                right = mid - 1; // hub 太大，向左找
             }
-        }
-        else if (input_vector[mid].hub_vertex > key)
-        {
-            right = mid - 1; // hub_vertex 太大，向左找
         }
         else
         {
-            left = mid + 1; // hub_vertex 太小，向右找
+            right = mid - 1; // t_e 不是无穷大，向左找
         }
     }
 
@@ -458,18 +525,17 @@ weightTYPE hop_constrained_extract_distance(vector<vector<hop_constrained_two_ho
     auto vector2_check_pointer = L[terminal].begin();
     auto pointer_L_s_end = L[source].end(), pointer_L_t_end = L[terminal].end();
 
-    while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end)
+    while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end && vector1_check_pointer->t_e == std::numeric_limits<int>::max() && vector2_check_pointer->t_e == std::numeric_limits<int>::max())
     {
         if (vector1_check_pointer->hub_vertex == vector2_check_pointer->hub_vertex)
         {
-
             auto vector1_end = vector1_check_pointer;
-            while (vector1_check_pointer->hub_vertex == vector1_end->hub_vertex && vector1_end != pointer_L_s_end)
+            while (vector1_check_pointer->hub_vertex == vector1_end->hub_vertex && vector1_end != pointer_L_s_end && vector1_check_pointer->t_e == std::numeric_limits<int>::max())
             {
                 vector1_end++;
             }
             auto vector2_end = vector2_check_pointer;
-            while (vector2_check_pointer->hub_vertex == vector2_end->hub_vertex && vector2_end != pointer_L_t_end)
+            while (vector2_check_pointer->hub_vertex == vector2_end->hub_vertex && vector2_end != pointer_L_t_end && vector2_check_pointer->t_e == std::numeric_limits<int>::max())
             {
                 vector2_end++;
             }
@@ -481,98 +547,6 @@ weightTYPE hop_constrained_extract_distance(vector<vector<hop_constrained_two_ho
                 {
                     // cout << "y (" << vector2_begin->hub_vertex << "," << vector2_begin->hop << "," << vector2_begin->distance << "," << vector2_begin->parent_vertex << ") " << endl;
                     if (vector1_begin->hop + vector2_begin->hop <= hop_cst)
-                    {
-                        long long int dis = (long long int)vector1_begin->distance + vector2_begin->distance;
-                        if (distance > dis)
-                        {
-                            distance = dis;
-                        }
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
-
-            vector1_check_pointer = vector1_end;
-            vector2_check_pointer = vector2_end;
-        }
-        else if (vector1_check_pointer->hub_vertex > vector2_check_pointer->hub_vertex)
-        {
-            vector2_check_pointer++;
-        }
-        else
-        {
-            vector1_check_pointer++;
-        }
-    }
-
-    return distance;
-}
-
-weightTYPE hop_constrained_extract_distance(vector<vector<hop_constrained_two_hop_label>> &L, int source, int terminal, int hop_cst, int t_s, int t_e)
-{
-
-    /*return std::numeric_limits<int>::max() is not connected*/
-
-    if (hop_cst < 0)
-    {
-        return std::numeric_limits<int>::max();
-    }
-    if (source == terminal)
-    {
-        return 0;
-    }
-    else if (hop_cst == 0)
-    {
-        return std::numeric_limits<int>::max();
-    }
-
-    int distance = std::numeric_limits<int>::max();
-    auto vector1_check_pointer = L[source].begin();
-    auto vector2_check_pointer = L[terminal].begin();
-    auto pointer_L_s_end = L[source].end(), pointer_L_t_end = L[terminal].end();
-
-    while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end)
-    {
-        while (vector1_check_pointer != pointer_L_s_end && vector1_check_pointer->t_e != std::numeric_limits<int>::max())
-        {
-            vector1_check_pointer++;
-        }
-        if (vector1_check_pointer == pointer_L_s_end)
-        {
-            break;
-        }
-        while (vector2_check_pointer != pointer_L_t_end && vector2_check_pointer->t_e != std::numeric_limits<int>::max())
-        {
-            vector2_check_pointer++;
-        }
-        if (vector2_check_pointer == pointer_L_t_end)
-        {
-            break;
-        }
-        if (vector1_check_pointer->hub_vertex == vector2_check_pointer->hub_vertex)
-        {
-
-            auto vector1_end = vector1_check_pointer;
-            while (vector1_check_pointer->hub_vertex == vector1_end->hub_vertex && vector1_end != pointer_L_s_end)
-            {
-                vector1_end++;
-            }
-            auto vector2_end = vector2_check_pointer;
-            while (vector2_check_pointer->hub_vertex == vector2_end->hub_vertex && vector2_end != pointer_L_t_end)
-            {
-                vector2_end++;
-            }
-
-            for (auto vector1_begin = vector1_check_pointer; vector1_begin != vector1_end; vector1_begin++)
-            {
-                // cout << "x (" << vector1_begin->hub_vertex << "," << vector1_begin->hop << "," << vector1_begin->distance << "," << vector1_begin->parent_vertex << ") " << endl;
-                for (auto vector2_begin = vector2_check_pointer; vector2_begin != vector2_end; vector2_begin++)
-                {
-                    // cout << "y (" << vector2_begin->hub_vertex << "," << vector2_begin->hop << "," << vector2_begin->distance << "," << vector2_begin->parent_vertex << ") " << endl;
-                    if (vector1_begin->hop + vector2_begin->hop <= hop_cst && max(t_s, max(vector1_begin->t_s, vector2_begin->t_s)) <= min(t_e, min(vector1_begin->t_e, vector2_begin->t_e)))
                     {
                         long long int dis = (long long int)vector1_begin->distance + vector2_begin->distance;
                         if (distance > dis)
@@ -633,6 +607,23 @@ pair<weightTYPE, int> hop_constrained_extract_distance_and_hub(vector<vector<hop
         if (vector1_check_pointer->hub_vertex == vector2_check_pointer->hub_vertex)
         {
 
+            while (vector1_check_pointer != pointer_L_s_end && vector1_check_pointer->t_e != std::numeric_limits<int>::max())
+            {
+                vector1_check_pointer++;
+            }
+            if (vector1_check_pointer == pointer_L_s_end)
+            {
+                break;
+            }
+
+            while (vector2_check_pointer != pointer_L_t_end && vector2_check_pointer->t_e != std::numeric_limits<int>::max())
+            {
+                vector2_check_pointer++;
+            }
+            if (vector2_check_pointer == pointer_L_t_end)
+            {
+                break;
+            }
             auto vector1_end = vector1_check_pointer;
             while (vector1_check_pointer->hub_vertex == vector1_end->hub_vertex && vector1_end->t_e == std::numeric_limits<int>::max() && vector1_end != pointer_L_s_end)
             {
@@ -651,101 +642,6 @@ pair<weightTYPE, int> hop_constrained_extract_distance_and_hub(vector<vector<hop
                 {
                     // cout << "y (" << vector2_begin->hub_vertex << "," << vector2_begin->hop << "," << vector2_begin->distance << "," << vector2_begin->parent_vertex << ") " << endl;
                     if (vector1_begin->hop + vector2_begin->hop <= hop_cst)
-                    {
-                        long long int dis = (long long int)vector1_begin->distance + vector2_begin->distance;
-                        if (distance > dis)
-                        {
-                            distance = dis;
-                            common_hub = vector1_check_pointer->hub_vertex;
-                        }
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
-
-            vector1_check_pointer = vector1_end;
-            vector2_check_pointer = vector2_end;
-        }
-        else if (vector1_check_pointer->hub_vertex > vector2_check_pointer->hub_vertex)
-        {
-            vector2_check_pointer++;
-        }
-        else
-        {
-            vector1_check_pointer++;
-        }
-    }
-
-    return {distance, common_hub};
-}
-
-pair<weightTYPE, int> hop_constrained_extract_distance_and_hub(vector<vector<hop_constrained_two_hop_label>> &L, int source, int terminal, int hop_cst, int t_s, int t_e)
-{
-    global_query_times++;
-
-    /*return std::numeric_limits<int>::max() is not connected*/
-
-    if (hop_cst < 0)
-    {
-        return {std::numeric_limits<int>::max(), -1};
-    }
-    if (source == terminal)
-    {
-        return {0, -1};
-    }
-    else if (hop_cst == 0)
-    {
-        return {std::numeric_limits<int>::max(), -1};
-    }
-
-    int distance = std::numeric_limits<int>::max();
-    int common_hub = -1;
-    auto vector1_check_pointer = L[source].begin();
-    auto vector2_check_pointer = L[terminal].begin();
-    auto pointer_L_s_end = L[source].end(), pointer_L_t_end = L[terminal].end();
-
-    while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end)
-    {
-        while (vector1_check_pointer != pointer_L_s_end && vector1_check_pointer->t_e != std::numeric_limits<int>::max())
-        {
-            vector1_check_pointer++;
-        }
-        if (vector1_check_pointer == pointer_L_s_end)
-        {
-            break;
-        }
-        while (vector2_check_pointer != pointer_L_t_end && vector2_check_pointer->t_e != std::numeric_limits<int>::max())
-        {
-            vector2_check_pointer++;
-        }
-        if (vector2_check_pointer == pointer_L_t_end)
-        {
-            break;
-        }
-        if (vector1_check_pointer->hub_vertex == vector2_check_pointer->hub_vertex)
-        {
-
-            auto vector1_end = vector1_check_pointer;
-            while (vector1_check_pointer->hub_vertex == vector1_end->hub_vertex && vector1_end->t_e == std::numeric_limits<int>::max() && vector1_end != pointer_L_s_end)
-            {
-                vector1_end++;
-            }
-            auto vector2_end = vector2_check_pointer;
-            while (vector2_check_pointer->hub_vertex == vector2_end->hub_vertex && vector2_end->t_e == std::numeric_limits<int>::max() && vector2_end != pointer_L_t_end)
-            {
-                vector2_end++;
-            }
-
-            for (auto vector1_begin = vector1_check_pointer; vector1_begin != vector1_end; vector1_begin++)
-            {
-                // cout << "x (" << vector1_begin->hub_vertex << "," << vector1_begin->hop << "," << vector1_begin->distance << "," << vector1_begin->parent_vertex << ") " << endl;
-                for (auto vector2_begin = vector2_check_pointer; vector2_begin != vector2_end; vector2_begin++)
-                {
-                    // cout << "y (" << vector2_begin->hub_vertex << "," << vector2_begin->hop << "," << vector2_begin->distance << "," << vector2_begin->parent_vertex << ") " << endl;
-                    if (vector1_begin->hop + vector2_begin->hop <= hop_cst && max(t_s, max(vector1_begin->t_s, vector2_begin->t_s)) <= min(t_e, min(vector1_begin->t_e, vector2_begin->t_e)))
                     {
                         long long int dis = (long long int)vector1_begin->distance + vector2_begin->distance;
                         if (distance > dis)
