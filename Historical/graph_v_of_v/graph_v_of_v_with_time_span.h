@@ -73,7 +73,7 @@ public:
 	inline weight_type search_shortest_path_in_period_time_naive(int u, int v, int k, int startTime, int endTime);
 
 	inline void print();
-	inline vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int maintain_percent, hop_constrained_case_info &info);
+	inline vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int decreate_time, float change_ratio, hop_constrained_case_info &info);
 
 	inline void txt_save(std::string save_name);
 	inline vector<graph_v_of_v<weight_type>> txt_read(std::string save_name, hop_constrained_case_info &info);
@@ -182,13 +182,8 @@ void graph_v_of_v_with_time_span<weight_type>::print()
 }
 
 template <typename weight_type>
-vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int maintain_percent, hop_constrained_case_info &case_info)
+vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int decreate_time, float change_ratio, hop_constrained_case_info &case_info)
 {
-	if (maintain_percent > 10 || maintain_percent < 0)
-	{
-		cout << "maintain_percent should be between 0 and 10: " << maintain_percent << endl;
-		exit(1);
-	}
 	if (change_num < 0)
 	{
 		cout << "the change_num should be greater than or equal to 0" << endl;
@@ -212,41 +207,38 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 	add_graph_time(instance_graph, 0);
 	vector<graph_v_of_v<weight_type>> res;
 	res.push_back(instance_graph);
-	uniform_int_distribution<> dis(1, 10);
+	uniform_int_distribution<> dis(0, this->v_num);
 	int index = 1;
 	int N = instance_graph.ADJs.size();
 	while (index <= change_num)
 	{
 		vector<pair<int, int>> path;
 		vector<int> weight;
-		for (int i = 0; i < N; i++)
+		int i, j;
+		while (decreate_time > 0)
 		{
-			auto &vertices = instance_graph.ADJs[i];
-			for (auto &edges : vertices)
+			i = dis(boost_random_time_seed);
+			if (instance_graph.ADJs[i].size() == 0)
 			{
-				if (edges.first > i && dis(boost_random_time_seed) > maintain_percent)
-				{
-					auto next_value = weight_dis(boost_random_time_seed);
-					// only edge weight decrease
-					if (edges.second > next_value)
-					{
-						edges.second = next_value;
-						int to_position = sorted_vector_binary_operations_search_position(instance_graph.ADJs[edges.first], i);
-						instance_graph.ADJs[edges.first][to_position].second = edges.second;
-						add_edge(i, edges.first, edges.second, index);
-						add_edge(edges.first, i, edges.second, index);
-						// maintain the label
-						path.push_back({edges.first, i});
-						weight.push_back(next_value);
-						// 5 is batch_size,it should be definable
-						if (path.size() >= 10)
-						{
-							HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
-							vector<pair<int, int>>().swap(path);
-							vector<int>().swap(weight);
-						}
-					}
-				}
+				continue;
+			}
+			uniform_int_distribution<> dis_inner(0, instance_graph.ADJs[i].size() - 1);
+			j = dis_inner(boost_random_time_seed);
+			int next_value = (instance_graph.ADJs[i][j].second) * (1 - change_ratio);
+			if (next_value == instance_graph.ADJs[i][j].second)
+			{
+				continue;
+			}
+			instance_graph.add_edge(i, instance_graph.ADJs[i][j].first, next_value);
+			this->add_edge(i, instance_graph.ADJs[i][j].first, next_value, index);
+			path.push_back({i, instance_graph.ADJs[i][j].first});
+			weight.push_back(next_value);
+			decreate_time--;
+			if (path.size() > case_info.thread_num)
+			{
+				HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
+				vector<pair<int, int>>().swap(path);
+				vector<int>().swap(weight);
 			}
 		}
 		if (path.size() > 0)
@@ -255,6 +247,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 			vector<pair<int, int>>().swap(path);
 			vector<int>().swap(weight);
 		}
+		// case_info.print_L();
 		res.push_back(instance_graph);
 		++index;
 	}
@@ -359,14 +352,6 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 					// maintain the label
 					path.push_back({v1, v2});
 					weight.push_back(ec);
-
-					// 5 is batch_size,it should be definable
-					if (path.size() >= case_info.thread_num * 3)
-					{
-						HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, current_time);
-						vector<pair<int, int>>().swap(path);
-						vector<int>().swap(weight);
-					}
 				}
 			}
 			else if (Parsed_content.size() == 1 && Parsed_content[0] == "")

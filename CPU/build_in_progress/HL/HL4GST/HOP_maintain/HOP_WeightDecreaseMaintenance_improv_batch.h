@@ -4,16 +4,16 @@ using namespace std;
 #include <CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_maintain_hop_constrained_two_hop_labels_generation.h>
 #include <algorithm>
 #include <map>
-
 void WeightDecreaseMaintenance_improv_step1_batch(std::map<pair<int, int>, weightTYPE> &v_map, vector<vector<hop_constrained_two_hop_label>> *L, PPR_type *PPR, std::vector<hop_constrained_affected_label> *CL,
                                                   ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
 {
-    for (auto it : v_map)
+    for (auto v_map_item : v_map)
     {
-        results_dynamic.emplace_back(pool_dynamic.enqueue([t, it, L, PPR, CL]
+        results_dynamic.emplace_back(pool_dynamic.enqueue([t, v_map_item, L, PPR, CL]
                                                           {
-            int v1 = it.first.first, v2 = it.first.second;
-            weightTYPE w_new = it.second;
+                                                            
+            int v1 = v_map_item.first.first, v2 = v_map_item.first.second;
+            weightTYPE w_new = v_map_item.second;
             for (int sl = 0; sl < 2; sl++)
             {
                 if (sl == 1)
@@ -43,13 +43,13 @@ void WeightDecreaseMaintenance_improv_step1_batch(std::map<pair<int, int>, weigh
                                 if (query_result.second != -1 && query_result.second != it.hub_vertex)
                                 {
                                     mtx_5992[v2].lock();
-                                    PPR_insert(*PPR, v2, query_result.second, it.hub_vertex);
+                                    // PPR_insert(*PPR, v2, query_result.second, it.hub_vertex);
                                     mtx_5992[v2].unlock();
                                 }
                                 if (query_result.second != -1 && query_result.second != v2)
                                 {
                                     mtx_5992[it.hub_vertex].lock();
-                                    PPR_insert(*PPR, it.hub_vertex, query_result.second, v2);
+                                    // PPR_insert(*PPR, it.hub_vertex, query_result.second, v2);
                                     mtx_5992[it.hub_vertex].unlock();
                                 }
                             }
@@ -142,15 +142,14 @@ void DIFFUSE_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_constrai
                 tmp.hop = h_v;
                 tmp.disx = du;
                 Q_handle[{u, h_v}] = {pq.push({tmp}), du}; //{node_for_DIFFUSE_v2,dis}
+                // what the meaning of Q_VALUE? mark the data of pq
                 if(h_v <= upper_k)
                     Q_VALUE[u][h_v] = du;
                 
             }
             
-
 			while (!pq.empty())
 			{
-
 				int x = pq.top().index;
 				int xhv = pq.top().hop;
 				weightTYPE dx = pq.top().disx;
@@ -186,16 +185,17 @@ void DIFFUSE_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_constrai
 						if (dist_hop[xnei].first == -1)
 						{
 							
-							Q_handle[{xnei, hop_nei}] = {pq.push(node), d_new};
-                            Q_VALUE[xnei][hop_nei] = d_new;
-                            dist_hop[xnei].first = d_new;
-							dist_hop[xnei].second = hop_nei;
-							dist_hop_changes.push_back(xnei);
-
+							// Q_handle[{xnei, hop_nei}] = {pq.push(node), d_new};
+                            // Q_VALUE[xnei][hop_nei] = d_new;
                             mtx_599[xnei].lock_shared();
-							std::pair<int, int> tmp = hop_constrained_extract_distance_and_hub_2((*L)[xnei], Lv, xhv + 1); 
+							// std::pair<int, int> tmp = hop_constrained_extract_distance_and_hub_2((*L)[xnei], Lv, xhv + 1); 
+							std::pair<int, int> temp_dis = hop_constrained_extract_distance_and_hop(*L,xnei, v, xhv + 1); 
 							mtx_599[xnei].unlock_shared();
-							hubs[xnei] = tmp.second;
+							// hubs[xnei] = tmp.second;
+
+                            dist_hop[xnei].first = temp_dis.first;
+                            dist_hop[xnei].second = temp_dis.second;							
+                            dist_hop_changes.push_back(xnei);
 						}
                         
                         if (d_new < dist_hop[xnei].first)
@@ -245,13 +245,13 @@ void DIFFUSE_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_constrai
                             if (hubs[xnei] != -1 && hubs[xnei] != v)
 							{
 								mtx_5992[xnei].lock();
-								PPR_insert(*PPR, xnei, hubs[xnei], v);
+								// PPR_insert(*PPR, xnei, hubs[xnei], v);
 								mtx_5992[xnei].unlock();
 							}
 							if (hubs[xnei] != -1 && hubs[xnei] != xnei)
 							{
 								mtx_5992[v].lock();
-								PPR_insert(*PPR, v, hubs[xnei], xnei);
+								// PPR_insert(*PPR, v, hubs[xnei], xnei);
 								mtx_5992[v].unlock();
 							}
                         }
@@ -305,7 +305,6 @@ void HOP_WeightDecreaseMaintenance_improv_batch(graph_v_of_v<int> &instance_grap
         }
     }
     std::vector<hop_constrained_affected_label> CL;
-
     WeightDecreaseMaintenance_improv_step1_batch(w_new_map, &mm.L, &mm.PPR, &CL, pool_dynamic, results_dynamic, t);
     DIFFUSE_batch(instance_graph, &mm.L, &mm.PPR, CL, pool_dynamic, results_dynamic, mm.upper_k, t);
 }

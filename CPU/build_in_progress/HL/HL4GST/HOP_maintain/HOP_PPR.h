@@ -6,32 +6,31 @@ typedef std::vector<std::vector<std::pair<int, std::vector<int>>>> PPR_type;
 
 int PPR_binary_operations_insert(std::vector<int> &input_vector, int key)
 {
-
-    int left = 0, right = input_vector.size() - 1;
-
-    while (left <= right) // it will be skept when input_vector.size() == 0
+    try
     {
-        int mid = left + ((right - left) / 2); // mid is between left and right (may be equal);
-        if (input_vector[mid] == key)
+        auto it = std::lower_bound(input_vector.begin(), input_vector.end(), key);
+        if (it != input_vector.end() && *it == key)
         {
-            return mid;
+            return std::distance(input_vector.begin(), it); // Return the index of found element
         }
-        else if (input_vector[mid] > key)
+        else if (it!=input_vector.end())
         {
-            right = mid - 1; // the elements after right are always either empty, or have larger keys than input key
+            // 插入键值
+            auto inserted_it = input_vector.insert(it, key);
+            return std::distance(input_vector.begin(), inserted_it); // Return the index where it was inserted
         }
         else
         {
-            left = mid + 1; // the elements before left are always either empty, or have smaller keys than input key
+            input_vector.push_back(key);
+            return input_vector.size() - 1;
         }
     }
-
-    /*the following code is used when key is not in vector, i.e., left > right, specifically, left = right + 1;
-    the elements before left are always either empty, or have smaller keys than input key;
-    the elements after right are always either empty, or have larger keys than input key;
-    so, the input key should be insert between right and left at this moment*/
-    input_vector.insert(input_vector.begin() + left, key);
-    return left;
+    catch (const std::bad_alloc &e)
+    {
+        std::cerr << "Memory allocation failed: " << e.what() << std::endl;
+        // 这里可以添加更多的错误处理逻辑，例如返回特定的错误码
+        return -1; // 或者根据你的需求返回其他值
+    }
 }
 
 void PPR_insert(PPR_type &PPR, int v1, int v2, int v3)
