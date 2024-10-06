@@ -49,6 +49,20 @@ public:
 
     double label_size_before_canonical_repair, label_size_after_canonical_repair, canonical_repair_remove_label_ratio;
 
+    std::chrono::_V2::system_clock::time_point start_time;
+
+    void begin_timing()
+    {
+        start_time = std::chrono::high_resolution_clock::now();
+    }
+
+    void mark_time(std::string current_step)
+    {
+        auto now = std::chrono::high_resolution_clock::now();
+        double runtime_base_line_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(now - start_time).count() / 1e9;
+        std::cout << current_step << ": " << runtime_base_line_with_span << std::endl;
+    }
+
     long long int compute_label_bit_size()
     {
         long long int size = 0;
@@ -729,7 +743,6 @@ pair<weightTYPE, int> hop_constrained_extract_distance_and_hop(vector<vector<hop
 
     return {distance, hop};
 }
-
 
 weightTYPE hop_constrained_extract_distance_2(vector<hop_constrained_two_hop_label> &L_s, vector<hop_constrained_two_hop_label> &L_t, int hop_cst)
 {

@@ -1,4 +1,6 @@
 #pragma once
+using namespace std;
+#include "CPU/tool_functions/ThreadPool.h"
 #include <CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_maintain_hop_constrained_two_hop_labels_generation.h>
 #include <map>
 #include <algorithm>
@@ -6,12 +8,12 @@
 // #define MAX_VALUE std::numeric_limits<int>::max()
 
 void HOP_maintain_SPREAD1_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_constrained_two_hop_label>> *L,
-								std::vector<hop_constrained_affected_label> &al1, std::vector<hop_constrained_pair_label> *al2, std::map<pair<int, int>, int> &w_old_map, ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic)
+								std::vector<hop_constrained_affected_label> &al1, std::vector<hop_constrained_pair_label> *al2, std::map<pair<int, int>, int> &w_old_map, ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
 {
 
 	for (auto it : al1)
 	{
-		results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, al2, &instance_graph, &w_old_map]
+		results_dynamic.emplace_back(pool_dynamic.enqueue([t, it, L, al2, &instance_graph, &w_old_map]
 														  {
 				queue<hop_constrained_node_for_DIFFUSE> q; //(u,h_v, d)
 				int v = it.second;
@@ -21,7 +23,7 @@ void HOP_maintain_SPREAD1_batch(graph_v_of_v<int> &instance_graph, vector<vector
 					int h_x = q.front().hop;
 					int dx = q.front().disx;
 					q.pop();
-					insert_sorted_hop_constrained_two_hop_label((*L)[x], v, h_x, MAX_VALUE); // this does not change the size of L[x] here, so does not need to lock here
+					insert_sorted_hop_constrained_two_hop_label((*L)[x], v, h_x, MAX_VALUE,t); // this does not change the size of L[x] here, so does not need to lock here
 					mtx_599_1.lock();
 					al2->push_back(hop_constrained_pair_label(x, v, h_x));
 					mtx_599_1.unlock();
@@ -202,7 +204,7 @@ void HOP_maintain_SPREAD2_batch(graph_v_of_v<int> &instance_graph, vector<vector
 }
 
 void HOP_maintain_SPREAD3_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_constrained_two_hop_label>> *L, PPR_type *PPR, std::vector<hop_constrained_affected_label> &al3,
-								ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int upper_k)
+								ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int upper_k, int t)
 {
 	std::map<hop_constrained_pair_label, int> al3_edge_map;
 	for (auto &it : al3)
@@ -243,7 +245,7 @@ void HOP_maintain_SPREAD3_batch(graph_v_of_v<int> &instance_graph, vector<vector
 
 	for (auto &it : al3_map)
 	{
-		results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, &instance_graph, PPR, upper_k]
+		results_dynamic.emplace_back(pool_dynamic.enqueue([t, it, L, &instance_graph, PPR, upper_k]
 														  {
 			mtx_599_1.lock();
 			int current_tid = Qid_599_v2.front();
@@ -322,7 +324,7 @@ void HOP_maintain_SPREAD3_batch(graph_v_of_v<int> &instance_graph, vector<vector
 				int d_old = search_sorted_hop_constrained_two_hop_label((*L)[x], v, xhv);
 				if (dx > 0 && dx < d_old)
 				{
-					insert_sorted_hop_constrained_two_hop_label((*L)[x], v, xhv, dx);
+					insert_sorted_hop_constrained_two_hop_label((*L)[x], v, xhv, dx,t);
 				}
                 
 				mtx_599[x].unlock();
@@ -435,7 +437,8 @@ void HOP_maintain_SPREAD3_batch(graph_v_of_v<int> &instance_graph, vector<vector
 }
 
 void HOP_WeightIncreaseMaintenance_improv_batch(graph_v_of_v<int> &instance_graph, hop_constrained_case_info &mm, vector<pair<int, int>> &v, vector<int> &w_old_vec,
-												ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic) {
+												ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
+{
 
 	global_query_times = 0;
 	label_operation_times = 0;
@@ -489,7 +492,7 @@ void HOP_WeightIncreaseMaintenance_improv_batch(graph_v_of_v<int> &instance_grap
 	}
 	std::vector<std::future<int>>().swap(results_dynamic);
 
-	HOP_maintain_SPREAD1_batch(instance_graph, &mm.L, al1, &al2, w_old_map, pool_dynamic, results_dynamic);
+	HOP_maintain_SPREAD1_batch(instance_graph, &mm.L, al1, &al2, w_old_map, pool_dynamic, results_dynamic, t);
 	HOP_maintain_SPREAD2_batch(instance_graph, &mm.L, &mm.PPR, al2, &al3, pool_dynamic, results_dynamic, mm.upper_k);
-	HOP_maintain_SPREAD3_batch(instance_graph, &mm.L, &mm.PPR, al3, pool_dynamic, results_dynamic, mm.upper_k);
+	HOP_maintain_SPREAD3_batch(instance_graph, &mm.L, &mm.PPR, al3, pool_dynamic, results_dynamic, mm.upper_k, t);
 }

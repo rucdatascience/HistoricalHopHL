@@ -8,6 +8,7 @@
 #include "CPU/graph_v_of_v/graph_v_of_v_generate_random_graph.h"
 #include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_maintain_hop_constrained_two_hop_labels.h"
 #include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_WeightDecreaseMaintenance_improv_batch.h"
+#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_WeightIncreaseMaintenance_improv_batch.h"
 #include "CPU/tool_functions/ThreadPool.h"
 #include <boost/heap/fibonacci_heap.hpp>
 template <typename weight_type> // weight_type may be int, long long int, float, double...
@@ -73,7 +74,7 @@ public:
 	inline weight_type search_shortest_path_in_period_time_naive(int u, int v, int k, int startTime, int endTime);
 
 	inline void print();
-	inline vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int decreate_time, float change_ratio, hop_constrained_case_info &info);
+	inline vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int decreate_time, int increase_time, float change_ratio, hop_constrained_case_info &info);
 
 	inline void txt_save(std::string save_name);
 	inline vector<graph_v_of_v<weight_type>> txt_read(std::string save_name, hop_constrained_case_info &info);
@@ -182,7 +183,7 @@ void graph_v_of_v_with_time_span<weight_type>::print()
 }
 
 template <typename weight_type>
-vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int decreate_time, float change_ratio, hop_constrained_case_info &case_info)
+vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int decreate_time, int increase_time, float change_ratio, hop_constrained_case_info &case_info)
 {
 	if (change_num < 0)
 	{
@@ -198,9 +199,10 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 		is_mock[i] = false;
 	}
 	instance_graph = graph_v_of_v_update_vertexIDs_by_degrees_large_to_small_mock(instance_graph, is_mock);
-
+	std::cout << "====time 0====" << endl;
 	// initialize the label
 	hop_constrained_two_hop_labels_generation(instance_graph, case_info);
+	case_info.mark_time("initialize the 2-hop label");
 	ThreadPool pool_dynamic(case_info.thread_num);
 	std::vector<std::future<int>> results_dynamic;
 
@@ -212,10 +214,13 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 	int N = instance_graph.ADJs.size();
 	while (index <= change_num)
 	{
+		int current_decrease_time = decreate_time;
+		int current_increase_time = increase_time;
+		std::cout << "====time " << std::to_string(index) << "====" << endl;
 		vector<pair<int, int>> path;
 		vector<int> weight;
 		int i, j;
-		while (decreate_time > 0)
+		while (current_decrease_time > 0)
 		{
 			i = dis(boost_random_time_seed);
 			if (instance_graph.ADJs[i].size() == 0)
@@ -225,6 +230,10 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 			uniform_int_distribution<> dis_inner(0, instance_graph.ADJs[i].size() - 1);
 			j = dis_inner(boost_random_time_seed);
 			int next_value = (instance_graph.ADJs[i][j].second) * (1 - change_ratio);
+			if (next_value > instance_graph.ADJs[i][j].second)
+			{
+				cout << "error in decrease" << endl;
+			}
 			if (next_value == instance_graph.ADJs[i][j].second)
 			{
 				continue;
@@ -233,7 +242,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 			this->add_edge(i, instance_graph.ADJs[i][j].first, next_value, index);
 			path.push_back({i, instance_graph.ADJs[i][j].first});
 			weight.push_back(next_value);
-			decreate_time--;
+			current_decrease_time--;
 			if (path.size() > case_info.thread_num)
 			{
 				HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
@@ -244,6 +253,43 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 		if (path.size() > 0)
 		{
 			HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
+			vector<pair<int, int>>().swap(path);
+			vector<int>().swap(weight);
+		}
+
+		while (current_increase_time > 0)
+		{
+			i = dis(boost_random_time_seed);
+			if (instance_graph.ADJs[i].size() == 0)
+			{
+				continue;
+			}
+			uniform_int_distribution<> dis_inner(0, instance_graph.ADJs[i].size() - 1);
+			j = dis_inner(boost_random_time_seed);
+			int next_value = (instance_graph.ADJs[i][j].second) * (1 + change_ratio);
+			if (next_value < instance_graph.ADJs[i][j].second)
+			{
+				cout << "error in increase" << endl;
+			}
+			if (next_value == instance_graph.ADJs[i][j].second)
+			{
+				continue;
+			}
+			instance_graph.add_edge(i, instance_graph.ADJs[i][j].first, next_value);
+			this->add_edge(i, instance_graph.ADJs[i][j].first, next_value, index);
+			path.push_back({i, instance_graph.ADJs[i][j].first});
+			weight.push_back(next_value);
+			current_increase_time--;
+			if (path.size() > case_info.thread_num)
+			{
+				HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
+				vector<pair<int, int>>().swap(path);
+				vector<int>().swap(weight);
+			}
+		}
+		if (path.size() > 0)
+		{
+			HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
 			vector<pair<int, int>>().swap(path);
 			vector<int>().swap(weight);
 		}
@@ -277,7 +323,8 @@ inline void graph_v_of_v_with_time_span<weight_type>::txt_save(std::string save_
 			{
 				if (i < this->ADJs[i][j].first)
 				{
-					for (int k = 0; this->ADJs[i][j].second[k].startTimeLabel <= index; k++)
+					vector<EdgeInfo<weight_type>> list = ADJs[i][j].second;
+					for (int k = 0; k < list.size() && list[k].startTimeLabel <= index; k++)
 					{
 						if (this->ADJs[i][j].second[k].startTimeLabel == index)
 						{
@@ -332,6 +379,7 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 			else if (!Parsed_content[0].compare("time"))
 			{
 				current_time = std::stoi(Parsed_content[1]);
+				std::cout << "====time " << Parsed_content[1] << "====" << endl;
 			}
 			else if (!Parsed_content[0].compare("Edge"))
 			{
@@ -367,6 +415,7 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 					if (current_time == 0)
 					{
 						hop_constrained_two_hop_labels_generation(instance_graph, case_info);
+						case_info.mark_time("initialize the 2-hop label");
 						add_graph_time(instance_graph, 0);
 					}
 					res.push_back(instance_graph);

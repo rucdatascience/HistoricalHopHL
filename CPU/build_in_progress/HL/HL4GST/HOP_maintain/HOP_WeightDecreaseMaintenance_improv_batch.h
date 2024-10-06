@@ -305,6 +305,10 @@ void HOP_WeightDecreaseMaintenance_improv_batch(graph_v_of_v<int> &instance_grap
         }
     }
     std::vector<hop_constrained_affected_label> CL;
+    mm.mark_time("start get the affected label");
     WeightDecreaseMaintenance_improv_step1_batch(w_new_map, &mm.L, &mm.PPR, &CL, pool_dynamic, results_dynamic, t);
+    mm.mark_time("end get the affected label and current CL size is" + std::to_string(CL.size()));
+    mm.mark_time("start diffuse");
     DIFFUSE_batch(instance_graph, &mm.L, &mm.PPR, CL, pool_dynamic, results_dynamic, mm.upper_k, t);
+    mm.mark_time("end diffuse");
 }
