@@ -31,6 +31,10 @@ struct compare_tuple
 {
 	bool operator()(const tuple<int, weight_type, int> &lhs, const tuple<int, weight_type, int> &rhs) const
 	{
+		if (get<1>(lhs) == get<1>(rhs))
+		{
+			return get<2>(lhs) > get<2>(rhs);
+		}
 		return get<1>(lhs) > get<1>(rhs);
 	}
 };
@@ -107,32 +111,28 @@ private:
 template <typename weight_type>
 weight_type graph_v_of_v_with_time_span<weight_type>::search_shortest_path_in_period_time_naive(int u, int v, int k, int startTime, int endTime)
 {
-	double res = __DBL_MAX__;
+	weight_type res = std::numeric_limits<weight_type>::max();
 	int N = this->v_num;
-	std::vector<double> dist(N);
-	std::vector<bool> visited(N);
-	boost::heap::fibonacci_heap<tuple<int, double, int>, boost::heap::compare<compare_tuple<weight_type>>> queue;
+
+	boost::heap::fibonacci_heap<tuple<int, weight_type, int>, boost::heap::compare<compare_tuple<weight_type>>> queue;
 	for (int queryTime = startTime; queryTime <= endTime; queryTime++)
 	{
-		dist.assign(N, __DBL_MAX__);
-		visited.assign(N, false);
+		std::vector<weight_type> dist(N, std::numeric_limits<weight_type>::max());
+		std::vector<int> hop_list(N, std::numeric_limits<int>::max());
 		queue.clear();
 		dist[u] = 0;
+		hop_list[u] = 0;
 		queue.push({u, 0, 0});
 		while (queue.size() > 0)
 		{
 			int hop = get<2>(queue.top());
 			int vertexBase = get<0>(queue.top());
+			weight_type currentDist = std::get<1>(queue.top());
 			queue.pop();
 			if (vertexBase == v)
 			{
-				res = min(res, dist[vertexBase]);
-				break;
+				res = min(res, currentDist);
 			}
-			if (visited[vertexBase])
-				continue;
-			visited[vertexBase] = true;
-
 			if (hop == k)
 			{
 				continue;
@@ -145,19 +145,21 @@ weight_type graph_v_of_v_with_time_span<weight_type>::search_shortest_path_in_pe
 				{
 					if (edge_info_time_span.startTimeLabel <= queryTime && edge_info_time_span.endTimeLabel >= queryTime)
 					{
-						if (dist[vertexBase] + edge_info_time_span.weight < dist[next])
+						weight_type newDist = currentDist + edge_info_time_span.weight;
+						if (newDist < dist[next] || (hop + 1) < hop_list[next])
 						{
-							dist[next] = dist[vertexBase] + edge_info_time_span.weight;
-							queue.push({next, dist[next], hop + 1});
+							dist[next] = newDist;
+							hop_list[next] = hop + 1;
+							queue.push({next, newDist, hop + 1});
 						}
 						break;
 					}
 				}
 			}
 		}
-		cout << "naive" << res << endl;
+		// cout << "naive" << res << endl;
 	}
-	return res == __DBL_MAX__ ? -1 : res;
+	return res;
 }
 
 template <typename weight_type>
@@ -487,41 +489,54 @@ inline void graph_v_of_v_with_time_span<weight_type>::clear()
 template <typename weight_type>
 weight_type dijkstra(graph_v_of_v<weight_type> graph, int u, int v, int k)
 {
-	std::vector<double> dist(graph.size(), __DBL_MAX__);
-	std::vector<bool> visited(graph.size(), false);
-	boost::heap::fibonacci_heap<tuple<int, weight_type, int>, boost::heap::compare<compare_tuple<weight_type>>> queue;
+	std::vector<weight_type> dist(graph.size(), std::numeric_limits<weight_type>::max());
+	std::vector<int> hop_list(graph.size(), std::numeric_limits<int>::max());
+	boost::heap::fibonacci_heap<std::tuple<int, weight_type, int>> queue;
+
 	dist[u] = 0;
-	queue.push({u, 0, 0});
-	while (queue.size() > 0)
+	hop_list[u] = 0;
+	queue.push({u, 0, 0}); // (节点, 距离, 跳数)
+	int res = __INT_MAX__;
+	while (!queue.empty())
 	{
-		tuple<int, weight_type, int> top = queue.top();
-		int hop = get<2>(top);
-		int vertexBase = get<0>(top);
+		auto top = queue.top();
+		int vertexBase = std::get<0>(top);
+		weight_type currentDist = std::get<1>(top);
+		int hop = std::get<2>(top);
 		queue.pop();
+
+		// 如果到达目标节点且跳数不超过 k，返回距离
 		if (vertexBase == v)
 		{
-			return dist[vertexBase];
+			res = min(res, currentDist);
 		}
-		if (visited[vertexBase])
-			continue;
-		visited[vertexBase] = true;
-		if (hop == k)
+
+		// 如果当前跳数达到最大限制，跳过
+		if (hop >= k)
 		{
 			continue;
 		}
+
+		// 遍历邻接边
 		for (const auto &edge : graph[vertexBase])
 		{
 			int next = edge.first;
-			int weight = edge.second;
+			weight_type weight = edge.second;
 
-			if (dist[vertexBase] + weight < dist[next])
+			// 计算新距离
+			weight_type newDist = currentDist + weight;
+
+			// 如果新距离更小，更新距离和跳数
+			if (newDist < dist[next] || (hop + 1 < hop_list[next]))
 			{
-				dist[next] = dist[vertexBase] + weight;
-				queue.push({next, dist[next], hop + 1});
+				dist[next] = newDist;
+				hop_list[next] = hop + 1;
+				queue.push({next, newDist, hop + 1});
 			}
 		}
 	}
-	return -1;
+
+	return res; // 如果没有找到路径
 }
 
 template <typename weight_type>
@@ -532,7 +547,7 @@ int dijkstra_iterator(vector<graph_v_of_v<weight_type>> list, int u, int v, int 
 	for (graph_v_of_v<int> graph : list)
 	{
 		res = min(res, dijkstra(graph, u, v, k));
-		cout << "dijkstra" << res << endl;
+		// cout << "dijkstra" << res << endl;
 	}
 	auto endTime = std::chrono::high_resolution_clock::now();
 	double runtime_n_iterate_dijkstra = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - start_time).count() / 1e9;

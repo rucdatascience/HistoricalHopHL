@@ -159,7 +159,7 @@ void DIFFUSE_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_constrai
 
 				mtx_599[x].lock();
 				weightTYPE d_old = search_sorted_hop_constrained_two_hop_label((*L)[x], v, xhv);
-				if (dx > 0 && dx < d_old)
+				if (dx >= 0 && dx < d_old)
 				{
                     insert_sorted_hop_constrained_two_hop_label((*L)[x], v, xhv, dx,t);
 				}

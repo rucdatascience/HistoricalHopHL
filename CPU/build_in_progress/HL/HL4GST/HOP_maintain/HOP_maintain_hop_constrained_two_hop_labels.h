@@ -43,6 +43,14 @@ public:
     long long int max_bit_size = 1e12;
     double max_run_time_seconds = 1e12;
 
+    /**
+     * query
+     */
+    int source;
+    int target;
+    int t_s;
+    int t_e;
+
     /*labels*/
     vector<vector<hop_constrained_two_hop_label>> L;
     PPR_type PPR;
