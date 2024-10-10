@@ -487,15 +487,15 @@ inline void graph_v_of_v_with_time_span<weight_type>::clear()
 }
 
 template <typename weight_type>
-weight_type dijkstra(graph_v_of_v<weight_type> graph, int u, int v, int k)
+weight_type dijkstra(graph_v_of_v<weight_type> &graph, int u, int v, int k)
 {
 	std::vector<weight_type> dist(graph.size(), std::numeric_limits<weight_type>::max());
 	std::vector<int> hop_list(graph.size(), std::numeric_limits<int>::max());
-	boost::heap::fibonacci_heap<std::tuple<int, weight_type, int>> queue;
+	boost::heap::fibonacci_heap<std::tuple<int, weight_type, int>, boost::heap::compare<compare_tuple<weight_type>>> queue;
 
 	dist[u] = 0;
 	hop_list[u] = 0;
-	queue.push({u, 0, 0}); // (节点, 距离, 跳数)
+	queue.push({u, 0, 0});
 	int res = __INT_MAX__;
 	while (!queue.empty())
 	{
@@ -505,28 +505,22 @@ weight_type dijkstra(graph_v_of_v<weight_type> graph, int u, int v, int k)
 		int hop = std::get<2>(top);
 		queue.pop();
 
-		// 如果到达目标节点且跳数不超过 k，返回距离
 		if (vertexBase == v)
 		{
 			res = min(res, currentDist);
 		}
-
-		// 如果当前跳数达到最大限制，跳过
 		if (hop >= k)
 		{
 			continue;
 		}
 
-		// 遍历邻接边
 		for (const auto &edge : graph[vertexBase])
 		{
 			int next = edge.first;
 			weight_type weight = edge.second;
 
-			// 计算新距离
 			weight_type newDist = currentDist + weight;
 
-			// 如果新距离更小，更新距离和跳数
 			if (newDist < dist[next] || (hop + 1 < hop_list[next]))
 			{
 				dist[next] = newDist;
@@ -536,7 +530,7 @@ weight_type dijkstra(graph_v_of_v<weight_type> graph, int u, int v, int k)
 		}
 	}
 
-	return res; // 如果没有找到路径
+	return res;
 }
 
 template <typename weight_type>
