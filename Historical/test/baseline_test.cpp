@@ -6,7 +6,7 @@ using namespace std;
 
 int testBaseLineAndBaseline2()
 {
-    int iterator = 100;
+    int iterator = 10;
     int index = 1;
     while (index < iterator)
     {
@@ -15,7 +15,7 @@ int testBaseLineAndBaseline2()
         {
             // query param
             int source = 999, target = 1999;
-            int queryStartTime = 1, queryEndTime = 9;
+            int queryStartTime = 6, queryEndTime = 9;
             int k = 10;
             // generate a random graph
             // int v_num = 10, e_num = 20;
@@ -25,7 +25,7 @@ int testBaseLineAndBaseline2()
             // generate a larger random graph
             int v_num = 5000, e_num = 20000;
             int upper = 20, lower = 1;
-            int change_num = 10, decrease_time = 30, increase_time = 0;
+            int change_num = 10, decrease_time = 0, increase_time = 10;
             float change_ratio = 0.3;
 
             // initialize the 2-hop label with time span

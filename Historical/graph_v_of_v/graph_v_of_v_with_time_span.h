@@ -224,6 +224,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 		int i, j;
 		while (current_decrease_time > 0)
 		{
+			current_decrease_time--;
 			i = dis(boost_random_time_seed);
 			if (instance_graph.ADJs[i].size() == 0)
 			{
@@ -236,7 +237,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 			{
 				cout << "error in decrease" << endl;
 			}
-			if (next_value == instance_graph.ADJs[i][j].second)
+			if (next_value == instance_graph.ADJs[i][j].second || next_value < 0)
 			{
 				continue;
 			}
@@ -244,7 +245,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 			this->add_edge(i, instance_graph.ADJs[i][j].first, next_value, index);
 			path.push_back({i, instance_graph.ADJs[i][j].first});
 			weight.push_back(next_value);
-			current_decrease_time--;
+			
 			if (path.size() > case_info.thread_num)
 			{
 				HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
@@ -261,6 +262,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 
 		while (current_increase_time > 0)
 		{
+			current_increase_time--;
 			i = dis(boost_random_time_seed);
 			if (instance_graph.ADJs[i].size() == 0)
 			{
@@ -281,7 +283,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 			this->add_edge(i, instance_graph.ADJs[i][j].first, next_value, index);
 			path.push_back({i, instance_graph.ADJs[i][j].first});
 			weight.push_back(next_value);
-			current_increase_time--;
+			
 			if (path.size() > case_info.thread_num)
 			{
 				HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);

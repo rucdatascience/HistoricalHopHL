@@ -322,7 +322,7 @@ void HOP_maintain_SPREAD3_batch(graph_v_of_v<int> &instance_graph, vector<vector
 
 				mtx_599[x].lock();
 				int d_old = search_sorted_hop_constrained_two_hop_label((*L)[x], v, xhv);
-				if (dx > 0 && dx < d_old)
+				if (dx >= 0 && dx < d_old)
 				{
 					insert_sorted_hop_constrained_two_hop_label((*L)[x], v, xhv, dx,t);
 				}
@@ -491,8 +491,9 @@ void HOP_WeightIncreaseMaintenance_improv_batch(graph_v_of_v<int> &instance_grap
 		result.get();
 	}
 	std::vector<std::future<int>>().swap(results_dynamic);
-
+    mm.mark_time("start increase");
 	HOP_maintain_SPREAD1_batch(instance_graph, &mm.L, al1, &al2, w_old_map, pool_dynamic, results_dynamic, t);
 	HOP_maintain_SPREAD2_batch(instance_graph, &mm.L, &mm.PPR, al2, &al3, pool_dynamic, results_dynamic, mm.upper_k);
 	HOP_maintain_SPREAD3_batch(instance_graph, &mm.L, &mm.PPR, al3, pool_dynamic, results_dynamic, mm.upper_k, t);
+	mm.mark_time("end increase");
 }
