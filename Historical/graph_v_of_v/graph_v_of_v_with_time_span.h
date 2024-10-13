@@ -359,9 +359,10 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 	ThreadPool pool_dynamic(case_info.thread_num);
 	std::vector<std::future<int>> results_dynamic;
 	vector<pair<int, int>> path_decrease;
-	vector<int> weight_decrease;
+	vector<weight_type> weight_decrease;
 	vector<pair<int, int>> path_increase;
-	vector<int> weight_increase;
+	vector<weight_type> weight_increase;
+	vector<weight_type> old_weight_increase;
 
 	std::ifstream myfile(save_name); // open the file
 	if (myfile.is_open())			 // if the file is opened successfully
@@ -409,10 +410,11 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 						path_decrease.push_back({v1, v2});
 						weight_decrease.push_back(ec);
 					}
-					else if (old_ec > ec)
+					else if (old_ec < ec)
 					{
 						path_increase.push_back({v1, v2});
 						weight_increase.push_back(ec);
+						old_weight_increase.push_back(old_ec);
 					}
 					if (path_decrease.size() >= case_info.thread_num)
 					{
@@ -424,7 +426,7 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 					if (path_increase.size() >= case_info.thread_num)
 					{
 						this->process(instance_graph, path_increase, weight_increase, current_time);
-						HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path_increase, weight_increase, pool_dynamic, results_dynamic, current_time);
+						HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path_increase, old_weight_increase, pool_dynamic, results_dynamic, current_time);
 						vector<pair<int, int>>().swap(path_increase);
 						vector<int>().swap(weight_increase);
 					}
@@ -442,7 +444,7 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 				if (path_increase.size() > 0)
 				{
 					this->process(instance_graph, path_increase, weight_increase, current_time);
-					HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path_increase, weight_increase, pool_dynamic, results_dynamic, current_time);
+					HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path_increase, old_weight_increase, pool_dynamic, results_dynamic, current_time);
 					vector<pair<int, int>>().swap(path_increase);
 					vector<int>().swap(weight_increase);
 				}
@@ -485,13 +487,8 @@ void graph_v_of_v_with_time_span<weight_type>::add_edge(int e1, int e2, weight_t
 		int index_e2 = sorted_vector_binary_operations_search_position<vector<EdgeInfo<weight_type>>>(this->ADJs[e2], e1);
 		if (this->ADJs[e1][index_e1].second.back().weight != ec)
 		{
-			if(this->ADJs[e1][index_e1].second.back().startTimeLabel == time){
-				this->ADJs[e1][index_e1].second.back().endTimeLabel = time;
-				this->ADJs[e2][index_e2].second.back().endTimeLabel = time;
-			}else{
-				this->ADJs[e1][index_e1].second.back().endTimeLabel = time - 1;
-				this->ADJs[e2][index_e2].second.back().endTimeLabel = time - 1;
-			}
+			this->ADJs[e1][index_e1].second.back().endTimeLabel = time - 1;
+			this->ADJs[e2][index_e2].second.back().endTimeLabel = time - 1;
 			this->ADJs[e1][index_e1].second.push_back(EdgeInfo(e2, ec, time));
 			this->ADJs[e2][index_e2].second.push_back(EdgeInfo(e1, ec, time));
 		}

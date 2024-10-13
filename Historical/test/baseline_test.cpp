@@ -14,8 +14,8 @@ int testBaseLineAndBaseline2()
         try
         {
             // query param
-            int source = 2, target = 3;
-            int queryStartTime = 6, queryEndTime = 9;
+            int source = 0, target = 1;
+            int queryStartTime = 0, queryEndTime = 1;
             int k = 10;
             // generate a random graph
             // int v_num = 10, e_num = 20;
@@ -43,7 +43,7 @@ int testBaseLineAndBaseline2()
             mm.t_s = queryStartTime;
             mm.t_e = queryEndTime;
 
-            bool use_save_read = false;
+            bool use_save_read = true;
             bool use_2_hop_label = true;
             graph_v_of_v_with_time_span<int> graph_with_time_span;
             vector<graph_v_of_v<int>> graphs;

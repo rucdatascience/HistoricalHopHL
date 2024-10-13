@@ -263,7 +263,7 @@ void insert_sorted_hop_constrained_two_hop_label(std::vector<hop_constrained_two
                 {
                     // 找到匹配的标签，进行 update(首先生成旧标签)
                     hop_constrained_two_hop_label old_label = input_vector[mid];
-                    old_label.t_e = t; // 将旧标签的 t_e 更新为 t
+                    old_label.t_e = t-1; // 将旧标签的 t_e 更新为 t
 
                     // 更新当前标签的 distance 和 t_s
                     input_vector[mid].distance = new_distance;
