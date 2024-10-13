@@ -43,13 +43,13 @@ void WeightDecreaseMaintenance_improv_step1_batch(std::map<pair<int, int>, weigh
                                 if (query_result.second != -1 && query_result.second != it.hub_vertex)
                                 {
                                     mtx_5992[v2].lock();
-                                    // PPR_insert(*PPR, v2, query_result.second, it.hub_vertex);
+                                    PPR_insert(*PPR, v2, query_result.second, it.hub_vertex);
                                     mtx_5992[v2].unlock();
                                 }
                                 if (query_result.second != -1 && query_result.second != v2)
                                 {
                                     mtx_5992[it.hub_vertex].lock();
-                                    // PPR_insert(*PPR, it.hub_vertex, query_result.second, v2);
+                                    PPR_insert(*PPR, it.hub_vertex, query_result.second, v2);
                                     mtx_5992[it.hub_vertex].unlock();
                                 }
                             }
@@ -245,13 +245,13 @@ void DIFFUSE_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_constrai
                             if (hubs[xnei] != -1 && hubs[xnei] != v)
 							{
 								mtx_5992[xnei].lock();
-								// PPR_insert(*PPR, xnei, hubs[xnei], v);
+								PPR_insert(*PPR, xnei, hubs[xnei], v);
 								mtx_5992[xnei].unlock();
 							}
 							if (hubs[xnei] != -1 && hubs[xnei] != xnei)
 							{
 								mtx_5992[v].lock();
-								// PPR_insert(*PPR, v, hubs[xnei], xnei);
+								PPR_insert(*PPR, v, hubs[xnei], xnei);
 								mtx_5992[v].unlock();
 							}
                         }

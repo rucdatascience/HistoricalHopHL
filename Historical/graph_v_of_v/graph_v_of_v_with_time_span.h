@@ -98,6 +98,8 @@ private:
 	inline void add_graph_time(graph_v_of_v<weight_type>, int);
 
 	inline void clear();
+
+	inline void process(graph_v_of_v<weight_type> &instance_graph, vector<pair<int, int>> &path, vector<int> &weight, int t);
 };
 
 /*class member functions*/
@@ -185,7 +187,7 @@ void graph_v_of_v_with_time_span<weight_type>::print()
 }
 
 template <typename weight_type>
-vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int decreate_time, int increase_time, float change_ratio, hop_constrained_case_info &case_info)
+vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int decrease_time, int increase_time, float change_ratio, hop_constrained_case_info &case_info)
 {
 	if (change_num < 0)
 	{
@@ -216,7 +218,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 	int N = instance_graph.ADJs.size();
 	while (index <= change_num)
 	{
-		int current_decrease_time = decreate_time;
+		int current_decrease_time = decrease_time;
 		int current_increase_time = increase_time;
 		std::cout << "====time " << std::to_string(index) << "====" << endl;
 		vector<pair<int, int>> path;
@@ -245,7 +247,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 			this->add_edge(i, instance_graph.ADJs[i][j].first, next_value, index);
 			path.push_back({i, instance_graph.ADJs[i][j].first});
 			weight.push_back(next_value);
-			
+
 			if (path.size() > case_info.thread_num)
 			{
 				HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
@@ -281,9 +283,10 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 			}
 			instance_graph.add_edge(i, instance_graph.ADJs[i][j].first, next_value);
 			this->add_edge(i, instance_graph.ADJs[i][j].first, next_value, index);
+			cout << i << "->" << instance_graph.ADJs[i][j].first << ":" << next_value << endl;
 			path.push_back({i, instance_graph.ADJs[i][j].first});
 			weight.push_back(next_value);
-			
+            
 			if (path.size() > case_info.thread_num)
 			{
 				HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
@@ -355,8 +358,10 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 	graph_v_of_v<weight_type> instance_graph;
 	ThreadPool pool_dynamic(case_info.thread_num);
 	std::vector<std::future<int>> results_dynamic;
-	vector<pair<int, int>> path;
-	vector<int> weight;
+	vector<pair<int, int>> path_decrease;
+	vector<int> weight_decrease;
+	vector<pair<int, int>> path_increase;
+	vector<int> weight_increase;
 
 	std::ifstream myfile(save_name); // open the file
 	if (myfile.is_open())			 // if the file is opened successfully
@@ -397,22 +402,49 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 				}
 				else
 				{
-					instance_graph.add_edge(v1, v2, ec);
-					add_edge(v1, v2, ec, current_time);
-					add_edge(v2, v1, ec, current_time);
-					// TODO current modification operations are only decrease
 					// maintain the label
-					path.push_back({v1, v2});
-					weight.push_back(ec);
+					int old_ec = instance_graph.edge_weight(v1, v2);
+					if (old_ec > ec)
+					{
+						path_decrease.push_back({v1, v2});
+						weight_decrease.push_back(ec);
+					}
+					else if (old_ec > ec)
+					{
+						path_increase.push_back({v1, v2});
+						weight_increase.push_back(ec);
+					}
+					if (path_decrease.size() >= case_info.thread_num)
+					{
+						this->process(instance_graph, path_decrease, weight_decrease, current_time);
+						HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path_decrease, weight_decrease, pool_dynamic, results_dynamic, current_time);
+						vector<pair<int, int>>().swap(path_decrease);
+						vector<int>().swap(weight_decrease);
+					}
+					if (path_increase.size() >= case_info.thread_num)
+					{
+						this->process(instance_graph, path_increase, weight_increase, current_time);
+						HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path_increase, weight_increase, pool_dynamic, results_dynamic, current_time);
+						vector<pair<int, int>>().swap(path_increase);
+						vector<int>().swap(weight_increase);
+					}
 				}
 			}
 			else if (Parsed_content.size() == 1 && Parsed_content[0] == "")
 			{
-				if (path.size() > 0)
+				if (path_decrease.size() > 0)
 				{
-					HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, current_time);
-					vector<pair<int, int>>().swap(path);
-					vector<int>().swap(weight);
+					this->process(instance_graph, path_decrease, weight_decrease, current_time);
+					HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path_decrease, weight_decrease, pool_dynamic, results_dynamic, current_time);
+					vector<pair<int, int>>().swap(path_decrease);
+					vector<int>().swap(weight_decrease);
+				}
+				if (path_increase.size() > 0)
+				{
+					this->process(instance_graph, path_increase, weight_increase, current_time);
+					HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path_increase, weight_increase, pool_dynamic, results_dynamic, current_time);
+					vector<pair<int, int>>().swap(path_increase);
+					vector<int>().swap(weight_increase);
 				}
 				if (current_time >= 0)
 				{
@@ -453,8 +485,13 @@ void graph_v_of_v_with_time_span<weight_type>::add_edge(int e1, int e2, weight_t
 		int index_e2 = sorted_vector_binary_operations_search_position<vector<EdgeInfo<weight_type>>>(this->ADJs[e2], e1);
 		if (this->ADJs[e1][index_e1].second.back().weight != ec)
 		{
-			this->ADJs[e1][index_e1].second.back().endTimeLabel = time - 1;
-			this->ADJs[e2][index_e2].second.back().endTimeLabel = time - 1;
+			if(this->ADJs[e1][index_e1].second.back().startTimeLabel == time){
+				this->ADJs[e1][index_e1].second.back().endTimeLabel = time;
+				this->ADJs[e2][index_e2].second.back().endTimeLabel = time;
+			}else{
+				this->ADJs[e1][index_e1].second.back().endTimeLabel = time - 1;
+				this->ADJs[e2][index_e2].second.back().endTimeLabel = time - 1;
+			}
 			this->ADJs[e1][index_e1].second.push_back(EdgeInfo(e2, ec, time));
 			this->ADJs[e2][index_e2].second.push_back(EdgeInfo(e1, ec, time));
 		}
@@ -486,6 +523,16 @@ inline void graph_v_of_v_with_time_span<weight_type>::clear()
 	this->e_num = 0;
 	this->v_num = 0;
 	this->time_max = 0;
+}
+
+template <typename weight_type>
+inline void graph_v_of_v_with_time_span<weight_type>::process(graph_v_of_v<weight_type> &instance_graph, vector<pair<int, int>> &path, vector<int> &weight, int t)
+{
+	for (int index = 0; index < path.size(); index++)
+	{
+		add_edge(path[index].first, path[index].second, weight[index], t);
+		instance_graph.add_edge(path[index].first, path[index].second, weight[index]);
+	}
 }
 
 template <typename weight_type>

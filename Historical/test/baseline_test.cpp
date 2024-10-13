@@ -14,7 +14,7 @@ int testBaseLineAndBaseline2()
         try
         {
             // query param
-            int source = 999, target = 1999;
+            int source = 2, target = 3;
             int queryStartTime = 6, queryEndTime = 9;
             int k = 10;
             // generate a random graph
@@ -23,9 +23,9 @@ int testBaseLineAndBaseline2()
             // int change_num = 2, decrease_time = 0, increase_time = 5;
             // float change_ratio = 0.3;
             // generate a larger random graph
-            int v_num = 5000, e_num = 20000;
+            int v_num = 5, e_num = 10;
             int upper = 20, lower = 1;
-            int change_num = 10, decrease_time = 0, increase_time = 10;
+            int change_num = 10, decrease_time = 0, increase_time = 15;
             float change_ratio = 0.3;
 
             // initialize the 2-hop label with time span
@@ -51,7 +51,7 @@ int testBaseLineAndBaseline2()
             if (use_save_read)
             {
                 graph_with_time_span = graph_v_of_v_with_time_span<int>();
-                graphs = graph_with_time_span.txt_read("time-graph-10000-100.txt", mm);
+                graphs = graph_with_time_span.txt_read("time-graph.txt", mm);
                 // graphs = graph_with_time_span.txt_read("time-graph-2024-10-09-1729.txt", mm);
                 if (graph_with_time_span.size() < source || graph_with_time_span.size() < target)
                 {
