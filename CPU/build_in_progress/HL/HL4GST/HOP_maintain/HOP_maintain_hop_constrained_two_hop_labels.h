@@ -437,6 +437,44 @@ pair<weightTYPE, int> get_shortest_distance_hop_two_hop_label(std::vector<hop_co
     return {mindis, hop_val};
 }
 
+pair<weightTYPE, int> get_shortest_distance_hop_two_hop_label2(std::vector<hop_constrained_two_hop_label> &input_vector, int key)
+{
+    label_operation_times++;
+    int idx = 0, right = input_vector.size() - 1;
+    weightTYPE mindis = std::numeric_limits<int>::max();
+    int hop_val = 0;
+
+    while (idx <= right)
+    {
+        // Step 1: 只考虑 t_e 为无穷大的标签
+        if (input_vector[idx].t_e != std::numeric_limits<int>::max())
+        {
+            // 如果 t_e 不是无穷大，已经不需要继续查找了，因为 t_e 是降序的
+            break;
+        }
+
+        // Step 2: 匹配 hub_vertex
+        if (input_vector[idx].hub_vertex > key)
+        {
+            // 如果 hub_vertex 大于 key，后面的 hub_vertex 都不会匹配，提前结束
+            break;
+        }
+        if (input_vector[idx].hub_vertex == key)
+        {
+            // Step 3: 匹配 hop，寻找最短的 distance
+            if (input_vector[idx].distance < mindis)
+            {
+                mindis = input_vector[idx].distance;
+                hop_val = input_vector[idx].hop;
+            }
+        }
+        idx++;
+    }
+
+    return {mindis, hop_val}; // 返回最短的 distance 和对应的 hop
+}
+
+
 class hop_constrained_affected_label
 {
 public:

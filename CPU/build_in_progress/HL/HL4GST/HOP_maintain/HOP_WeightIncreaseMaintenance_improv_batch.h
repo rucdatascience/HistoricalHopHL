@@ -84,7 +84,7 @@ void HOP_maintain_SPREAD2_batch(graph_v_of_v<int> &instance_graph, vector<vector
 						int hop_vn = 0;
 						for (auto nei : instance_graph[t]) {
                             //mtx_599[nei.first].lock();
-							pair<int, int> dis_hop = get_shortest_distance_hop_two_hop_label((*L)[nei.first], v);
+							pair<int, int> dis_hop = get_shortest_distance_hop_two_hop_label2((*L)[nei.first], v);
 							//mtx_599[nei.first].unlock();
                             if (d1 > dis_hop.first + (long long int)nei.second)
 							{
@@ -111,7 +111,7 @@ void HOP_maintain_SPREAD2_batch(graph_v_of_v<int> &instance_graph, vector<vector
 								continue;
 							//mtx_599[t].lock_shared();
 							//auto query_result = graph_hash_of_mixed_weighted_two_hop_v2_extract_distance_no_reduc2(*L, t.first, v, hop_i);
-							auto query_result = hop_constrained_extract_distance_and_hub_2((*L)[t], Lv, hop_i);
+							auto query_result = hop_constrained_extract_distance_and_hub(*L, t, v, hop_i);
 							//mtx_599[t].unlock_shared();
 
 							if (query_result.first > di) { // only add new label when it's absolutely necessary
@@ -141,7 +141,7 @@ void HOP_maintain_SPREAD2_batch(graph_v_of_v<int> &instance_graph, vector<vector
 						for (auto nei : instance_graph[v]) {
 							//d1 = min(d1, search_sorted_two_hop_label((*L)[nei.first], t_first, t.second) + (int)nei.second);
 							//mtx_599[nei.first].lock();
-							pair<int, int> dis_hop = get_shortest_distance_hop_two_hop_label((*L)[nei.first], t);
+							pair<int, int> dis_hop = get_shortest_distance_hop_two_hop_label2((*L)[nei.first], t);
 							//mtx_599[nei.first].unlock();
 							if (d1 > dis_hop.first + (long long int)nei.second)
 							{
@@ -169,7 +169,7 @@ void HOP_maintain_SPREAD2_batch(graph_v_of_v<int> &instance_graph, vector<vector
 
 							//mtx_599[t].lock_shared();
 							//auto query_result = graph_hash_of_mixed_weighted_two_hop_v2_extract_distance_no_reduc2(*L, v, t_first, hop_i);
-							auto query_result = hop_constrained_extract_distance_and_hub_2(Lv, (*L)[t], hop_i);
+							auto query_result = hop_constrained_extract_distance_and_hub(*L,v, t, hop_i);
 							//mtx_599[t].unlock_shared();
 
 							if (query_result.first > di) {
@@ -274,7 +274,7 @@ void HOP_maintain_SPREAD3_batch(graph_v_of_v<int> &instance_graph, vector<vector
 				int du = it.distance;
 
 				mtx_599[u].lock_shared();
-				auto query_result = hop_constrained_extract_distance_and_hub_2((*L)[u], Lv, h_v);
+				auto query_result = hop_constrained_extract_distance_and_hub(*L,u,v, h_v);
 				mtx_599[u].unlock_shared();
 
 				bool flag = false;
@@ -355,7 +355,7 @@ void HOP_maintain_SPREAD3_batch(graph_v_of_v<int> &instance_graph, vector<vector
 							dist_hop_changes.push_back(xnei);
 
                             mtx_599[xnei].lock_shared();
-							std::pair<int, int> tmp = hop_constrained_extract_distance_and_hub_2((*L)[xnei], Lv, xhv + 1); 
+							std::pair<int, int> tmp = hop_constrained_extract_distance_and_hub(*L,xnei,v, xhv + 1); 
 							mtx_599[xnei].unlock_shared();
 							hubs[xnei] = tmp.second;
 						}
