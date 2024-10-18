@@ -6,7 +6,7 @@ using namespace std;
 
 int testBaseLineAndBaseline2()
 {
-    int iterator = 10;
+    int iterator = 2;
     int index = 1;
     while (index < iterator)
     {
@@ -14,8 +14,8 @@ int testBaseLineAndBaseline2()
         try
         {
             // query param
-            int source = 0, target = 1;
-            int queryStartTime = 1, queryEndTime = 1;
+            int source = 0, target = 4;
+            int queryStartTime = 8, queryEndTime = 10;
             int k = 10;
             // generate a random graph
             // int v_num = 10, e_num = 20;
@@ -25,7 +25,7 @@ int testBaseLineAndBaseline2()
             // generate a larger random graph
             int v_num = 5, e_num = 10;
             int upper = 20, lower = 1;
-            int change_num = 10, decrease_time = 0, increase_time = 15;
+            int change_num = 10, decrease_time = 0, increase_time = 10;
             float change_ratio = 0.3;
 
             // initialize the 2-hop label with time span
@@ -93,7 +93,9 @@ int testBaseLineAndBaseline2()
             if (use_2_hop_label)
             {
                 auto start_time_2_hop_label = std::chrono::high_resolution_clock::now();
-                // mm.print_L();
+                mm.print_L();
+                // mm.print_L_vk(source);
+                // mm.print_L_vk(target);
                 int res = mm.query(source, target, queryStartTime, queryEndTime, k);
                 auto end_time_2_hop_label = std::chrono::high_resolution_clock::now();
                 double runtime_2_hop_label_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_2_hop_label - start_time_2_hop_label).count() / 1e9;

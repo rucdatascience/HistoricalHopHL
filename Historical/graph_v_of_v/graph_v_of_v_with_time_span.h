@@ -429,6 +429,7 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 						HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path_increase, old_weight_increase, pool_dynamic, results_dynamic, current_time);
 						vector<pair<int, int>>().swap(path_increase);
 						vector<int>().swap(weight_increase);
+						vector<int>().swap(old_weight_increase);
 					}
 				}
 			}
@@ -447,6 +448,7 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 					HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path_increase, old_weight_increase, pool_dynamic, results_dynamic, current_time);
 					vector<pair<int, int>>().swap(path_increase);
 					vector<int>().swap(weight_increase);
+					vector<int>().swap(old_weight_increase);
 				}
 				if (current_time >= 0)
 				{

@@ -23,7 +23,9 @@ void HOP_maintain_SPREAD1_batch(graph_v_of_v<int> &instance_graph, vector<vector
 					int h_x = q.front().hop;
 					int dx = q.front().disx;
 					q.pop();
+                    mtx_599[x].lock();
 					insert_sorted_hop_constrained_two_hop_label((*L)[x], v, h_x, MAX_VALUE,t); // this does not change the size of L[x] here, so does not need to lock here
+                    mtx_599[x].unlock();
 					mtx_599_1.lock();
 					al2->push_back(hop_constrained_pair_label(x, v, h_x));
 					mtx_599_1.unlock();
@@ -348,8 +350,8 @@ void HOP_maintain_SPREAD3_batch(graph_v_of_v<int> &instance_graph, vector<vector
 
 						if (dist_hop[xnei].first == -1)
 						{
-							Q_handle[{xnei, hop_nei}] = {pq.push(node), d_new};
-                            Q_VALUE[xnei][hop_nei] = d_new;
+							//Q_handle[{xnei, hop_nei}] = {pq.push(node), d_new};
+                            //Q_VALUE[xnei][hop_nei] = d_new;
                             dist_hop[xnei].first = d_new;
 							dist_hop[xnei].second = hop_nei;
 							dist_hop_changes.push_back(xnei);
@@ -357,7 +359,7 @@ void HOP_maintain_SPREAD3_batch(graph_v_of_v<int> &instance_graph, vector<vector
                             mtx_599[xnei].lock_shared();
 							std::pair<int, int> tmp = hop_constrained_extract_distance_and_hub(*L,xnei,v, xhv + 1); 
 							mtx_599[xnei].unlock_shared();
-							hubs[xnei] = tmp.second;
+							//hubs[xnei] = tmp.second;
 						}
 						if (d_new < dist_hop[xnei].first)
 						{

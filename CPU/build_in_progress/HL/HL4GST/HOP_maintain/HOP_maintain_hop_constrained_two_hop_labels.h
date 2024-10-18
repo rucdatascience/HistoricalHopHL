@@ -187,16 +187,18 @@ public:
 
         for (auto vector1_begin = vector1_check_pointer; vector1_begin != pointer_L_s_end; vector1_begin++)
         {
-            // cout << "x (" << vector1_begin->hub_vertex << "," << vector1_begin->hop << "," << vector1_begin->distance << "," << vector1_begin->parent_vertex << ") " << endl;
+             //cout << "x (" << vector1_begin->hub_vertex << "," << vector1_begin->hop << "," << vector1_begin->distance << "," << vector1_begin->parent_vertex << ") " << endl;
             for (auto vector2_begin = vector2_check_pointer; vector2_begin != pointer_L_t_end; vector2_begin++)
             {
-                // cout << "y (" << vector2_begin->hub_vertex << "," << vector2_begin->hop << "," << vector2_begin->distance << "," << vector2_begin->parent_vertex << ") " << endl;
+                 //cout << "y (" << vector2_begin->hub_vertex << "," << vector2_begin->hop << "," << vector2_begin->distance << "," << vector2_begin->parent_vertex << ") " << endl;
                 if (vector1_begin->hub_vertex == vector2_begin->hub_vertex && vector1_begin->hop + vector2_begin->hop <= hop_cst && max(vector1_begin->t_s, max(vector2_begin->t_s, t_s)) <= min(vector1_begin->t_e, min(vector2_begin->t_e, t_e)))
                 {
                     long long int dis = (long long int)vector1_begin->distance + vector2_begin->distance;
                     if (distance > dis)
                     {
                         distance = dis;
+                        // cout << "x (" << vector1_begin->hub_vertex << "," << vector1_begin->hop << "," << vector1_begin->distance <<  ") " << endl;
+                        // cout << "y (" << vector2_begin->hub_vertex << "," << vector2_begin->hop << "," << vector2_begin->distance <<  ") " << endl;
                     }
                 }
             }
