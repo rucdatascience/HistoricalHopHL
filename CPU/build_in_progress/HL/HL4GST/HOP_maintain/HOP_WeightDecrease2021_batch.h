@@ -1,17 +1,19 @@
 #pragma once
-
+using namespace std;
+#include "CPU/tool_functions/ThreadPool.h"
 #include <CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_maintain_hop_constrained_two_hop_labels_generation.h>
 #include <algorithm>
 #include <map>
 
 void ProDecreasep_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_constrained_two_hop_label>> *L, PPR_type *PPR,
                         std::vector<hop_constrained_affected_label> &CL_curr, std::vector<hop_constrained_affected_label> *CL_next,
-                        ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int upper_k)
+                        ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int upper_k, int t)
 {
 
     for (auto it : CL_curr)
     {
-        results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, PPR, CL_next, &instance_graph, upper_k]{
+        results_dynamic.emplace_back(pool_dynamic.enqueue([t, it, L, PPR, CL_next, &instance_graph, upper_k]
+                                                          {
 
             if (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - begin_time).count() > max_run_time_nanosec) {
                 throw reach_limit_time_string;
@@ -32,11 +34,11 @@ void ProDecreasep_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_con
                 long long dnew = it.dis + nei.second;
 				if (u < vnei) {
 					mtx_599[vnei].lock();
-					auto query_result = hop_constrained_extract_distance_and_hub_2((*L)[vnei], Lu, hop_u + 1); // query_result is {distance, common hub}
+					auto query_result = hop_constrained_extract_distance_and_hub((*L),vnei, u, hop_u + 1); // query_result is {distance, common hub}
                     mtx_599[vnei].unlock();
 					if ((long long)query_result.first > dnew) {
 						mtx_599[vnei].lock();
-						insert_sorted_hop_constrained_two_hop_label((*L)[vnei], u, hop_u + 1, dnew);
+						insert_sorted_hop_constrained_two_hop_label((*L)[vnei], u, hop_u + 1, dnew, t);
 						mtx_599[vnei].unlock();
 						mtx_599_1.lock();
 						CL_next->push_back(hop_constrained_affected_label(vnei, u, hop_u + 1, dnew));
@@ -44,7 +46,7 @@ void ProDecreasep_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_con
 					}
 					else {
 						mtx_599[vnei].lock();
-						auto search_result = search_sorted_hop_constrained_two_hop_label_2((*L)[vnei], u, hop_u + 1);
+						auto search_result = search_sorted_hop_constrained_two_hop_label_and_index((*L)[vnei], u, hop_u + 1);
 						mtx_599[vnei].unlock();
 						if (search_result.first < MAX_VALUE && search_result.first > dnew) {
 							mtx_599[vnei].lock();
@@ -79,7 +81,8 @@ void ProDecreasep_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_con
 }
 
 void HOP_WeightDecrease2021_batch(graph_v_of_v<int> &instance_graph, hop_constrained_case_info &mm, std::vector<pair<int, int>> &v, std::vector<weightTYPE> &w_new,
-                                  ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic) {
+                                  ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
+{
 
     global_query_times = 0;
     label_operation_times = 0;
@@ -134,12 +137,12 @@ void HOP_WeightDecrease2021_batch(graph_v_of_v<int> &instance_graph, hop_constra
 
                     if ((long long)query_result.first > dis)
                     {
-                        insert_sorted_hop_constrained_two_hop_label(L[v2], v, hop_v + 1, dis);
+                        insert_sorted_hop_constrained_two_hop_label(L[v2], v, hop_v + 1, dis, t);
                         CL_curr.push_back(hop_constrained_affected_label(v2, v, hop_v + 1, dis));
                     }
                     else
                     {
-                        auto search_result = search_sorted_hop_constrained_two_hop_label_2(L[v2], v, hop_v + 1);
+                        auto search_result = search_sorted_hop_constrained_two_hop_label_and_index(L[v2], v, hop_v + 1);
                         if (search_result.first < MAX_VALUE && search_result.first > dis)
                         {
                             L[v2][search_result.second].distance = dis;
@@ -159,8 +162,9 @@ void HOP_WeightDecrease2021_batch(graph_v_of_v<int> &instance_graph, hop_constra
         }
     }
 
-    while (CL_curr.size()) {
-        ProDecreasep_batch(instance_graph, &mm.L, &mm.PPR, CL_curr, &CL_next, pool_dynamic, results_dynamic, mm.upper_k);
+    while (CL_curr.size())
+    {
+        ProDecreasep_batch(instance_graph, &mm.L, &mm.PPR, CL_curr, &CL_next, pool_dynamic, results_dynamic, mm.upper_k, t);
         CL_curr = CL_next;
         std::vector<hop_constrained_affected_label>().swap(CL_next);
     }

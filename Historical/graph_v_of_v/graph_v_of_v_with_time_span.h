@@ -8,6 +8,7 @@
 #include "CPU/graph_v_of_v/graph_v_of_v_generate_random_graph.h"
 #include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_maintain_hop_constrained_two_hop_labels.h"
 #include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_WeightDecreaseMaintenance_improv_batch.h"
+#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_WeightDecrease2021_batch.h"
 #include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_WeightIncreaseMaintenance_improv_batch.h"
 #include "CPU/tool_functions/ThreadPool.h"
 #include <boost/heap/fibonacci_heap.hpp>
@@ -78,7 +79,7 @@ public:
 	inline weight_type search_shortest_path_in_period_time_naive(int u, int v, int k, int startTime, int endTime);
 
 	inline void print();
-	inline vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int decreate_time, int increase_time, float change_ratio, hop_constrained_case_info &info);
+	inline vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int decreate_time, int increase_time, float change_ratio, hop_constrained_case_info &info, hop_constrained_case_info &case_info_2021);
 
 	inline void txt_save(std::string save_name);
 	inline vector<graph_v_of_v<weight_type>> txt_read(std::string save_name, hop_constrained_case_info &info);
@@ -187,7 +188,7 @@ void graph_v_of_v_with_time_span<weight_type>::print()
 }
 
 template <typename weight_type>
-vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int decrease_time, int increase_time, float change_ratio, hop_constrained_case_info &case_info)
+vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int decrease_time, int increase_time, float change_ratio, hop_constrained_case_info &case_info, hop_constrained_case_info &case_info_2021)
 {
 	if (change_num < 0)
 	{
@@ -206,6 +207,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 	std::cout << "====time 0====" << endl;
 	// initialize the label
 	hop_constrained_two_hop_labels_generation(instance_graph, case_info);
+	hop_constrained_two_hop_labels_generation(instance_graph, case_info_2021);
 	case_info.mark_time("initialize the 2-hop label");
 	ThreadPool pool_dynamic(case_info.thread_num);
 	std::vector<std::future<int>> results_dynamic;
@@ -250,7 +252,14 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 
 			if (path.size() > case_info.thread_num)
 			{
+				auto time1 = std::chrono::high_resolution_clock::now();
 				HOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
+				auto time2 = std::chrono::high_resolution_clock::now();
+				case_info.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
+				auto time3 = std::chrono::high_resolution_clock::now();
+				HOP_WeightDecrease2021_batch(instance_graph, case_info_2021, path, weight, pool_dynamic, results_dynamic, index);
+				auto time4 = std::chrono::high_resolution_clock::now();
+				case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
 				vector<pair<int, int>>().swap(path);
 				vector<int>().swap(weight);
 			}
@@ -286,7 +295,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 			cout << i << "->" << instance_graph.ADJs[i][j].first << ":" << next_value << endl;
 			path.push_back({i, instance_graph.ADJs[i][j].first});
 			weight.push_back(next_value);
-            
+
 			if (path.size() > case_info.thread_num)
 			{
 				HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);

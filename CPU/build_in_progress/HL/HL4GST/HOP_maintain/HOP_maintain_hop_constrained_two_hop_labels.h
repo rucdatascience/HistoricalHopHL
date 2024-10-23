@@ -39,12 +39,28 @@ public:
     double time_canonical_repair = 0;
     double time_total = 0;
 
+    /* array of maintenance algorithm running time each time*/
+    vector<double> time_decrease;
+    vector<double> time_increase;
+
+    double get_decrease_time()
+    {
+        double res = 0;
+        for (double time : this->time_decrease)
+        {
+            res += time;
+        }
+        return res;
+    }
+
+    bool is_debug = false;
+
     /*running limits*/
     long long int max_bit_size = 1e12;
     double max_run_time_seconds = 1e12;
 
     /**
-     * query
+     * query param
      */
     int source;
     int target;
@@ -66,9 +82,12 @@ public:
 
     void mark_time(std::string current_step)
     {
-        auto now = std::chrono::high_resolution_clock::now();
-        double runtime_base_line_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(now - start_time).count() / 1e9;
-        std::cout << current_step << ": " << runtime_base_line_with_span << std::endl;
+        if (is_debug)
+        {
+            auto now = std::chrono::high_resolution_clock::now();
+            double runtime_base_line_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(now - start_time).count() / 1e9;
+            std::cout << current_step << ": " << runtime_base_line_with_span << std::endl;
+        }
     }
 
     long long int compute_label_bit_size()
@@ -265,7 +284,7 @@ void insert_sorted_hop_constrained_two_hop_label(std::vector<hop_constrained_two
                 {
                     // 找到匹配的标签，进行 update(首先生成旧标签)
                     hop_constrained_two_hop_label old_label = input_vector[mid];
-                    old_label.t_e = t-1; // 将旧标签的 t_e 更新为 t
+                    old_label.t_e = t - 1; // 将旧标签的 t_e 更新为 t
 
                     // 更新当前标签的 distance 和 t_s
                     input_vector[mid].distance = new_distance;
@@ -387,6 +406,53 @@ weightTYPE search_sorted_hop_constrained_two_hop_label(std::vector<hop_constrain
     }
 
     return std::numeric_limits<int>::max(); // 没找到符合条件的标签，返回无穷大
+}
+
+pair<weightTYPE, int> search_sorted_hop_constrained_two_hop_label_and_index(std::vector<hop_constrained_two_hop_label> &input_vector, int key, int hop)
+{
+    label_operation_times++;
+    int left = 0, right = input_vector.size() - 1;
+
+    while (left <= right)
+    {
+        int mid = left + ((right - left) / 2); // mid is between left and right (may be equal)
+
+        // Step 1: 先检查 t_e 是否为无穷大
+        if (input_vector[mid].t_e == std::numeric_limits<int>::max())
+        {
+            // Step 2: 匹配 hub_vertex
+            if (input_vector[mid].hub_vertex == key)
+            {
+                // Step 3: 再检查 hop
+                if (input_vector[mid].hop == hop)
+                {
+                    return {input_vector[mid].distance, mid}; // 找到符合条件的标签，返回 distance
+                }
+                else if (input_vector[mid].hop < hop)
+                {
+                    left = mid + 1; // hop 太小，向右找
+                }
+                else
+                {
+                    right = mid - 1; // hop 太大，向左找
+                }
+            }
+            else if (input_vector[mid].hub_vertex < key)
+            {
+                left = mid + 1; // hub 太小，向右找
+            }
+            else
+            {
+                right = mid - 1; // hub 太大，向左找
+            }
+        }
+        else
+        {
+            right = mid - 1; // t_e 不是无穷大，向左找
+        }
+    }
+
+    return {std::numeric_limits<int>::max(), -1}; // 没找到符合条件的标签，返回无穷大
 }
 
 pair<weightTYPE, int> search_sorted_hop_constrained_two_hop_label_2(std::vector<hop_constrained_two_hop_label> &input_vector, int key, int hop)

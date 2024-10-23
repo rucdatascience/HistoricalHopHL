@@ -3,7 +3,6 @@ using namespace std;
 #include "CPU/graph_v_of_v/graph_v_of_v_generate_random_graph.h"
 #include "Historical/graph_v_of_v/graph_v_of_v_with_time_span.h"
 #include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_maintain_hop_constrained_two_hop_labels.h"
-
 int testBaseLineAndBaseline2()
 {
     int iterator = 2;
@@ -25,7 +24,7 @@ int testBaseLineAndBaseline2()
             // generate a larger random graph
             int v_num = 5, e_num = 10;
             int upper = 20, lower = 1;
-            int change_num = 10, decrease_time = 0, increase_time = 10;
+            int change_num = 10, decrease_time = 10, increase_time = 0;
             float change_ratio = 0.3;
 
             // initialize the 2-hop label with time span
@@ -43,11 +42,26 @@ int testBaseLineAndBaseline2()
             mm.t_s = queryStartTime;
             mm.t_e = queryEndTime;
 
-            bool use_save_read = true;
+            hop_constrained_case_info mm2021;
+            mm.upper_k = k;
+            mm.max_bit_size = 6e9;
+            mm.use_2M_prune = 1;
+            mm.use_rank_prune = 1; // set true
+            mm.use_2023WWW_generation = 0;
+            mm.use_canonical_repair = 0;
+            mm.max_run_time_seconds = 1e2;
+            mm.thread_num = 10;
+            mm.source = source;
+            mm.target = target;
+            mm.t_s = queryStartTime;
+            mm.t_e = queryEndTime;
+
+            bool use_save_read = false;
             bool use_2_hop_label = true;
             graph_v_of_v_with_time_span<int> graph_with_time_span;
             vector<graph_v_of_v<int>> graphs;
             mm.begin_timing();
+            mm2021.begin_timing();
             if (use_save_read)
             {
                 graph_with_time_span = graph_v_of_v_with_time_span<int>();
@@ -62,17 +76,14 @@ int testBaseLineAndBaseline2()
             else
             {
                 initialize_global_values_dynamic_hop_constrained(v_num, mm.thread_num, mm.upper_k);
+                initialize_global_values_dynamic_hop_constrained(v_num, mm2021.thread_num, mm2021.upper_k);
                 graph_with_time_span = graph_v_of_v_with_time_span<int>(v_num, e_num, upper, lower);
                 mm.mark_time("initialize_global_values_dynamic_hop_constrained");
-                graphs = graph_with_time_span.graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(change_num, decrease_time, increase_time, change_ratio, mm);
+                graphs = graph_with_time_span.graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(change_num, decrease_time, increase_time, change_ratio, mm, mm2021);
                 graph_with_time_span.txt_save("time-graph.txt");
             }
-            // print the graphs
-            // for (graph_v_of_v<int> graph : graphs)
-            // {
-            //     graph.print();
-            // }
-            // graphWithTimeSpan.print();
+            std::cout << "decrease runtime is " << mm.get_decrease_time();
+            std::cout << "2021 decrease runtime is " << mm2021.get_decrease_time();
 
             // dijkstra_iterator baseline 1
             if (queryStartTime < 0 || queryEndTime < queryStartTime || queryEndTime > change_num)
@@ -93,17 +104,19 @@ int testBaseLineAndBaseline2()
             if (use_2_hop_label)
             {
                 auto start_time_2_hop_label = std::chrono::high_resolution_clock::now();
-                mm.print_L();
-                // mm.print_L_vk(source);
-                // mm.print_L_vk(target);
                 int res = mm.query(source, target, queryStartTime, queryEndTime, k);
                 auto end_time_2_hop_label = std::chrono::high_resolution_clock::now();
                 double runtime_2_hop_label_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_2_hop_label - start_time_2_hop_label).count() / 1e9;
 
-                std::cout << runtime_2_hop_label_with_span << std::endl;
-                std::cout << res_n_iterate_dijkstra << ":" << res_base_line_with_span << ":" << res << std::endl;
-            }
+                auto start_time_2_hop_label_2021 = std::chrono::high_resolution_clock::now();
+                int res_2021 = mm.query(source, target, queryStartTime, queryEndTime, k);
+                auto end_time_2_hop_label_2021 = std::chrono::high_resolution_clock::now();
+                double runtime_2_hop_label_with_span_2021 = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_2_hop_label - start_time_2_hop_label).count() / 1e9;
 
+                std::cout << "query time is " << runtime_2_hop_label_with_span << std::endl;
+                std::cout << "2021 query time is " << runtime_2_hop_label_with_span_2021 << std::endl;
+                std::cout << res_n_iterate_dijkstra << ":" << res_base_line_with_span << ":" << res << ":" << res_2021 << std::endl;
+            }
         }
         catch (const char *c)
         {
