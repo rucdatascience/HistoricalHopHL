@@ -5,8 +5,8 @@ using namespace std;
 #include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_maintain_hop_constrained_two_hop_labels.h"
 int testBaseLineAndBaseline2()
 {
-    int iterator = 2;
-    int index = 1;
+    int iterator = 10;
+    int index = 0;
     while (index < iterator)
     {
         ++index;
@@ -98,7 +98,7 @@ int testBaseLineAndBaseline2()
             int res_base_line_with_span = graph_with_time_span.search_shortest_path_in_period_time_naive(source, target, k, queryStartTime, queryEndTime);
             auto end_time_base_line_2 = std::chrono::high_resolution_clock::now();
             double runtime_base_line_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_base_line_2 - start_time_base_line_2).count() / 1e9;
-            std::cout << "query time of graph with time_span :"<<runtime_base_line_with_span << std::endl;
+            std::cout << "query time of graph with time_span :" << runtime_base_line_with_span << std::endl;
             std::cout << res_n_iterate_dijkstra << ":" << res_base_line_with_span << std::endl;
             if (use_2_hop_label)
             {
@@ -108,7 +108,7 @@ int testBaseLineAndBaseline2()
                 double runtime_2_hop_label_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_2_hop_label - start_time_2_hop_label).count() / 1e9;
 
                 auto start_time_2_hop_label_2021 = std::chrono::high_resolution_clock::now();
-                int res_2021 = mm.query(source, target, queryStartTime, queryEndTime, k);
+                int res_2021 = mm2021.query(source, target, queryStartTime, queryEndTime, k);
                 auto end_time_2_hop_label_2021 = std::chrono::high_resolution_clock::now();
                 double runtime_2_hop_label_with_span_2021 = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_2_hop_label_2021 - start_time_2_hop_label_2021).count() / 1e9;
 
