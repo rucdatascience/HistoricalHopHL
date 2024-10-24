@@ -43,10 +43,14 @@ public:
     vector<double> time_decrease;
     vector<double> time_increase;
 
-    double get_decrease_time()
+    double get_maintain_time()
     {
         double res = 0;
         for (double time : this->time_decrease)
+        {
+            res += time;
+        }
+        for (double time : this->time_increase)
         {
             res += time;
         }
@@ -206,10 +210,10 @@ public:
 
         for (auto vector1_begin = vector1_check_pointer; vector1_begin != pointer_L_s_end; vector1_begin++)
         {
-             //cout << "x (" << vector1_begin->hub_vertex << "," << vector1_begin->hop << "," << vector1_begin->distance << "," << vector1_begin->parent_vertex << ") " << endl;
+            // cout << "x (" << vector1_begin->hub_vertex << "," << vector1_begin->hop << "," << vector1_begin->distance << "," << vector1_begin->parent_vertex << ") " << endl;
             for (auto vector2_begin = vector2_check_pointer; vector2_begin != pointer_L_t_end; vector2_begin++)
             {
-                 //cout << "y (" << vector2_begin->hub_vertex << "," << vector2_begin->hop << "," << vector2_begin->distance << "," << vector2_begin->parent_vertex << ") " << endl;
+                // cout << "y (" << vector2_begin->hub_vertex << "," << vector2_begin->hop << "," << vector2_begin->distance << "," << vector2_begin->parent_vertex << ") " << endl;
                 if (vector1_begin->hub_vertex == vector2_begin->hub_vertex && vector1_begin->hop + vector2_begin->hop <= hop_cst && max(vector1_begin->t_s, max(vector2_begin->t_s, t_s)) <= min(vector1_begin->t_e, min(vector2_begin->t_e, t_e)))
                 {
                     long long int dis = (long long int)vector1_begin->distance + vector2_begin->distance;
@@ -541,7 +545,6 @@ pair<weightTYPE, int> get_shortest_distance_hop_two_hop_label2(std::vector<hop_c
 
     return {mindis, hop_val}; // 返回最短的 distance 和对应的 hop
 }
-
 
 class hop_constrained_affected_label
 {

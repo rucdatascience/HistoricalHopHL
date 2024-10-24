@@ -260,7 +260,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 				auto time3 = std::chrono::high_resolution_clock::now();
 				HOP_WeightDecrease2021_batch(instance_graph, case_info_2021, path, weight, pool_dynamic, results_dynamic, index);
 				auto time4 = std::chrono::high_resolution_clock::now();
-				case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
+				case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time4 - time3).count() / 1e9);
 				vector<pair<int, int>>().swap(path);
 				vector<int>().swap(weight);
 			}
@@ -274,7 +274,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 			auto time3 = std::chrono::high_resolution_clock::now();
 			HOP_WeightDecrease2021_batch(instance_graph, case_info_2021, path, weight, pool_dynamic, results_dynamic, index);
 			auto time4 = std::chrono::high_resolution_clock::now();
-			case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
+			case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time4 - time3).count() / 1e9);
 			vector<pair<int, int>>().swap(path);
 			vector<int>().swap(weight);
 		}
@@ -310,11 +310,11 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 				auto time1 = std::chrono::high_resolution_clock::now();
 				HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
 				auto time2 = std::chrono::high_resolution_clock::now();
-				case_info.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
+				case_info.time_increase.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
 				auto time3 = std::chrono::high_resolution_clock::now();
 				HOP_WeightIncrease2021_batch(instance_graph, case_info_2021, path, weight, pool_dynamic, results_dynamic, index);
 				auto time4 = std::chrono::high_resolution_clock::now();
-				case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
+				case_info_2021.time_increase.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time4 - time3).count() / 1e9);
 
 				vector<pair<int, int>>().swap(path);
 				vector<int>().swap(weight);
@@ -325,11 +325,11 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 			auto time1 = std::chrono::high_resolution_clock::now();
 			HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
 			auto time2 = std::chrono::high_resolution_clock::now();
-			case_info.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
+			case_info.time_increase.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
 			auto time3 = std::chrono::high_resolution_clock::now();
 			HOP_WeightIncrease2021_batch(instance_graph, case_info_2021, path, weight, pool_dynamic, results_dynamic, index);
 			auto time4 = std::chrono::high_resolution_clock::now();
-			case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
+			case_info_2021.time_increase.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time4 - time3).count() / 1e9);
 
 			vector<pair<int, int>>().swap(path);
 			vector<int>().swap(weight);
@@ -665,6 +665,6 @@ int dijkstra_iterator(vector<graph_v_of_v<weight_type>> list, int u, int v, int 
 	}
 	auto endTime = std::chrono::high_resolution_clock::now();
 	double runtime_n_iterate_dijkstra = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - start_time).count() / 1e9;
-	std::cout << runtime_n_iterate_dijkstra << endl;
+	std::cout << "dijkstra query time" << runtime_n_iterate_dijkstra << endl;
 	return res;
 }

@@ -22,7 +22,7 @@ int testBaseLineAndBaseline2()
             // int change_num = 2, decrease_time = 0, increase_time = 5;
             // float change_ratio = 0.3;
             // generate a larger random graph
-            int v_num = 100, e_num = 1000;
+            int v_num = 1000, e_num = 10000;
             int upper = 100, lower = 80;
             int change_num = 10, decrease_time = 10, increase_time = 10;
             float change_ratio = 0.3;
@@ -81,8 +81,8 @@ int testBaseLineAndBaseline2()
                 graphs = graph_with_time_span.graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(change_num, decrease_time, increase_time, change_ratio, mm, mm2021);
                 graph_with_time_span.txt_save("time-graph.txt");
             }
-            std::cout << "decrease runtime is " << mm.get_decrease_time() << std::endl;
-            std::cout << "2021 decrease runtime is " << mm2021.get_decrease_time() << std::endl;
+            std::cout << "maintain runtime is " << mm.get_maintain_time() << std::endl;
+            std::cout << "2021 maintain runtime is " << mm2021.get_maintain_time() << std::endl;
 
             // dijkstra_iterator baseline 1
             if (queryStartTime < 0 || queryEndTime < queryStartTime || queryEndTime > change_num)
@@ -98,7 +98,7 @@ int testBaseLineAndBaseline2()
             int res_base_line_with_span = graph_with_time_span.search_shortest_path_in_period_time_naive(source, target, k, queryStartTime, queryEndTime);
             auto end_time_base_line_2 = std::chrono::high_resolution_clock::now();
             double runtime_base_line_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_base_line_2 - start_time_base_line_2).count() / 1e9;
-            std::cout << runtime_base_line_with_span << std::endl;
+            std::cout << "query time of graph with time_span :"<<runtime_base_line_with_span << std::endl;
             std::cout << res_n_iterate_dijkstra << ":" << res_base_line_with_span << std::endl;
             if (use_2_hop_label)
             {
@@ -110,7 +110,7 @@ int testBaseLineAndBaseline2()
                 auto start_time_2_hop_label_2021 = std::chrono::high_resolution_clock::now();
                 int res_2021 = mm.query(source, target, queryStartTime, queryEndTime, k);
                 auto end_time_2_hop_label_2021 = std::chrono::high_resolution_clock::now();
-                double runtime_2_hop_label_with_span_2021 = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_2_hop_label - start_time_2_hop_label).count() / 1e9;
+                double runtime_2_hop_label_with_span_2021 = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_2_hop_label_2021 - start_time_2_hop_label_2021).count() / 1e9;
 
                 std::cout << "query time is " << runtime_2_hop_label_with_span << std::endl;
                 std::cout << "2021 query time is " << runtime_2_hop_label_with_span_2021 << std::endl;
