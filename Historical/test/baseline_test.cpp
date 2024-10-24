@@ -13,8 +13,8 @@ int testBaseLineAndBaseline2()
         try
         {
             // query param
-            int source = 0, target = 4;
-            int queryStartTime = 8, queryEndTime = 10;
+            int source = 90, target = 99;
+            int queryStartTime = 4, queryEndTime = 8;
             int k = 10;
             // generate a random graph
             // int v_num = 10, e_num = 20;
@@ -22,9 +22,9 @@ int testBaseLineAndBaseline2()
             // int change_num = 2, decrease_time = 0, increase_time = 5;
             // float change_ratio = 0.3;
             // generate a larger random graph
-            int v_num = 5, e_num = 10;
-            int upper = 20, lower = 1;
-            int change_num = 10, decrease_time = 10, increase_time = 0;
+            int v_num = 100, e_num = 1000;
+            int upper = 100, lower = 80;
+            int change_num = 10, decrease_time = 10, increase_time = 10;
             float change_ratio = 0.3;
 
             // initialize the 2-hop label with time span
@@ -43,18 +43,18 @@ int testBaseLineAndBaseline2()
             mm.t_e = queryEndTime;
 
             hop_constrained_case_info mm2021;
-            mm.upper_k = k;
-            mm.max_bit_size = 6e9;
-            mm.use_2M_prune = 1;
-            mm.use_rank_prune = 1; // set true
-            mm.use_2023WWW_generation = 0;
-            mm.use_canonical_repair = 0;
-            mm.max_run_time_seconds = 1e2;
-            mm.thread_num = 10;
-            mm.source = source;
-            mm.target = target;
-            mm.t_s = queryStartTime;
-            mm.t_e = queryEndTime;
+            mm2021.upper_k = k;
+            mm2021.max_bit_size = 6e9;
+            mm2021.use_2M_prune = 1;
+            mm2021.use_rank_prune = 1; // set true
+            mm2021.use_2023WWW_generation = 0;
+            mm2021.use_canonical_repair = 0;
+            mm2021.max_run_time_seconds = 1e2;
+            mm2021.thread_num = 10;
+            mm2021.source = source;
+            mm2021.target = target;
+            mm2021.t_s = queryStartTime;
+            mm2021.t_e = queryEndTime;
 
             bool use_save_read = false;
             bool use_2_hop_label = true;
@@ -65,7 +65,7 @@ int testBaseLineAndBaseline2()
             if (use_save_read)
             {
                 graph_with_time_span = graph_v_of_v_with_time_span<int>();
-                graphs = graph_with_time_span.txt_read("time-graph.txt", mm);
+                graphs = graph_with_time_span.txt_read("time-graph.txt", mm, mm2021);
                 // graphs = graph_with_time_span.txt_read("time-graph-2024-10-09-1729.txt", mm);
                 if (graph_with_time_span.size() < source || graph_with_time_span.size() < target)
                 {
@@ -76,14 +76,13 @@ int testBaseLineAndBaseline2()
             else
             {
                 initialize_global_values_dynamic_hop_constrained(v_num, mm.thread_num, mm.upper_k);
-                initialize_global_values_dynamic_hop_constrained(v_num, mm2021.thread_num, mm2021.upper_k);
                 graph_with_time_span = graph_v_of_v_with_time_span<int>(v_num, e_num, upper, lower);
                 mm.mark_time("initialize_global_values_dynamic_hop_constrained");
                 graphs = graph_with_time_span.graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(change_num, decrease_time, increase_time, change_ratio, mm, mm2021);
                 graph_with_time_span.txt_save("time-graph.txt");
             }
-            std::cout << "decrease runtime is " << mm.get_decrease_time();
-            std::cout << "2021 decrease runtime is " << mm2021.get_decrease_time();
+            std::cout << "decrease runtime is " << mm.get_decrease_time() << std::endl;
+            std::cout << "2021 decrease runtime is " << mm2021.get_decrease_time() << std::endl;
 
             // dijkstra_iterator baseline 1
             if (queryStartTime < 0 || queryEndTime < queryStartTime || queryEndTime > change_num)
