@@ -205,11 +205,11 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 		is_mock[i] = false;
 	}
 	instance_graph = graph_v_of_v_update_vertexIDs_by_degrees_large_to_small_mock(instance_graph, is_mock);
-	std::cout << "====time 0====" << endl;
-	// initialize the label
+	timer.mark_time("====time 0====");
 	hop_constrained_two_hop_labels_generation(instance_graph, case_info);
 	hop_constrained_two_hop_labels_generation(instance_graph, case_info_2021);
-	case_info.mark_time("initialize the 2-hop label");
+	timer.mark_time("initialize_global_values_dynamic_hop_constrained");
+	timer.mark_time("====maintain process====");
 	ThreadPool pool_dynamic(case_info.thread_num);
 	std::vector<std::future<int>> results_dynamic;
 
@@ -223,7 +223,7 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 	{
 		int current_decrease_time = decrease_time;
 		int current_increase_time = increase_time;
-		std::cout << "====time " << std::to_string(index) << "====" << endl;
+		timer.mark_time("====time " + std::to_string(index) + "====");
 		vector<pair<int, int>> path;
 		vector<int> weight;
 		int i, j;
@@ -422,7 +422,8 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 			else if (!Parsed_content[0].compare("time"))
 			{
 				current_time = std::stoi(Parsed_content[1]);
-				std::cout << "====time " << Parsed_content[1] << "====" << endl;
+				timer.mark_time("====time " + Parsed_content[1] + "====");
+				// std::cout << "====time " << Parsed_content[1] << "====" << endl;
 			}
 			else if (!Parsed_content[0].compare("Edge"))
 			{
@@ -525,8 +526,7 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 					{
 						hop_constrained_two_hop_labels_generation(instance_graph, case_info);
 						hop_constrained_two_hop_labels_generation(instance_graph, case_info_2021);
-						case_info.mark_time("initialize the 2-hop label");
-						case_info_2021.mark_time("initialize the 2-hop label");
+						timer.mark_time("initialize the 2-hop label");
 						add_graph_time(instance_graph, 0);
 					}
 					res.push_back(instance_graph);

@@ -299,6 +299,7 @@ void HOP_WeightIncrease2021_batch(graph_v_of_v<int> &instance_graph, hop_constra
 			}
 		}
 	}
+	timer.mark_time("2021 maintain start increase");
 	while (al1_curr.size() || al2_curr.size())
 	{
 
@@ -316,4 +317,5 @@ void HOP_WeightIncrease2021_batch(graph_v_of_v<int> &instance_graph, hop_constra
 		std::vector<hop_constrained_affected_label>().swap(al1_next);
 		std::vector<hop_constrained_pair_label>().swap(al2_next);
 	}
+	timer.mark_time("2021 maintain end increase");
 }

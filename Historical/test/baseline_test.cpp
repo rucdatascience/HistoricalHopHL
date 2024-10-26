@@ -3,12 +3,15 @@ using namespace std;
 #include "CPU/graph_v_of_v/graph_v_of_v_generate_random_graph.h"
 #include "Historical/graph_v_of_v/graph_v_of_v_with_time_span.h"
 #include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_maintain_hop_constrained_two_hop_labels.h"
+
 int testBaseLineAndBaseline2()
 {
     int iterator = 20;
     int index = 0;
+    timer.is_debug = false;
     while (index < iterator)
     {
+        timer.begin_timing();
         ++index;
         try
         {
@@ -60,8 +63,6 @@ int testBaseLineAndBaseline2()
             bool use_2_hop_label = true;
             graph_v_of_v_with_time_span<int> graph_with_time_span;
             vector<graph_v_of_v<int>> graphs;
-            mm.begin_timing();
-            mm2021.begin_timing();
             if (use_save_read)
             {
                 graph_with_time_span = graph_v_of_v_with_time_span<int>();
@@ -77,7 +78,6 @@ int testBaseLineAndBaseline2()
             {
                 initialize_global_values_dynamic_hop_constrained(v_num, mm.thread_num, mm.upper_k);
                 graph_with_time_span = graph_v_of_v_with_time_span<int>(v_num, e_num, upper, lower);
-                mm.mark_time("initialize_global_values_dynamic_hop_constrained");
                 graphs = graph_with_time_span.graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(change_num, decrease_time, increase_time, change_ratio, mm, mm2021);
                 graph_with_time_span.txt_save("time-graph.txt");
             }
@@ -98,8 +98,6 @@ int testBaseLineAndBaseline2()
             int res_base_line_with_span = graph_with_time_span.search_shortest_path_in_period_time_naive(source, target, k, queryStartTime, queryEndTime);
             auto end_time_base_line_2 = std::chrono::high_resolution_clock::now();
             double runtime_base_line_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_base_line_2 - start_time_base_line_2).count() / 1e9;
-            std::cout << "query time of graph with time_span :" << runtime_base_line_with_span << std::endl;
-            std::cout << res_n_iterate_dijkstra << ":" << res_base_line_with_span << std::endl;
             if (use_2_hop_label)
             {
                 auto start_time_2_hop_label = std::chrono::high_resolution_clock::now();
@@ -120,6 +118,10 @@ int testBaseLineAndBaseline2()
                 {
                     throw "error result .please check the algorithm";
                 }
+            }
+            else
+            {
+                std::cout << "query time of graph with time_span :" << runtime_base_line_with_span << std::endl;
             }
         }
         catch (const char *c)

@@ -1,6 +1,6 @@
 #pragma once
 #include <CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_PPR.h>
-
+#include "Historical/graph_v_of_v/Timer.h"
 #define weightTYPE int
 
 /* label format */
@@ -57,8 +57,6 @@ public:
         return res;
     }
 
-    bool is_debug = false;
-
     /*running limits*/
     long long int max_bit_size = 1e12;
     double max_run_time_seconds = 1e12;
@@ -76,23 +74,6 @@ public:
     PPR_type PPR;
 
     double label_size_before_canonical_repair, label_size_after_canonical_repair, canonical_repair_remove_label_ratio;
-
-    std::chrono::_V2::system_clock::time_point start_time;
-
-    void begin_timing()
-    {
-        start_time = std::chrono::high_resolution_clock::now();
-    }
-
-    void mark_time(std::string current_step)
-    {
-        if (is_debug)
-        {
-            auto now = std::chrono::high_resolution_clock::now();
-            double runtime_base_line_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(now - start_time).count() / 1e9;
-            std::cout << current_step << ": " << runtime_base_line_with_span << std::endl;
-        }
-    }
 
     long long int compute_label_bit_size()
     {

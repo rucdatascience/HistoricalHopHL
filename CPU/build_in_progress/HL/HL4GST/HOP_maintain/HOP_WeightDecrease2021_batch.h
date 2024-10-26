@@ -83,7 +83,7 @@ void ProDecreasep_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_con
 void HOP_WeightDecrease2021_batch(graph_v_of_v<int> &instance_graph, hop_constrained_case_info &mm, std::vector<pair<int, int>> &v, std::vector<weightTYPE> &w_new,
                                   ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
 {
-
+    timer.mark_time("2021 maintain start get the affected label");
     global_query_times = 0;
     label_operation_times = 0;
 
@@ -161,11 +161,13 @@ void HOP_WeightDecrease2021_batch(graph_v_of_v<int> &instance_graph, hop_constra
             }
         }
     }
-
+    timer.mark_time("2021 maintain end get the affected label and current CL size is" + std::to_string(CL_curr.size()));
+    timer.mark_time("2021 maintain start pro decrease");
     while (CL_curr.size())
     {
         ProDecreasep_batch(instance_graph, &mm.L, &mm.PPR, CL_curr, &CL_next, pool_dynamic, results_dynamic, mm.upper_k, t);
         CL_curr = CL_next;
         std::vector<hop_constrained_affected_label>().swap(CL_next);
     }
+    timer.mark_time("2021 maintain end pro decrease");
 }
