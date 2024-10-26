@@ -131,7 +131,7 @@ void HOP_WeightDecrease2021_batch(graph_v_of_v<int> &instance_graph, hop_constra
                 int v = it.hub_vertex;
                 int hop_v = it.hop;
                 long long dis = it.distance + w_new;
-                if (v <= v2)
+                if (v <= v2 && it.t_e == std::numeric_limits<int>::max())
                 {
                     auto query_result = hop_constrained_extract_distance_and_hub(L, v, v2, hop_v + 1); // query_result is {distance, common hub}
 

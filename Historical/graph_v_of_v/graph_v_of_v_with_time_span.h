@@ -301,7 +301,6 @@ vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type>::grap
 			}
 			instance_graph.add_edge(i, instance_graph.ADJs[i][j].first, next_value);
 			this->add_edge(i, instance_graph.ADJs[i][j].first, next_value, index);
-			cout << i << "->" << instance_graph.ADJs[i][j].first << ":" << next_value << endl;
 			path.push_back({i, instance_graph.ADJs[i][j].first});
 			weight.push_back(old_value);
 
@@ -459,9 +458,9 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 						auto time2 = std::chrono::high_resolution_clock::now();
 						case_info.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
 						auto time3 = std::chrono::high_resolution_clock::now();
-						HOP_WeightDecrease2021_batch(instance_graph, case_info, path_decrease, weight_decrease, pool_dynamic, results_dynamic, current_time);
+						HOP_WeightDecrease2021_batch(instance_graph, case_info_2021, path_decrease, weight_decrease, pool_dynamic, results_dynamic, current_time);
 						auto time4 = std::chrono::high_resolution_clock::now();
-						case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
+						case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time4 - time3).count() / 1e9);
 
 						vector<pair<int, int>>().swap(path_decrease);
 						vector<int>().swap(weight_decrease);
@@ -473,11 +472,11 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 						auto time1 = std::chrono::high_resolution_clock::now();
 						HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path_increase, old_weight_increase, pool_dynamic, results_dynamic, current_time);
 						auto time2 = std::chrono::high_resolution_clock::now();
-						case_info.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
+						case_info.time_increase.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
 						auto time3 = std::chrono::high_resolution_clock::now();
-						HOP_WeightIncrease2021_batch(instance_graph, case_info, path_increase, old_weight_increase, pool_dynamic, results_dynamic, current_time);
+						HOP_WeightIncrease2021_batch(instance_graph, case_info_2021, path_increase, old_weight_increase, pool_dynamic, results_dynamic, current_time);
 						auto time4 = std::chrono::high_resolution_clock::now();
-						case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
+						case_info_2021.time_increase.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time4 - time3).count() / 1e9);
 
 						vector<pair<int, int>>().swap(path_increase);
 						vector<int>().swap(weight_increase);
@@ -496,9 +495,9 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 					auto time2 = std::chrono::high_resolution_clock::now();
 					case_info.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
 					auto time3 = std::chrono::high_resolution_clock::now();
-					HOP_WeightDecrease2021_batch(instance_graph, case_info, path_decrease, weight_decrease, pool_dynamic, results_dynamic, current_time);
+					HOP_WeightDecrease2021_batch(instance_graph, case_info_2021, path_decrease, weight_decrease, pool_dynamic, results_dynamic, current_time);
 					auto time4 = std::chrono::high_resolution_clock::now();
-					case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
+					case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time4 - time3).count() / 1e9);
 
 					vector<pair<int, int>>().swap(path_decrease);
 					vector<int>().swap(weight_decrease);
@@ -510,11 +509,11 @@ inline vector<graph_v_of_v<weight_type>> graph_v_of_v_with_time_span<weight_type
 					auto time1 = std::chrono::high_resolution_clock::now();
 					HOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path_increase, old_weight_increase, pool_dynamic, results_dynamic, current_time);
 					auto time2 = std::chrono::high_resolution_clock::now();
-					case_info.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
+					case_info.time_increase.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
 					auto time3 = std::chrono::high_resolution_clock::now();
-					HOP_WeightIncrease2021_batch(instance_graph, case_info, path_increase, old_weight_increase, pool_dynamic, results_dynamic, current_time);
+					HOP_WeightIncrease2021_batch(instance_graph, case_info_2021, path_increase, old_weight_increase, pool_dynamic, results_dynamic, current_time);
 					auto time4 = std::chrono::high_resolution_clock::now();
-					case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
+					case_info_2021.time_increase.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time4 - time3).count() / 1e9);
 
 					vector<pair<int, int>>().swap(path_increase);
 					vector<int>().swap(weight_increase);

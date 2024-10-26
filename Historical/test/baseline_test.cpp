@@ -5,7 +5,7 @@ using namespace std;
 #include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_maintain_hop_constrained_two_hop_labels.h"
 int testBaseLineAndBaseline2()
 {
-    int iterator = 10;
+    int iterator = 20;
     int index = 0;
     while (index < iterator)
     {
@@ -24,7 +24,7 @@ int testBaseLineAndBaseline2()
             // generate a larger random graph
             int v_num = 1000, e_num = 10000;
             int upper = 100, lower = 80;
-            int change_num = 10, decrease_time = 10, increase_time = 10;
+            int change_num = 30, decrease_time = 50, increase_time = 50;
             float change_ratio = 0.3;
 
             // initialize the 2-hop label with time span
@@ -115,11 +115,17 @@ int testBaseLineAndBaseline2()
                 std::cout << "query time is " << runtime_2_hop_label_with_span << std::endl;
                 std::cout << "2021 query time is " << runtime_2_hop_label_with_span_2021 << std::endl;
                 std::cout << res_n_iterate_dijkstra << ":" << res_base_line_with_span << ":" << res << ":" << res_2021 << std::endl;
+
+                if (!(res_n_iterate_dijkstra == res_base_line_with_span && res == res_2021 && res_n_iterate_dijkstra == res))
+                {
+                    throw "error result .please check the algorithm";
+                }
             }
         }
         catch (const char *c)
         {
             std::cerr << "Error: " << c << std::endl;
+            return 1;
         }
     }
     return 0;

@@ -471,7 +471,7 @@ void HOP_WeightIncreaseMaintenance_improv_batch(graph_v_of_v<int> &instance_grap
 				int w_old = iter.second;
 				for (auto it : mm.L[v1]) {
 					int search_weight = search_sorted_hop_constrained_two_hop_label(mm.L[v2], it.hub_vertex, it.hop + 1);
-					if (it.hub_vertex <= v2 && search_weight >= (long long int)it.distance + w_old && search_weight < MAX_VALUE) {
+					if (it.hub_vertex <= v2 && search_weight >= (long long int)it.distance + w_old && search_weight < MAX_VALUE && it.t_e == std::numeric_limits<int>::max()) {
 						mtx_599_1.lock();
 						al1.push_back(hop_constrained_affected_label(v2, it.hub_vertex, it.hop + 1, it.distance + w_old));
 						mtx_599_1.unlock();
@@ -479,7 +479,7 @@ void HOP_WeightIncreaseMaintenance_improv_batch(graph_v_of_v<int> &instance_grap
 				}
 				for (auto it : mm.L[v2]) {
 				    int search_weight = search_sorted_hop_constrained_two_hop_label(mm.L[v1], it.hub_vertex, it.hop + 1);
-					if (it.hub_vertex <= v1 && search_weight >= (long long int)it.distance + w_old && search_weight < MAX_VALUE) {
+					if (it.hub_vertex <= v1 && search_weight >= (long long int)it.distance + w_old && search_weight < MAX_VALUE && it.t_e == std::numeric_limits<int>::max()) {
 						mtx_599_1.lock();
 						al1.push_back(hop_constrained_affected_label(v1, it.hub_vertex, it.hop + 1, it.distance + w_old));
 						mtx_599_1.unlock();
