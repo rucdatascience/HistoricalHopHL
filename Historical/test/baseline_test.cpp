@@ -1,7 +1,7 @@
 using namespace std;
 #include <chrono>
 #include "CPU/graph_v_of_v/graph_v_of_v_generate_random_graph.h"
-#include "Historical/graph_v_of_v/graph_v_of_v_with_time_span.h"
+#include "Historical/graph_v_of_v/graph_v_of_v_with_time_span_hop_constrained.h"
 #include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_maintain_hop_constrained_two_hop_labels.h"
 
 int testBaseLineAndBaseline2()
@@ -61,14 +61,14 @@ int testBaseLineAndBaseline2()
 
             bool use_save_read = false;
             bool use_2_hop_label = true;
-            graph_v_of_v_with_time_span<int> graph_with_time_span;
+            graph_v_of_v_with_time_span_hop_constrained<int> graph_with_time_span_hop = nullptr;
             vector<graph_v_of_v<int>> graphs;
             if (use_save_read)
             {
-                graph_with_time_span = graph_v_of_v_with_time_span<int>();
-                graphs = graph_with_time_span.txt_read("time-graph.txt", mm, mm2021);
+                graph_with_time_span_hop = graph_v_of_v_with_time_span_hop_constrained<int>();
+                graphs = graph_with_time_span_hop.txt_read("time-graph.txt", mm, mm2021);
                 // graphs = graph_with_time_span.txt_read("time-graph-2024-10-09-1729.txt", mm);
-                if (graph_with_time_span.size() < source || graph_with_time_span.size() < target)
+                if (graph_with_time_span_hop.size() < source || graph_with_time_span.size() < target)
                 {
                     cout << "vertex is out of range" << endl;
                     return 0;
