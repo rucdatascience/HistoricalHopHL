@@ -84,10 +84,6 @@ public:
 	/*class member functions*/
 	virtual weight_type search_shortest_path_in_period_time_naive(int u, int v, int k, int startTime, int endTime) = 0;
 
-	virtual vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int decreate_time, int increase_time, float change_ratio);
-
-	virtual vector<graph_v_of_v<weight_type>> txt_read(std::string save_name);
-
 	inline void print();
 
 	inline void txt_save(std::string save_name);

@@ -61,14 +61,14 @@ int testBaseLineAndBaseline2()
 
             bool use_save_read = false;
             bool use_2_hop_label = true;
-            graph_v_of_v_with_time_span_hop_constrained<int> graph_with_time_span_hop = nullptr;
+            graph_v_of_v_with_time_span_hop_constrained<int> graph_with_time_span_hop_constrained;
             vector<graph_v_of_v<int>> graphs;
             if (use_save_read)
             {
-                graph_with_time_span_hop = graph_v_of_v_with_time_span_hop_constrained<int>();
-                graphs = graph_with_time_span_hop.txt_read("time-graph.txt", mm, mm2021);
+                graph_with_time_span_hop_constrained = graph_v_of_v_with_time_span_hop_constrained<int>();
+                graphs = graph_with_time_span_hop_constrained.txt_read("time-graph.txt", mm, mm2021);
                 // graphs = graph_with_time_span.txt_read("time-graph-2024-10-09-1729.txt", mm);
-                if (graph_with_time_span_hop.size() < source || graph_with_time_span.size() < target)
+                if (graph_with_time_span_hop_constrained.size() < source || graph_with_time_span_hop_constrained.size() < target)
                 {
                     cout << "vertex is out of range" << endl;
                     return 0;
@@ -77,9 +77,9 @@ int testBaseLineAndBaseline2()
             else
             {
                 initialize_global_values_dynamic_hop_constrained(v_num, mm.thread_num, mm.upper_k);
-                graph_with_time_span = graph_v_of_v_with_time_span<int>(v_num, e_num, upper, lower);
-                graphs = graph_with_time_span.graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(change_num, decrease_time, increase_time, change_ratio, mm, mm2021);
-                graph_with_time_span.txt_save("time-graph.txt");
+                graph_with_time_span_hop_constrained = graph_v_of_v_with_time_span_hop_constrained<int>(v_num, e_num, upper, lower);
+                graphs = graph_with_time_span_hop_constrained.graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(change_num, decrease_time, increase_time, change_ratio, mm, mm2021);
+                graph_with_time_span_hop_constrained.txt_save("time-graph.txt");
             }
             std::cout << "maintain runtime is " << mm.get_maintain_time() << std::endl;
             std::cout << "2021 maintain runtime is " << mm2021.get_maintain_time() << std::endl;
@@ -95,7 +95,7 @@ int testBaseLineAndBaseline2()
 
             // dfs to calculate the shortest path baseline 2
             auto start_time_base_line_2 = std::chrono::high_resolution_clock::now();
-            int res_base_line_with_span = graph_with_time_span.search_shortest_path_in_period_time_naive(source, target, k, queryStartTime, queryEndTime);
+            int res_base_line_with_span = graph_with_time_span_hop_constrained.search_shortest_path_in_period_time_naive(source, target, k, queryStartTime, queryEndTime);
             auto end_time_base_line_2 = std::chrono::high_resolution_clock::now();
             double runtime_base_line_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_base_line_2 - start_time_base_line_2).count() / 1e9;
             if (use_2_hop_label)
