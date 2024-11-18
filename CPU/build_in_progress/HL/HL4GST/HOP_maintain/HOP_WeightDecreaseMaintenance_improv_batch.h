@@ -170,21 +170,16 @@ void DIFFUSE_batch(graph_v_of_v<int> &instance_graph, vector<vector<hop_constrai
 
 				for (auto nei : instance_graph[x])
 				{
-					
                     if (dx + nei.second >= TwoM_value)
 					    continue;
-				
 					int xnei = nei.first;
                     int hop_nei = xhv + 1;
                     long long int d_new = dx + (long long int)nei.second;
 					hop_constrained_node_for_DIFFUSE node = {xnei, hop_nei, (weightTYPE)d_new};
-
 					if (v < xnei)
 					{
-
 						if (dist_hop[xnei].first == -1)
 						{
-							
 							// Q_handle[{xnei, hop_nei}] = {pq.push(node), d_new};
                             // Q_VALUE[xnei][hop_nei] = d_new;
                             mtx_599[xnei].lock_shared();

@@ -4,7 +4,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
-#include <graph_hash_of_mixed_weighted/graph_hash_of_mixed_weighted_binary_operations.h>
+#include "CPU/graph_hash_of_mixed_weighted/graph_hash_of_mixed_weighted_binary_operations.h"
 
 /*the pairs should be sorted from small to large based on pair.first, for fast querying*/
 typedef std::vector<std::vector<std::pair<int, std::vector<int>>>> PPR_type;

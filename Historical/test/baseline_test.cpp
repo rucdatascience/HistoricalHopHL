@@ -1,9 +1,11 @@
 using namespace std;
 #include <chrono>
-#include "CPU/graph_v_of_v/graph_v_of_v_generate_random_graph.h"
+#ifdef _HOP
 #include "Historical/graph_v_of_v/graph_v_of_v_with_time_span_hop_constrained.h"
-#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_maintain_hop_constrained_two_hop_labels.h"
-
+#endif
+#ifdef _NO_HOP
+#include "Historical/graph_v_of_v/graph_v_of_v_with_time_span_non_hop_constrained.h"
+#endif
 int testBaseLineAndBaseline2()
 {
     int iterator = 20;

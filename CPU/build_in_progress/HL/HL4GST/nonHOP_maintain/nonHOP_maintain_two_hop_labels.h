@@ -2,11 +2,11 @@
 #include <vector>
 #include <string>
 #include <shared_mutex>
-#include <build_in_progress/HL/HL4GST/nonHOP_maintain/nonHOP_PPR.h>
 #include <boost/heap/fibonacci_heap.hpp>
-#include <tool_functions/ThreadPool.h>
 #include <chrono>
 #include <algorithm>
+#include "CPU/tool_functions/ThreadPool.h"
+#include "CPU/build_in_progress/HL/HL4GST/nonHOP_maintain/nonHOP_PPR.h"
 using namespace std;
 #define weightTYPE int
 
@@ -213,92 +213,147 @@ bool compare_two_hop_label_small_to_large(two_hop_label &i, two_hop_label &j)
 
 void insert_sorted_two_hop_label(std::vector<two_hop_label> &input_vector, int key, weightTYPE value, int time)
 {
-
 	label_operation_times++;
-
 	int left = 0, right = input_vector.size() - 1;
 
-	two_hop_label xx(time);
-	xx.vertex = key;
-	xx.distance = value;
-
-	while (left <= right) // it will be skept when input_vector.size() == 0
+	while (left <= right)
 	{
-		int mid = left + ((right - left) / 2); // mid is between left and right (may be equal);
-		if (input_vector[mid].vertex == key)
+		int mid = left + ((right - left) / 2);
+
+		if (input_vector[mid].t_e == std::numeric_limits<int>::max())
 		{
-			input_vector[mid] = xx;
-			return;
-		}
-		else if (input_vector[mid].vertex > key)
-		{
-			right = mid - 1; // the elements after right are always either empty, or have larger keys than input key
+			if (input_vector[mid].vertex == key)
+			{
+				two_hop_label old_label = input_vector[mid];
+				old_label.t_e = time - 1;
+
+				input_vector[mid].distance = value;
+				input_vector[mid].t_s = time;
+
+				int insert_left = mid + 1, insert_right = input_vector.size() - 1;
+
+				while (insert_left <= insert_right)
+				{
+					int insert_mid = insert_left + ((insert_right - insert_left) / 2);
+
+					if (input_vector[insert_mid].t_e < time)
+					{
+						insert_right = insert_mid - 1;
+					}
+					else if (input_vector[insert_mid].t_e == time)
+					{
+						if (input_vector[insert_mid].vertex > key)
+						{
+							insert_right = insert_mid - 1;
+						}
+						else if (input_vector[insert_mid].vertex < key)
+						{
+							insert_left = insert_mid + 1;
+						}
+						else
+						{
+							insert_left = insert_mid;
+							break;
+						}
+					}
+					else
+					{
+						insert_left = insert_mid + 1;
+					}
+				}
+				input_vector.insert(input_vector.begin() + insert_left, old_label);
+				return;
+			}
+			else if (input_vector[mid].vertex < key)
+			{
+				left = mid + 1; // hub_vertex 太小，继续向右找
+			}
+			else
+			{
+				right = mid - 1; // hub_vertex 太大，向左找
+			}
 		}
 		else
 		{
-			left = mid + 1; // the elements before left are always either empty, or have smaller keys than input key
+			right = mid - 1; // t_e 不是无穷大，向左继续查找
 		}
 	}
-	// cout << "h 4.3 " << left << " " << key << " " << value << " " << input_vector.size() << " " << &input_vector << endl;
-	input_vector.insert(input_vector.begin() + left, xx);
+
+	// Step 6: 如果没找到符合条件的标签，则插入新标签
+	two_hop_label new_label(time);
+	new_label.vertex = key;
+	new_label.distance = value;
+
+	// 找到插入点，确保排序规则
+	input_vector.insert(input_vector.begin() + left, new_label); // 在 left 位置插入新标签
 }
 
 weightTYPE search_sorted_two_hop_label(std::vector<two_hop_label> &input_vector, int key)
 {
 
 	label_operation_times++;
-
-	/*return true if key is in vector; time complexity O(log n)*/
-
 	int left = 0, right = input_vector.size() - 1;
 
 	while (left <= right)
 	{
-		int mid = left + ((right - left) / 2); // mid is between left and right (may be equal);
-		if (input_vector[mid].vertex == key)
+		int mid = left + ((right - left) / 2);
+
+		if (input_vector[mid].t_e == std::numeric_limits<int>::max())
 		{
-			return input_vector[mid].distance;
-		}
-		else if (input_vector[mid].vertex > key)
-		{
-			right = mid - 1;
+			if (input_vector[mid].vertex == key)
+			{
+				return input_vector[mid].distance;
+			}
+			else if (input_vector[mid].vertex < key)
+			{
+				left = mid + 1;
+			}
+			else
+			{
+				right = mid - 1;
+			}
 		}
 		else
 		{
-			left = mid + 1;
+			right = mid - 1;
 		}
 	}
 
-	return std::numeric_limits<weightTYPE>::max();
+	return std::numeric_limits<int>::max();
 }
 
 pair<weightTYPE, int> search_sorted_two_hop_label2(std::vector<two_hop_label> &input_vector, int key)
 {
 
 	label_operation_times++;
-
-	/*return true if key is in vector; time complexity O(log n)*/
-
 	int left = 0, right = input_vector.size() - 1;
 
 	while (left <= right)
 	{
-		int mid = left + ((right - left) / 2); // mid is between left and right (may be equal);
-		if (input_vector[mid].vertex == key)
+		int mid = left + ((right - left) / 2);
+
+		if (input_vector[mid].t_e == std::numeric_limits<int>::max())
 		{
-			return {input_vector[mid].distance, mid};
-		}
-		else if (input_vector[mid].vertex > key)
-		{
-			right = mid - 1;
+			if (input_vector[mid].vertex == key)
+			{
+				return {input_vector[mid].distance, mid};
+			}
+			else if (input_vector[mid].vertex < key)
+			{
+				left = mid + 1;
+			}
+			else
+			{
+				right = mid - 1;
+			}
 		}
 		else
 		{
-			left = mid + 1;
+			right = mid - 1;
 		}
 	}
 
-	return {std::numeric_limits<weightTYPE>::max(), -1};
+	return {std::numeric_limits<int>::max(), -1};
 }
 
 #define Query(x, y) graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc(L, x, y)	 // reduction is not used here
@@ -442,7 +497,8 @@ pair<weightTYPE, int> graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_n
 	auto vector1_check_pointer = L[source].begin();
 	auto vector2_check_pointer = L[terminal].begin();
 	auto pointer_L_s_end = L[source].end(), pointer_L_t_end = L[terminal].end();
-	while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end)
+	while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end
+		&& vector1_check_pointer->t_e == std::numeric_limits<int>::max() && vector2_check_pointer->t_e == std::numeric_limits<int>::max())
 	{
 		if (vector1_check_pointer->vertex == vector2_check_pointer->vertex)
 		{
@@ -516,7 +572,8 @@ pair<weightTYPE, int> graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_n
 	auto vector1_check_pointer = L_s.begin();
 	auto vector2_check_pointer = L_t.begin();
 	auto pointer_L_s_end = L_s.end(), pointer_L_t_end = L_t.end();
-	while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end)
+	while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end
+	 	&& vector1_check_pointer->t_e==std::numeric_limits<int>::max() && vector2_check_pointer->t_e == std::numeric_limits<int>::max())
 	{
 		if (vector1_check_pointer->vertex == vector2_check_pointer->vertex)
 		{

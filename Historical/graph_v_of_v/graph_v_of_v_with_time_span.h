@@ -2,15 +2,12 @@
 
 #include <iostream>
 #include <chrono>
+#include <boost/random.hpp>
+#include <vector>
 #include "CPU/tool_functions/sorted_vector_binary_operations.h"
 #include "CPU/graph_v_of_v/graph_v_of_v.h"
 #include "CPU/graph_v_of_v/graph_v_of_v_update_vertexIDs_by_degrees_large_to_small.h"
 #include "CPU/graph_v_of_v/graph_v_of_v_generate_random_graph.h"
-#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_maintain_hop_constrained_two_hop_labels.h"
-#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_WeightDecreaseMaintenance_improv_batch.h"
-#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_WeightDecrease2021_batch.h"
-#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_WeightIncrease2021_batch.h"
-#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_WeightIncreaseMaintenance_improv_batch.h"
 
 #include "CPU/tool_functions/ThreadPool.h"
 #include <boost/heap/fibonacci_heap.hpp>
@@ -27,18 +24,6 @@ public:
 		: vertex(vertex), weight(weight), startTimeLabel(startTimeLabel)
 	{
 		endTimeLabel = INT_MAX;
-	}
-};
-template <typename weight_type>
-struct compare_tuple
-{
-	bool operator()(const tuple<int, weight_type, int> &lhs, const tuple<int, weight_type, int> &rhs) const
-	{
-		if (get<1>(lhs) == get<1>(rhs))
-		{
-			return get<2>(lhs) > get<2>(rhs);
-		}
-		return get<1>(lhs) > get<1>(rhs);
 	}
 };
 
@@ -228,67 +213,4 @@ inline void graph_v_of_v_with_time_span<weight_type>::process(graph_v_of_v<weigh
 		add_edge(path[index].first, path[index].second, weight[index], t);
 		instance_graph.add_edge(path[index].first, path[index].second, weight[index]);
 	}
-}
-
-template <typename weight_type>
-weight_type dijkstra(graph_v_of_v<weight_type> &graph, int u, int v, int k)
-{
-	std::vector<weight_type> dist(graph.size(), std::numeric_limits<weight_type>::max());
-	std::vector<int> hop_list(graph.size(), std::numeric_limits<int>::max());
-	boost::heap::fibonacci_heap<std::tuple<int, weight_type, int>, boost::heap::compare<compare_tuple<weight_type>>> queue;
-
-	dist[u] = 0;
-	hop_list[u] = 0;
-	queue.push({u, 0, 0});
-	int res = __INT_MAX__;
-	while (!queue.empty())
-	{
-		auto top = queue.top();
-		int vertexBase = std::get<0>(top);
-		weight_type currentDist = std::get<1>(top);
-		int hop = std::get<2>(top);
-		queue.pop();
-
-		if (vertexBase == v)
-		{
-			res = min(res, currentDist);
-		}
-		if (hop >= k)
-		{
-			continue;
-		}
-
-		for (const auto &edge : graph[vertexBase])
-		{
-			int next = edge.first;
-			weight_type weight = edge.second;
-
-			weight_type newDist = currentDist + weight;
-
-			if (newDist < dist[next] || (hop + 1 < hop_list[next]))
-			{
-				dist[next] = newDist;
-				hop_list[next] = hop + 1;
-				queue.push({next, newDist, hop + 1});
-			}
-		}
-	}
-
-	return res;
-}
-
-template <typename weight_type>
-int dijkstra_iterator(vector<graph_v_of_v<weight_type>> list, int u, int v, int k)
-{
-	int res = INT_MAX;
-	auto start_time = std::chrono::high_resolution_clock::now();
-	for (graph_v_of_v<int> graph : list)
-	{
-		res = min(res, dijkstra(graph, u, v, k));
-		// cout << "dijkstra" << res << endl;
-	}
-	auto endTime = std::chrono::high_resolution_clock::now();
-	double runtime_n_iterate_dijkstra = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - start_time).count() / 1e9;
-	std::cout << "dijkstra query time" << runtime_n_iterate_dijkstra << endl;
-	return res;
 };

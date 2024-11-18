@@ -1,8 +1,8 @@
 #pragma once
-#include <build_in_progress/HL/HL4GST/nonHOP_maintain/nonHOP_maintain_two_hop_labels.h>
-#include <tool_functions/ThreadPool.h>
+#include <CPU/build_in_progress/HL/HL4GST/nonHOP_maintain/nonHOP_maintain_two_hop_labels.h>
+#include <CPU/tool_functions/ThreadPool.h>
 #include <shared_mutex>
-#include <graph_v_of_v/graph_v_of_v.h>
+#include <CPU/graph_v_of_v/graph_v_of_v.h>
 #include <iostream>
 #include <chrono>
 #include <boost/heap/fibonacci_heap.hpp>

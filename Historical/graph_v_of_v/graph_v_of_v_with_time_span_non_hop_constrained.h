@@ -1,34 +1,28 @@
 #include "Historical/graph_v_of_v/graph_v_of_v_with_time_span.h"
-#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_maintain_hop_constrained_two_hop_labels.h"
-#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_WeightDecreaseMaintenance_improv_batch.h"
-#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_WeightDecrease2021_batch.h"
-#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_WeightIncrease2021_batch.h"
-#include "CPU/build_in_progress/HL/HL4GST/HOP_maintain/HOP_WeightIncreaseMaintenance_improv_batch.h"
+#include "CPU/build_in_progress/HL/HL4GST/nonHOP_maintain/nonHOP_maintain_two_hop_labels.h"
+#include "CPU/build_in_progress/HL/HL4GST/nonHOP_maintain/nonHOP_maintain_PLL.h"
 
 using namespace std;
-
 template <typename weight_type>
-struct compare_tuple
+struct compare_pair
 {
-    bool operator()(const tuple<int, weight_type, int> &lhs, const tuple<int, weight_type, int> &rhs) const
+    bool operator()(const pair<int, weight_type> &lhs, const pair<int, weight_type> &rhs) const
     {
-        if (get<1>(lhs) == get<1>(rhs))
+        if (lhs.first == rhs.first)
         {
-            return get<2>(lhs) > get<2>(rhs);
+            return lhs.second > rhs.second;
         }
-        return get<1>(lhs) > get<1>(rhs);
+        return lhs.first > rhs.first;
     }
 };
-
 template <typename weight_type> // weight_type may be int, long long int, float, double...
-class graph_v_of_v_with_time_span_hop_constrained : public graph_v_of_v_with_time_span<weight_type>
+class graph_v_of_v_with_time_span_non_hop_constrained : public graph_v_of_v_with_time_span<weight_type>
 {
 private:
 public:
-    graph_v_of_v_with_time_span_hop_constrained() : graph_v_of_v_with_time_span<weight_type>() {};
-    graph_v_of_v_with_time_span_hop_constrained(int n, int e, weight_type weight_upper_limit, weight_type weight_lower_limit) : graph_v_of_v_with_time_span<weight_type>(n, e, weight_upper_limit, weight_lower_limit) {};
+    graph_v_of_v_with_time_span_non_hop_constrained() : graph_v_of_v_with_time_span<weight_type>() {};
+    graph_v_of_v_with_time_span_non_hop_constrained(int n, int e, weight_type weight_upper_limit, weight_type weight_lower_limit) : graph_v_of_v_with_time_span<weight_type>(n, e, weight_upper_limit, weight_lower_limit) {};
 
-    /*class member functions*/
     /**
      * param
      * 	@u is the source vertex,
@@ -36,35 +30,27 @@ public:
      * 	@startTime,
      * 	@endTime
      */
-    weight_type search_shortest_path_in_period_time_naive(int u, int v, int k, int startTime, int endTime) override
+    weight_type search_shortest_path_in_period_time_naive(int u, int v, int startTime, int endTime) override
     {
         weight_type res = std::numeric_limits<weight_type>::max();
         int N = this->v_num;
 
-        boost::heap::fibonacci_heap<tuple<int, weight_type, int>, boost::heap::compare<compare_tuple<weight_type>>> queue;
+        boost::heap::fibonacci_heap<pair<int, weight_type>, boost::heap::compare<compare_pair<weight_type>>> queue;
         for (int queryTime = startTime; queryTime <= endTime; queryTime++)
         {
             std::vector<weight_type> dist(N, std::numeric_limits<weight_type>::max());
-            std::vector<int> hop_list(N, std::numeric_limits<int>::max());
             queue.clear();
             dist[u] = 0;
-            hop_list[u] = 0;
-            queue.push({u, 0, 0});
+            queue.push({u, 0});
             while (queue.size() > 0)
             {
-                int hop = get<2>(queue.top());
-                int vertexBase = get<0>(queue.top());
-                weight_type currentDist = std::get<1>(queue.top());
+                int vertexBase = queue.top().first;
+                weight_type currentDist = queue.top().second;
                 queue.pop();
                 if (vertexBase == v)
                 {
                     res = min(res, currentDist);
                 }
-                if (hop == k)
-                {
-                    continue;
-                }
-
                 for (const auto &vertices : this->ADJs[vertexBase])
                 {
                     int next = vertices.first;
@@ -73,11 +59,10 @@ public:
                         if (edge_info_time_span.startTimeLabel <= queryTime && edge_info_time_span.endTimeLabel >= queryTime)
                         {
                             weight_type newDist = currentDist + edge_info_time_span.weight;
-                            if (newDist < dist[next] || (hop + 1) < hop_list[next])
+                            if (newDist < dist[next])
                             {
                                 dist[next] = newDist;
-                                hop_list[next] = hop + 1;
-                                queue.push({next, newDist, hop + 1});
+                                queue.push({next, newDist});
                             }
                             break;
                         }
@@ -89,7 +74,7 @@ public:
         return res;
     };
 
-    vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int decrease_time, int increase_time, float change_ratio, hop_constrained_case_info &case_info, hop_constrained_case_info &case_info_2021)
+    vector<graph_v_of_v<weight_type>> graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(int change_num, int decrease_time, int increase_time, float change_ratio, two_hop_case_info &case_info, two_hop_case_info &case_info_2021)
     {
         if (change_num < 0)
         {
@@ -106,9 +91,9 @@ public:
         }
         instance_graph = graph_v_of_v_update_vertexIDs_by_degrees_large_to_small_mock(instance_graph, is_mock);
         timer.mark_time("====time 0====");
-        hop_constrained_two_hop_labels_generation(instance_graph, case_info);
-        hop_constrained_two_hop_labels_generation(instance_graph, case_info_2021);
-        timer.mark_time("initialize_global_values_dynamic_hop_constrained");
+        PLL(instance_graph, case_info);
+        PLL(instance_graph, case_info_2021);
+        timer.mark_time("initialize_global_values_dynamic_non_hop_constrained");
         timer.mark_time("====maintain process====");
         ThreadPool pool_dynamic(case_info.thread_num);
         std::vector<std::future<int>> results_dynamic;
@@ -402,67 +387,4 @@ public:
             exit(1);                                                                  // end the program
         }
     };
-};
-
-template <typename weight_type>
-weight_type dijkstra(graph_v_of_v<weight_type> &graph, int u, int v, int k)
-{
-	std::vector<weight_type> dist(graph.size(), std::numeric_limits<weight_type>::max());
-	std::vector<int> hop_list(graph.size(), std::numeric_limits<int>::max());
-	boost::heap::fibonacci_heap<std::tuple<int, weight_type, int>, boost::heap::compare<compare_tuple<weight_type>>> queue;
-
-	dist[u] = 0;
-	hop_list[u] = 0;
-	queue.push({u, 0, 0});
-	int res = __INT_MAX__;
-	while (!queue.empty())
-	{
-		auto top = queue.top();
-		int vertexBase = std::get<0>(top);
-		weight_type currentDist = std::get<1>(top);
-		int hop = std::get<2>(top);
-		queue.pop();
-
-		if (vertexBase == v)
-		{
-			res = min(res, currentDist);
-		}
-		if (hop >= k)
-		{
-			continue;
-		}
-
-		for (const auto &edge : graph[vertexBase])
-		{
-			int next = edge.first;
-			weight_type weight = edge.second;
-
-			weight_type newDist = currentDist + weight;
-
-			if (newDist < dist[next] || (hop + 1 < hop_list[next]))
-			{
-				dist[next] = newDist;
-				hop_list[next] = hop + 1;
-				queue.push({next, newDist, hop + 1});
-			}
-		}
-	}
-
-	return res;
-}
-
-template <typename weight_type>
-int dijkstra_iterator(vector<graph_v_of_v<weight_type>> list, int u, int v, int k)
-{
-	int res = INT_MAX;
-	auto start_time = std::chrono::high_resolution_clock::now();
-	for (graph_v_of_v<int> graph : list)
-	{
-		res = min(res, dijkstra(graph, u, v, k));
-		// cout << "dijkstra" << res << endl;
-	}
-	auto endTime = std::chrono::high_resolution_clock::now();
-	double runtime_n_iterate_dijkstra = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - start_time).count() / 1e9;
-	std::cout << "dijkstra query time" << runtime_n_iterate_dijkstra << endl;
-	return res;
 };
