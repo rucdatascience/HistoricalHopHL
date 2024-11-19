@@ -36,7 +36,7 @@ public:
      * 	@startTime,
      * 	@endTime
      */
-    weight_type search_shortest_path_in_period_time_naive(int u, int v, int k, int startTime, int endTime) override
+    weight_type search_shortest_path_in_period_time_naive(int u, int v, int k, int startTime, int endTime)
     {
         weight_type res = std::numeric_limits<weight_type>::max();
         int N = this->v_num;
@@ -407,62 +407,62 @@ public:
 template <typename weight_type>
 weight_type dijkstra(graph_v_of_v<weight_type> &graph, int u, int v, int k)
 {
-	std::vector<weight_type> dist(graph.size(), std::numeric_limits<weight_type>::max());
-	std::vector<int> hop_list(graph.size(), std::numeric_limits<int>::max());
-	boost::heap::fibonacci_heap<std::tuple<int, weight_type, int>, boost::heap::compare<compare_tuple<weight_type>>> queue;
+    std::vector<weight_type> dist(graph.size(), std::numeric_limits<weight_type>::max());
+    std::vector<int> hop_list(graph.size(), std::numeric_limits<int>::max());
+    boost::heap::fibonacci_heap<std::tuple<int, weight_type, int>, boost::heap::compare<compare_tuple<weight_type>>> queue;
 
-	dist[u] = 0;
-	hop_list[u] = 0;
-	queue.push({u, 0, 0});
-	int res = __INT_MAX__;
-	while (!queue.empty())
-	{
-		auto top = queue.top();
-		int vertexBase = std::get<0>(top);
-		weight_type currentDist = std::get<1>(top);
-		int hop = std::get<2>(top);
-		queue.pop();
+    dist[u] = 0;
+    hop_list[u] = 0;
+    queue.push({u, 0, 0});
+    int res = __INT_MAX__;
+    while (!queue.empty())
+    {
+        auto top = queue.top();
+        int vertexBase = std::get<0>(top);
+        weight_type currentDist = std::get<1>(top);
+        int hop = std::get<2>(top);
+        queue.pop();
 
-		if (vertexBase == v)
-		{
-			res = min(res, currentDist);
-		}
-		if (hop >= k)
-		{
-			continue;
-		}
+        if (vertexBase == v)
+        {
+            res = min(res, currentDist);
+        }
+        if (hop >= k)
+        {
+            continue;
+        }
 
-		for (const auto &edge : graph[vertexBase])
-		{
-			int next = edge.first;
-			weight_type weight = edge.second;
+        for (const auto &edge : graph[vertexBase])
+        {
+            int next = edge.first;
+            weight_type weight = edge.second;
 
-			weight_type newDist = currentDist + weight;
+            weight_type newDist = currentDist + weight;
 
-			if (newDist < dist[next] || (hop + 1 < hop_list[next]))
-			{
-				dist[next] = newDist;
-				hop_list[next] = hop + 1;
-				queue.push({next, newDist, hop + 1});
-			}
-		}
-	}
+            if (newDist < dist[next] || (hop + 1 < hop_list[next]))
+            {
+                dist[next] = newDist;
+                hop_list[next] = hop + 1;
+                queue.push({next, newDist, hop + 1});
+            }
+        }
+    }
 
-	return res;
+    return res;
 }
 
 template <typename weight_type>
 int dijkstra_iterator(vector<graph_v_of_v<weight_type>> list, int u, int v, int k)
 {
-	int res = INT_MAX;
-	auto start_time = std::chrono::high_resolution_clock::now();
-	for (graph_v_of_v<int> graph : list)
-	{
-		res = min(res, dijkstra(graph, u, v, k));
-		// cout << "dijkstra" << res << endl;
-	}
-	auto endTime = std::chrono::high_resolution_clock::now();
-	double runtime_n_iterate_dijkstra = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - start_time).count() / 1e9;
-	std::cout << "dijkstra query time" << runtime_n_iterate_dijkstra << endl;
-	return res;
+    int res = INT_MAX;
+    auto start_time = std::chrono::high_resolution_clock::now();
+    for (graph_v_of_v<int> graph : list)
+    {
+        res = min(res, dijkstra(graph, u, v, k));
+        // cout << "dijkstra" << res << endl;
+    }
+    auto endTime = std::chrono::high_resolution_clock::now();
+    double runtime_n_iterate_dijkstra = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - start_time).count() / 1e9;
+    std::cout << "dijkstra query time" << runtime_n_iterate_dijkstra << endl;
+    return res;
 };

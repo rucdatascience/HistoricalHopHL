@@ -1,6 +1,8 @@
 using namespace std;
 #include <chrono>
-#include "Historical/graph_v_of_v/graph_v_of_v_with_time_span_hop_constrained.h"
+#include "Historical/graph_v_of_v/graph_v_of_v_with_time_span_non_hop_constrained.h"
+using namespace nonHop;
+
 int testBaseLineAndBaseline2()
 {
     int iterator = 20;
@@ -13,61 +15,56 @@ int testBaseLineAndBaseline2()
         try
         {
             // query param
-            int source = 90, target = 99;
+            int source = 2, target = 4;
             int queryStartTime = 4, queryEndTime = 8;
-            int k = 10;
             // generate a random graph
             // int v_num = 10, e_num = 20;
             // int upper = 20, lower = 1;
             // int change_num = 2, decrease_time = 0, increase_time = 5;
             // float change_ratio = 0.3;
             // generate a larger random graph
-            int v_num = 1000, e_num = 10000;
+            int v_num = 5, e_num = 10;
             int upper = 100, lower = 80;
-            int change_num = 30, decrease_time = 50, increase_time = 50;
+            int change_num = 30, decrease_time = 2, increase_time = 0;
             float change_ratio = 0.3;
 
-            graph_v_of_v_with_time_span_hop_constrained<int> graph_with_time_span_hop_constrained;
+            graph_v_of_v_with_time_span_non_hop_constrained<int> graph_with_time_span_non_hop_constrained;
             vector<graph_v_of_v<int>> graphs;
 
             // initialize the 2-hop label with time span
-            hop_constrained_case_info mm;
-            mm.upper_k = k;
-            mm.max_bit_size = 6e9;
-            mm.use_2M_prune = 1;
-            mm.use_rank_prune = 1; // set true
-            mm.use_2023WWW_generation = 0;
-            mm.use_canonical_repair = 0;
+            two_hop_case_info mm;
+            mm.max_labal_byte_size = 6e9;
             mm.max_run_time_seconds = 1e2;
-            mm.thread_num = 10;
+            mm.use_2M_prune = 1;
+            mm.use_rank_prune = 1;
+            mm.use_canonical_repair = 1;
+            mm.thread_num = 1;
             mm.source = source;
             mm.target = target;
             mm.t_s = queryStartTime;
             mm.t_e = queryEndTime;
 
-            hop_constrained_case_info mm2021;
-            mm2021.upper_k = k;
-            mm2021.max_bit_size = 6e9;
-            mm2021.use_2M_prune = 1;
-            mm2021.use_rank_prune = 1; // set true
-            mm2021.use_2023WWW_generation = 0;
-            mm2021.use_canonical_repair = 0;
-            mm2021.max_run_time_seconds = 1e2;
-            mm2021.thread_num = 10;
-            mm2021.source = source;
-            mm2021.target = target;
-            mm2021.t_s = queryStartTime;
-            mm2021.t_e = queryEndTime;
+            two_hop_case_info mm2021;
+            mm.max_labal_byte_size = 6e9;
+            mm.max_run_time_seconds = 1e2;
+            mm.use_2M_prune = 1;
+            mm.use_rank_prune = 1;
+            mm.use_canonical_repair = 1;
+            mm.thread_num = 1;
+            mm.source = source;
+            mm.target = target;
+            mm.t_s = queryStartTime;
+            mm.t_e = queryEndTime;
 
             bool use_save_read = false;
             bool use_2_hop_label = true;
 
             if (use_save_read)
             {
-                graph_with_time_span_hop_constrained = graph_v_of_v_with_time_span_hop_constrained<int>();
-                graphs = graph_with_time_span_hop_constrained.txt_read("time-graph.txt", mm, mm2021);
+                graph_with_time_span_non_hop_constrained = graph_v_of_v_with_time_span_non_hop_constrained<int>();
+                graphs = graph_with_time_span_non_hop_constrained.txt_read("time-graph-nonhop.txt", mm, mm2021);
                 // graphs = graph_with_time_span.txt_read("time-graph-2024-10-09-1729.txt", mm);
-                if (graph_with_time_span_hop_constrained.size() < source || graph_with_time_span_hop_constrained.size() < target)
+                if (graph_with_time_span_non_hop_constrained.size() < source || graph_with_time_span_non_hop_constrained.size() < target)
                 {
                     cout << "vertex is out of range" << endl;
                     return 0;
@@ -75,10 +72,10 @@ int testBaseLineAndBaseline2()
             }
             else
             {
-                initialize_global_values_dynamic_hop_constrained(v_num, mm.thread_num, mm.upper_k);
-                graph_with_time_span_hop_constrained = graph_v_of_v_with_time_span_hop_constrained<int>(v_num, e_num, upper, lower);
-                graphs = graph_with_time_span_hop_constrained.graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(change_num, decrease_time, increase_time, change_ratio, mm, mm2021);
-                graph_with_time_span_hop_constrained.txt_save("time-graph.txt");
+                initialize_global_values_dynamic(v_num, mm.thread_num);
+                graph_with_time_span_non_hop_constrained = graph_v_of_v_with_time_span_non_hop_constrained<int>(v_num, e_num, upper, lower);
+                graphs = graph_with_time_span_non_hop_constrained.graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(change_num, decrease_time, increase_time, change_ratio, mm, mm2021);
+                graph_with_time_span_non_hop_constrained.txt_save("time-graph-nonhop.txt");
             }
             std::cout << "maintain runtime is " << mm.get_maintain_time() << std::endl;
             std::cout << "2021 maintain runtime is " << mm2021.get_maintain_time() << std::endl;
@@ -90,22 +87,22 @@ int testBaseLineAndBaseline2()
                 return 1;
             }
             vector<graph_v_of_v<int>> subsequence(graphs.begin() + queryStartTime, graphs.begin() + queryEndTime + 1);
-            int res_n_iterate_dijkstra = dijkstra_iterator(subsequence, source, target, k);
+            int res_n_iterate_dijkstra = dijkstra_iterator(subsequence, source, target);
 
             // dfs to calculate the shortest path baseline 2
             auto start_time_base_line_2 = std::chrono::high_resolution_clock::now();
-            int res_base_line_with_span = graph_with_time_span_hop_constrained.search_shortest_path_in_period_time_naive(source, target, k, queryStartTime, queryEndTime);
+            int res_base_line_with_span = graph_with_time_span_non_hop_constrained.search_shortest_path_in_period_time_naive(source, target, queryStartTime, queryEndTime);
             auto end_time_base_line_2 = std::chrono::high_resolution_clock::now();
             double runtime_base_line_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_base_line_2 - start_time_base_line_2).count() / 1e9;
             if (use_2_hop_label)
             {
                 auto start_time_2_hop_label = std::chrono::high_resolution_clock::now();
-                int res = mm.query(source, target, queryStartTime, queryEndTime, k);
+                int res = mm.query(source, target, queryStartTime, queryEndTime);
                 auto end_time_2_hop_label = std::chrono::high_resolution_clock::now();
                 double runtime_2_hop_label_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_2_hop_label - start_time_2_hop_label).count() / 1e9;
 
                 auto start_time_2_hop_label_2021 = std::chrono::high_resolution_clock::now();
-                int res_2021 = mm2021.query(source, target, queryStartTime, queryEndTime, k);
+                int res_2021 = mm2021.query(source, target, queryStartTime, queryEndTime);
                 auto end_time_2_hop_label_2021 = std::chrono::high_resolution_clock::now();
                 double runtime_2_hop_label_with_span_2021 = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_2_hop_label_2021 - start_time_2_hop_label_2021).count() / 1e9;
 

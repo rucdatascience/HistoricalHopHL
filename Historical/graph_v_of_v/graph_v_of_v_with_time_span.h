@@ -43,7 +43,7 @@ public:
 	vector<vector<pair<int, vector<EdgeInfo<weight_type>>>>> ADJs;
 
 	/*constructors*/
-	graph_v_of_v_with_time_span() {}
+	graph_v_of_v_with_time_span() {};
 
 	graph_v_of_v_with_time_span(int n, int e, weight_type weight_upper_limit, weight_type weight_lower_limit) : v_num(n), e_num(e), weight_dis(weight_lower_limit, weight_upper_limit), ADJs(n)
 	{
@@ -65,10 +65,7 @@ public:
 	{
 		return ADJs[i];
 	}
-
-	/*class member functions*/
-	virtual weight_type search_shortest_path_in_period_time_naive(int u, int v, int k, int startTime, int endTime) = 0;
-
+	
 	inline void print();
 
 	inline void txt_save(std::string save_name);

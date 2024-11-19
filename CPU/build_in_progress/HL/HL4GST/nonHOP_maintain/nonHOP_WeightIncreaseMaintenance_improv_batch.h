@@ -6,7 +6,7 @@
 #include <map>
 
 using namespace std;
-
+using namespace nonHop;
 void SPREAD1_batch(graph_v_of_v<int>& instance_graph, vector<vector<two_hop_label>>* L,
 	std::vector<affected_label>& al1, std::vector<pair_label>* al2, std::map<pair<int,int>,weightTYPE >& w_old_map,
 	ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic) {

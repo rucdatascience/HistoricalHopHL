@@ -1,7 +1,7 @@
 #pragma once
 
 #include <build_in_progress/HL/HL4GST/nonHOP_maintain/nonHOP_maintain_PLL.h>
-
+using namespace nonHop;
 void PI11(graph_v_of_v<int>& instance_graph, vector<vector<two_hop_label>>* L,
 	std::vector<affected_label>& al1_curr, std::vector<affected_label>* al1_next, 
 	std::map<pair<int,int>,weightTYPE >& w_old_map,

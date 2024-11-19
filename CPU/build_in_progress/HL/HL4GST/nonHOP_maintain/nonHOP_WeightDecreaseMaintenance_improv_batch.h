@@ -1,18 +1,17 @@
 #pragma once
-
-#include "build_in_progress/HL/HL4GST/nonHOP_maintain/nonHOP_maintain_PLL.h"
 #include <map>
-
+#include "CPU/build_in_progress/HL/HL4GST/nonHOP_maintain/nonHOP_maintain_PLL.h"
 using namespace std;
-
-void WeightDecreaseMaintenance_improv_step1_batch(std::map<pair<int, int>, weightTYPE> &v_map, vector<vector<two_hop_label>> *L, PPR_type *PPR, std::vector<affected_label> *CL,
-												  ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
+namespace nonHop
 {
-
-	for (auto it : v_map)
+	void WeightDecreaseMaintenance_improv_step1_batch(std::map<pair<int, int>, weightTYPE> &v_map, vector<vector<two_hop_label>> *L, PPR_type *PPR, std::vector<affected_label> *CL,
+													  ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
 	{
-		results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, PPR, CL]
-														  {
+
+		for (auto it : v_map)
+		{
+			results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, PPR, CL]
+															  {
 			int v1 = it.first.first, v2 = it.first.second;
 			weightTYPE w_new = it.second;
 			for (int sl = 0; sl < 2; sl++) {
@@ -49,63 +48,63 @@ void WeightDecreaseMaintenance_improv_step1_batch(std::map<pair<int, int>, weigh
 				}
 			}
 		return 1; }));
+		}
+
+		for (auto &&result : results_dynamic)
+		{
+			result.get();
+		}
+		std::vector<std::future<int>>().swap(results_dynamic);
 	}
 
-	for (auto &&result : results_dynamic)
+	void DIFFUSE_batch(graph_v_of_v<int> &instance_graph, vector<vector<two_hop_label>> *L, PPR_type *PPR, std::vector<affected_label> &CL,
+					   ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
 	{
-		result.get();
-	}
-	std::vector<std::future<int>>().swap(results_dynamic);
-}
 
-void DIFFUSE_batch(graph_v_of_v<int> &instance_graph, vector<vector<two_hop_label>> *L, PPR_type *PPR, std::vector<affected_label> &CL,
-				   ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
-{
-
-	// Deduplication
-	std::map<std::pair<int, int>, weightTYPE> CL_edge_map;
-	for (auto &it : CL)
-	{
-		if (CL_edge_map.count({it.first, it.second}) == 0)
+		// Deduplication
+		std::map<std::pair<int, int>, weightTYPE> CL_edge_map;
+		for (auto &it : CL)
 		{
-			CL_edge_map[{it.first, it.second}] = it.dis;
+			if (CL_edge_map.count({it.first, it.second}) == 0)
+			{
+				CL_edge_map[{it.first, it.second}] = it.dis;
+			}
+			else if (CL_edge_map[{it.first, it.second}] > it.dis)
+			{
+				CL_edge_map[{it.first, it.second}] = it.dis;
+			}
 		}
-		else if (CL_edge_map[{it.first, it.second}] > it.dis)
-		{
-			CL_edge_map[{it.first, it.second}] = it.dis;
-		}
-	}
 
-	// extract each unique hub v and its (u,dis) list
-	std::map<int, std::vector<std::pair<int, weightTYPE>>> CL_map; // CL_map[v]=(u1,dis1),(u2,dis2)...
-	for (auto &it : CL_edge_map)
-	{
-		int u = it.first.first;
-		int v = it.first.second;
-		weightTYPE dis = it.second;
-		if (CL_map.count(v) == 0)
+		// extract each unique hub v and its (u,dis) list
+		std::map<int, std::vector<std::pair<int, weightTYPE>>> CL_map; // CL_map[v]=(u1,dis1),(u2,dis2)...
+		for (auto &it : CL_edge_map)
 		{
-			std::vector<std::pair<int, weightTYPE>> vec_with_hub_v;
-			vec_with_hub_v.emplace_back(make_pair(u, dis));
-			CL_map[v] = vec_with_hub_v;
+			int u = it.first.first;
+			int v = it.first.second;
+			weightTYPE dis = it.second;
+			if (CL_map.count(v) == 0)
+			{
+				std::vector<std::pair<int, weightTYPE>> vec_with_hub_v;
+				vec_with_hub_v.emplace_back(make_pair(u, dis));
+				CL_map[v] = vec_with_hub_v;
+			}
+			else
+			{
+				std::vector<std::pair<int, weightTYPE>> vec_with_hub_v = CL_map[v];
+				vec_with_hub_v.emplace_back(make_pair(u, dis));
+				CL_map[v] = vec_with_hub_v;
+			}
 		}
-		else
+
+		std::vector<std::pair<int, std::vector<std::pair<int, weightTYPE>>>> CL_map_vec(CL_map.begin(), CL_map.end());
+		sort(CL_map_vec.begin(), CL_map_vec.end(), [](const std::pair<int, std::vector<std::pair<int, weightTYPE>>> &a, const std::pair<int, std::vector<std::pair<int, weightTYPE>>> &b)
+			 { return a.first < b.first; });
+
+		// each thread processes one unique hub
+		for (auto &it : CL_map_vec)
 		{
-			std::vector<std::pair<int, weightTYPE>> vec_with_hub_v = CL_map[v];
-			vec_with_hub_v.emplace_back(make_pair(u, dis));
-			CL_map[v] = vec_with_hub_v;
-		}
-	}
-
-	std::vector<std::pair<int, std::vector<std::pair<int, weightTYPE>>>> CL_map_vec(CL_map.begin(), CL_map.end());
-	sort(CL_map_vec.begin(), CL_map_vec.end(), [](const std::pair<int, std::vector<std::pair<int, weightTYPE>>> &a, const std::pair<int, std::vector<std::pair<int, weightTYPE>>> &b)
-		 { return a.first < b.first; });
-
-	// each thread processes one unique hub
-	for (auto &it : CL_map_vec)
-	{
-		results_dynamic.emplace_back(pool_dynamic.enqueue([t, it, L, &instance_graph, PPR]
-														  {
+			results_dynamic.emplace_back(pool_dynamic.enqueue([t, it, L, &instance_graph, PPR]
+															  {
 
 			mtx_595_1.lock();
 			int current_tid = Qid_595.front();
@@ -217,42 +216,43 @@ void DIFFUSE_batch(graph_v_of_v<int> &instance_graph, vector<vector<two_hop_labe
 			mtx_595_1.unlock();
 
 			return 1; }));
+		}
+
+		for (auto &&result : results_dynamic)
+		{
+			result.get();
+		}
+		std::vector<std::future<int>>().swap(results_dynamic);
 	}
 
-	for (auto &&result : results_dynamic)
+	void nonHOP_WeightDecreaseMaintenance_improv_batch(graph_v_of_v<int> &instance_graph, two_hop_case_info &mm, std::vector<pair<int, int>> &v, std::vector<int> &w_new,
+													   ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int time)
 	{
-		result.get();
+
+		label_operation_times = 0;
+		global_query_times = 0;
+
+		std::map<pair<int, int>, weightTYPE> w_new_map;
+		int batch_size = v.size();
+		for (int i = 0; i < batch_size; i++)
+		{
+			if (v[i].first > v[i].second)
+			{
+				swap(v[i].first, v[i].second);
+			}
+			if (w_new_map.count(v[i]) == 0)
+			{
+				w_new_map[v[i]] = w_new[i];
+			}
+			else if (w_new_map[v[i]] > w_new[i])
+			{
+				w_new_map[v[i]] = w_new[i];
+			}
+		}
+		std::vector<affected_label> CL;
+
+		WeightDecreaseMaintenance_improv_step1_batch(w_new_map, &mm.L, &mm.PPR, &CL, pool_dynamic, results_dynamic, time);
+
+		DIFFUSE_batch(instance_graph, &mm.L, &mm.PPR, CL, pool_dynamic, results_dynamic, time);
 	}
-	std::vector<std::future<int>>().swap(results_dynamic);
-}
-
-void nonHOP_WeightDecreaseMaintenance_improv_batch(graph_v_of_v<int> &instance_graph, two_hop_case_info &mm, std::vector<pair<int, int>> &v, std::vector<int> &w_new,
-												   ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int time)
-{
-
-	label_operation_times = 0;
-	global_query_times = 0;
-
-	std::map<pair<int, int>, weightTYPE> w_new_map;
-	int batch_size = v.size();
-	for (int i = 0; i < batch_size; i++)
-	{
-		if (v[i].first > v[i].second)
-		{
-			swap(v[i].first, v[i].second);
-		}
-		if (w_new_map.count(v[i]) == 0)
-		{
-			w_new_map[v[i]] = w_new[i];
-		}
-		else if (w_new_map[v[i]] > w_new[i])
-		{
-			w_new_map[v[i]] = w_new[i];
-		}
-	}
-	std::vector<affected_label> CL;
-
-	WeightDecreaseMaintenance_improv_step1_batch(w_new_map, &mm.L, &mm.PPR, &CL, pool_dynamic, results_dynamic, time);
-
-	DIFFUSE_batch(instance_graph, &mm.L, &mm.PPR, CL, pool_dynamic, results_dynamic, time);
 }
