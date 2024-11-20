@@ -2,12 +2,12 @@
 #include <map>
 #include "CPU/build_in_progress/HL/HL4GST/nonHOP_maintain/nonHOP_maintain_PLL.h"
 using namespace std;
+using namespace nonHop;
 namespace nonHop
 {
 	void WeightDecreaseMaintenance_improv_step1_batch(std::map<pair<int, int>, weightTYPE> &v_map, vector<vector<two_hop_label>> *L, PPR_type *PPR, std::vector<affected_label> *CL,
 													  ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
 	{
-
 		for (auto it : v_map)
 		{
 			results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, PPR, CL]

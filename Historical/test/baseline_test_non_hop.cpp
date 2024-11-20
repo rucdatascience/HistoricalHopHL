@@ -16,17 +16,17 @@ int testBaseLineAndBaseline2()
         {
             // query param
             int source = 2, target = 4;
-            int queryStartTime = 4, queryEndTime = 8;
+            int queryStartTime = 0, queryEndTime = 2;
             // generate a random graph
             // int v_num = 10, e_num = 20;
             // int upper = 20, lower = 1;
             // int change_num = 2, decrease_time = 0, increase_time = 5;
             // float change_ratio = 0.3;
             // generate a larger random graph
-            int v_num = 5, e_num = 10;
+            int v_num = 10, e_num = 40;
             int upper = 100, lower = 80;
-            int change_num = 30, decrease_time = 2, increase_time = 0;
-            float change_ratio = 0.3;
+            int change_num = 5, decrease_time = 20, increase_time = 0;
+            float change_ratio = 0.2;
 
             graph_v_of_v_with_time_span_non_hop_constrained<int> graph_with_time_span_non_hop_constrained;
             vector<graph_v_of_v<int>> graphs;
@@ -72,7 +72,6 @@ int testBaseLineAndBaseline2()
             }
             else
             {
-                initialize_global_values_dynamic(v_num, mm.thread_num);
                 graph_with_time_span_non_hop_constrained = graph_v_of_v_with_time_span_non_hop_constrained<int>(v_num, e_num, upper, lower);
                 graphs = graph_with_time_span_non_hop_constrained.graph_v_of_v_generate_random_graph_with_same_edges_of_different_weight(change_num, decrease_time, increase_time, change_ratio, mm, mm2021);
                 graph_with_time_span_non_hop_constrained.txt_save("time-graph-nonhop.txt");
@@ -96,6 +95,8 @@ int testBaseLineAndBaseline2()
             double runtime_base_line_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_base_line_2 - start_time_base_line_2).count() / 1e9;
             if (use_2_hop_label)
             {
+                mm.print_L();
+                mm2021.print_L();
                 auto start_time_2_hop_label = std::chrono::high_resolution_clock::now();
                 int res = mm.query(source, target, queryStartTime, queryEndTime);
                 auto end_time_2_hop_label = std::chrono::high_resolution_clock::now();

@@ -94,7 +94,9 @@ public:
         }
         instance_graph = graph_v_of_v_update_vertexIDs_by_degrees_large_to_small_mock(instance_graph, is_mock);
         timer.mark_time("====time 0====");
+        initialize_global_values_dynamic(this->v_num, case_info.thread_num);
         PLL(instance_graph, case_info);
+        initialize_global_values_dynamic(this->v_num, case_info.thread_num);
         PLL(instance_graph, case_info_2021);
         timer.mark_time("initialize_global_values_dynamic_non_hop_constrained");
         timer.mark_time("====maintain process====");
@@ -142,10 +144,12 @@ public:
                 if (path.size() > case_info.thread_num)
                 {
                     auto time1 = std::chrono::high_resolution_clock::now();
+                    initialize_global_values_dynamic(this->v_num, case_info.thread_num);
                     nonHOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
                     auto time2 = std::chrono::high_resolution_clock::now();
                     case_info.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
                     auto time3 = std::chrono::high_resolution_clock::now();
+                    initialize_global_values_dynamic(this->v_num, case_info.thread_num);
                     nonHOP_WeightDecrease2021_batch(instance_graph, case_info_2021, path, weight, pool_dynamic, results_dynamic, index);
                     auto time4 = std::chrono::high_resolution_clock::now();
                     case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time4 - time3).count() / 1e9);
@@ -156,10 +160,12 @@ public:
             if (path.size() > 0)
             {
                 auto time1 = std::chrono::high_resolution_clock::now();
+                initialize_global_values_dynamic(this->v_num, case_info.thread_num);
                 nonHOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
                 auto time2 = std::chrono::high_resolution_clock::now();
                 case_info.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
                 auto time3 = std::chrono::high_resolution_clock::now();
+                initialize_global_values_dynamic(this->v_num, case_info.thread_num);
                 nonHOP_WeightDecrease2021_batch(instance_graph, case_info_2021, path, weight, pool_dynamic, results_dynamic, index);
                 auto time4 = std::chrono::high_resolution_clock::now();
                 case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time4 - time3).count() / 1e9);
