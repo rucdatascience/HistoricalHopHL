@@ -5,7 +5,7 @@ using namespace nonHop;
 
 int testBaseLineAndBaseline2()
 {
-    int iterator = 20;
+    int iterator = 1;
     int index = 0;
     timer.is_debug = false;
     while (index < iterator)
@@ -15,17 +15,17 @@ int testBaseLineAndBaseline2()
         try
         {
             // query param
-            int source = 2, target = 4;
-            int queryStartTime = 0, queryEndTime = 2;
+            int source = 490, target = 499;
+            int queryStartTime = 7, queryEndTime = 9;
             // generate a random graph
             // int v_num = 10, e_num = 20;
             // int upper = 20, lower = 1;
             // int change_num = 2, decrease_time = 0, increase_time = 5;
             // float change_ratio = 0.3;
             // generate a larger random graph
-            int v_num = 10, e_num = 40;
-            int upper = 100, lower = 80;
-            int change_num = 5, decrease_time = 20, increase_time = 0;
+            int v_num = 500, e_num = 3000;
+            int upper = 100, lower = 50;
+            int change_num = 10, decrease_time = 20, increase_time = 20;
             float change_ratio = 0.2;
 
             graph_v_of_v_with_time_span_non_hop_constrained<int> graph_with_time_span_non_hop_constrained;
@@ -95,8 +95,8 @@ int testBaseLineAndBaseline2()
             double runtime_base_line_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_base_line_2 - start_time_base_line_2).count() / 1e9;
             if (use_2_hop_label)
             {
-                mm.print_L();
-                mm2021.print_L();
+                //mm.print_L();
+                //mm2021.print_L();
                 auto start_time_2_hop_label = std::chrono::high_resolution_clock::now();
                 int res = mm.query(source, target, queryStartTime, queryEndTime);
                 auto end_time_2_hop_label = std::chrono::high_resolution_clock::now();

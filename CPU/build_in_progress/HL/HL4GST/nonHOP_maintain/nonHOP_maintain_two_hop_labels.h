@@ -159,7 +159,7 @@ namespace nonHop
 				cout << "L[" << i << "]=";
 				for (int j = 0; j < L[i].size(); j++)
 				{
-					cout << "{" << L[i][j].vertex << "," << L[i][j].distance << "}";
+					cout << "{" << L[i][j].vertex << "," << L[i][j].distance << "," <<  L[i][j].t_s << ","<< L[i][j].t_e << "}";
 				}
 				cout << endl;
 			}
@@ -269,6 +269,8 @@ namespace nonHop
 
 	bool compare_two_hop_label_small_to_large(two_hop_label &i, two_hop_label &j)
 	{
+		if (i.t_e != j.t_e) 
+			return i.t_e > j.t_e; // t_e降序
 		return i.vertex < j.vertex; // < is from small to big; > is from big to small
 	}
 
