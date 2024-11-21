@@ -384,7 +384,6 @@ namespace nonHop
 		//---------------------------------------------------------------------------------------------------------------------------------------
 
 		case_info.time_total = case_info.time_initialization + case_info.time_generate_labels + case_info.time_sortL + case_info.time_canonical_repair;
-
 		PLL_clear_global_values();
 	}
 }

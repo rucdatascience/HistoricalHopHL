@@ -5,7 +5,7 @@ using namespace nonHop;
 
 int testBaseLineAndBaseline2()
 {
-    int iterator = 1;
+    int iterator = 10;
     int index = 0;
     timer.is_debug = false;
     while (index < iterator)
@@ -15,18 +15,18 @@ int testBaseLineAndBaseline2()
         try
         {
             // query param
-            int source = 490, target = 499;
-            int queryStartTime = 7, queryEndTime = 9;
+            int source = 3, target = 4;
+            int queryStartTime = 1, queryEndTime = 9;
             // generate a random graph
             // int v_num = 10, e_num = 20;
             // int upper = 20, lower = 1;
             // int change_num = 2, decrease_time = 0, increase_time = 5;
             // float change_ratio = 0.3;
             // generate a larger random graph
-            int v_num = 500, e_num = 3000;
+            int v_num = 5, e_num = 10;
             int upper = 100, lower = 50;
-            int change_num = 10, decrease_time = 20, increase_time = 20;
-            float change_ratio = 0.2;
+            int change_num = 10, decrease_time = 3, increase_time = 3;
+            float change_ratio = 0.3;
 
             graph_v_of_v_with_time_span_non_hop_constrained<int> graph_with_time_span_non_hop_constrained;
             vector<graph_v_of_v<int>> graphs;
@@ -38,7 +38,7 @@ int testBaseLineAndBaseline2()
             mm.use_2M_prune = 1;
             mm.use_rank_prune = 1;
             mm.use_canonical_repair = 1;
-            mm.thread_num = 1;
+            mm.thread_num = 5;
             mm.source = source;
             mm.target = target;
             mm.t_s = queryStartTime;
@@ -50,7 +50,7 @@ int testBaseLineAndBaseline2()
             mm.use_2M_prune = 1;
             mm.use_rank_prune = 1;
             mm.use_canonical_repair = 1;
-            mm.thread_num = 1;
+            mm.thread_num = 5;
             mm.source = source;
             mm.target = target;
             mm.t_s = queryStartTime;

@@ -74,7 +74,7 @@ public:
                     }
                 }
             }
-            // cout << "naive" << res << endl;
+            cout << "naive" << res << endl;
         }
         return res;
     };
@@ -113,6 +113,7 @@ public:
         int N = instance_graph.ADJs.size();
         while (index <= change_num)
         {
+            initialize_global_values_dynamic(this->v_num, case_info.thread_num);
             int current_decrease_time = decrease_time;
             int current_increase_time = increase_time;
             timer.mark_time("====time " + std::to_string(index) + "====");
@@ -146,12 +147,10 @@ public:
                 if (path.size() > case_info.thread_num)
                 {
                     auto time1 = std::chrono::high_resolution_clock::now();
-                    initialize_global_values_dynamic(this->v_num, case_info.thread_num);
                     nonHOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
                     auto time2 = std::chrono::high_resolution_clock::now();
                     case_info.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
                     auto time3 = std::chrono::high_resolution_clock::now();
-                    initialize_global_values_dynamic(this->v_num, case_info.thread_num);
                     nonHOP_WeightDecrease2021_batch(instance_graph, case_info_2021, path, weight, pool_dynamic, results_dynamic, index);
                     auto time4 = std::chrono::high_resolution_clock::now();
                     case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time4 - time3).count() / 1e9);
@@ -162,12 +161,10 @@ public:
             if (path.size() > 0)
             {
                 auto time1 = std::chrono::high_resolution_clock::now();
-                initialize_global_values_dynamic(this->v_num, case_info.thread_num);
                 nonHOP_WeightDecreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
                 auto time2 = std::chrono::high_resolution_clock::now();
                 case_info.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
                 auto time3 = std::chrono::high_resolution_clock::now();
-                initialize_global_values_dynamic(this->v_num, case_info.thread_num);
                 nonHOP_WeightDecrease2021_batch(instance_graph, case_info_2021, path, weight, pool_dynamic, results_dynamic, index);
                 auto time4 = std::chrono::high_resolution_clock::now();
                 case_info_2021.time_decrease.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time4 - time3).count() / 1e9);
@@ -203,12 +200,10 @@ public:
                 if (path.size() > case_info.thread_num)
                 {
                     auto time1 = std::chrono::high_resolution_clock::now();
-                    initialize_global_values_dynamic(this->v_num, case_info.thread_num);
                     nonHOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
                     auto time2 = std::chrono::high_resolution_clock::now();
                     case_info.time_increase.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
                     auto time3 = std::chrono::high_resolution_clock::now();
-                    initialize_global_values_dynamic(this->v_num, case_info.thread_num);
                     nonHOP_WeightIncrease2021_batch(instance_graph, case_info_2021, path, weight, pool_dynamic, results_dynamic, index);
                     auto time4 = std::chrono::high_resolution_clock::now();
                     case_info_2021.time_increase.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time4 - time3).count() / 1e9);
@@ -220,12 +215,10 @@ public:
             if (path.size() > 0)
             {
                 auto time1 = std::chrono::high_resolution_clock::now();
-                initialize_global_values_dynamic(this->v_num, case_info.thread_num);
                 nonHOP_WeightIncreaseMaintenance_improv_batch(instance_graph, case_info, path, weight, pool_dynamic, results_dynamic, index);
                 auto time2 = std::chrono::high_resolution_clock::now();
                 case_info.time_increase.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
                 auto time3 = std::chrono::high_resolution_clock::now();
-                initialize_global_values_dynamic(this->v_num, case_info.thread_num);
                 nonHOP_WeightIncrease2021_batch(instance_graph, case_info_2021, path, weight, pool_dynamic, results_dynamic, index);
                 auto time4 = std::chrono::high_resolution_clock::now();
                 case_info_2021.time_increase.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(time4 - time3).count() / 1e9);
@@ -236,6 +229,7 @@ public:
             // case_info.print_L();
             res.push_back(instance_graph);
             ++index;
+		    PLL_clear_global_values();
         }
         return res;
     };
@@ -255,19 +249,18 @@ public:
         vector<weight_type> weight_increase;
         vector<weight_type> old_weight_increase;
 
-        std::ifstream myfile(save_name); // open the file
-        if (myfile.is_open())            // if the file is opened successfully
+        std::ifstream myfile(save_name);
+        if (myfile.is_open())
         {
-            while (getline(myfile, line_content)) // read file line by line
+            while (getline(myfile, line_content))
             {
                 std::vector<std::string> Parsed_content = parse_string(line_content, " ");
 
-                if (!Parsed_content[0].compare("|V|=")) // when it's equal, compare returns 0
+                if (!Parsed_content[0].compare("|V|="))
                 {
                     this->v_num = std::stoi(Parsed_content[1]);
                     instance_graph.ADJs.resize(this->v_num);
                     this->ADJs.resize(std::stoi(Parsed_content[1]));
-                    initialize_global_values_dynamic(this->v_num, case_info.thread_num);
                 }
                 else if (!Parsed_content[0].compare("|E|="))
                 {
@@ -279,6 +272,7 @@ public:
                 }
                 else if (!Parsed_content[0].compare("time"))
                 {
+                    initialize_global_values_dynamic(this->v_num, case_info.thread_num);
                     current_time = std::stoi(Parsed_content[1]);
                     timer.mark_time("====time " + Parsed_content[1] + "====");
                     // std::cout << "====time " << Parsed_content[1] << "====" << endl;
@@ -383,6 +377,7 @@ public:
                         if (current_time == 0)
                         {
                             PLL(instance_graph, case_info);
+                            initialize_global_values_dynamic(this->v_num, case_info.thread_num);
                             PLL(instance_graph, case_info_2021);
                             timer.mark_time("initialize the 2-hop label");
                             this->add_graph_time(instance_graph, 0);
@@ -448,7 +443,7 @@ int dijkstra_iterator(vector<graph_v_of_v<weight_type>> list, int u, int v)
     for (graph_v_of_v<int> graph : list)
     {
         res = min(res, dijkstra(graph, u, v));
-        // cout << "dijkstra" << res << endl;
+        cout << "dijkstra" << res << endl;
     }
     auto endTime = std::chrono::high_resolution_clock::now();
     double runtime_n_iterate_dijkstra = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - start_time).count() / 1e9;

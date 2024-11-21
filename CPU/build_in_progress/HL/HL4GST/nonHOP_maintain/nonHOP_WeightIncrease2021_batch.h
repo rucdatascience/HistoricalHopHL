@@ -29,8 +29,9 @@ namespace nonHop
 						mtx_595_1.unlock();
 					}
 				}
+				mtx_595[it.first].lock();
 				insert_sorted_two_hop_label((*L)[it.first], it.second, MAX_VALUE,time); // this does not change the size of L[it->first] here, so does not need to lock here
-
+				mtx_595[it.first].unlock();
 				return 1; }));
 		}
 

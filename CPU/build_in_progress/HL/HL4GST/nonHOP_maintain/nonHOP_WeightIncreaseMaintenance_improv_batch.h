@@ -22,8 +22,10 @@ namespace nonHop
 				while (!q.empty()) {
 					int x = q.front().first;
 					weightTYPE dx = q.front().second;
-					q.pop();		
+					q.pop();
+					mtx_595[x].lock();
 					insert_sorted_two_hop_label((*L)[x], v, MAX_VALUE,time); 
+					mtx_595[x].unlock();
 					mtx_595_1.lock();
 					al2->push_back(pair_label(x, v));
 					mtx_595_1.unlock();
