@@ -46,7 +46,8 @@ namespace nonHop
 						mtx_595[vnei].unlock();
 						if (search_result.first < MAX_VALUE && search_result.first > dnew) {
 							mtx_595[vnei].lock();
-							(*L)[vnei][search_result.second].distance = dnew;
+							insert_sorted_two_hop_label((*L)[vnei], search_result.second, dnew, time);
+							// (*L)[vnei][search_result.second].distance = dnew;
 							mtx_595[vnei].unlock();
 							mtx_595_1.lock();
 							CL_next->push_back(affected_label(vnei, u, dnew));
@@ -132,7 +133,9 @@ namespace nonHop
 						auto query_result = Query2(v, v2); // query_result is {distance, common hub}
 						if (query_result.first > dis)
 						{
+							mtx_595[v2].lock();
 							insert_sorted_two_hop_label(L[v2], v, dis, time);
+							mtx_595[v2].unlock();
 							CL_curr.push_back(affected_label(v2, v, dis));
 						}
 						else
@@ -140,7 +143,11 @@ namespace nonHop
 							auto search_result = search_sorted_two_hop_label2(L[v2], v);
 							if (search_result.first < MAX_VALUE && search_result.first > dis)
 							{
-								L[v2][search_result.second].distance = dis;
+								mtx_595[v2].lock();
+								// 不能直接替换 使用方法
+								insert_sorted_two_hop_label(L[v2], search_result.second, dis, time);
+								mtx_595[v2].unlock();
+								// L[v2][search_result.second].distance = dis;
 								CL_curr.push_back(affected_label(v2, v, dis));
 							}
 							if (query_result.second != v)

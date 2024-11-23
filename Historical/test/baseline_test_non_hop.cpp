@@ -15,7 +15,7 @@ int testBaseLineAndBaseline2()
         try
         {
             // query param
-            int source = 3, target = 4;
+            int source = 7, target = 9;
             int queryStartTime = 1, queryEndTime = 9;
             // generate a random graph
             // int v_num = 10, e_num = 20;
@@ -34,11 +34,11 @@ int testBaseLineAndBaseline2()
             // initialize the 2-hop label with time span
             two_hop_case_info mm;
             mm.max_labal_byte_size = 6e9;
-            mm.max_run_time_seconds = 1e2;
+            mm.max_run_time_seconds = 1e4;
             mm.use_2M_prune = 1;
             mm.use_rank_prune = 1;
             mm.use_canonical_repair = 1;
-            mm.thread_num = 5;
+            mm.thread_num = 1;
             mm.source = source;
             mm.target = target;
             mm.t_s = queryStartTime;
@@ -46,7 +46,7 @@ int testBaseLineAndBaseline2()
 
             two_hop_case_info mm2021;
             mm.max_labal_byte_size = 6e9;
-            mm.max_run_time_seconds = 1e2;
+            mm.max_run_time_seconds = 1e4;
             mm.use_2M_prune = 1;
             mm.use_rank_prune = 1;
             mm.use_canonical_repair = 1;
@@ -56,7 +56,7 @@ int testBaseLineAndBaseline2()
             mm.t_s = queryStartTime;
             mm.t_e = queryEndTime;
 
-            bool use_save_read = false;
+            bool use_save_read = true;
             bool use_2_hop_label = true;
 
             if (use_save_read)
@@ -87,7 +87,7 @@ int testBaseLineAndBaseline2()
             }
             vector<graph_v_of_v<int>> subsequence(graphs.begin() + queryStartTime, graphs.begin() + queryEndTime + 1);
             int res_n_iterate_dijkstra = dijkstra_iterator(subsequence, source, target);
-
+            // int temp = graph_with_time_span_non_hop_constrained.search_shortest_path_in_period_time_naive(2, 3, 6, 6);
             // dfs to calculate the shortest path baseline 2
             auto start_time_base_line_2 = std::chrono::high_resolution_clock::now();
             int res_base_line_with_span = graph_with_time_span_non_hop_constrained.search_shortest_path_in_period_time_naive(source, target, queryStartTime, queryEndTime);
@@ -95,8 +95,8 @@ int testBaseLineAndBaseline2()
             double runtime_base_line_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_base_line_2 - start_time_base_line_2).count() / 1e9;
             if (use_2_hop_label)
             {
-                //mm.print_L();
-                //mm2021.print_L();
+                // mm.print_L();
+                // mm2021.print_L();
                 auto start_time_2_hop_label = std::chrono::high_resolution_clock::now();
                 int res = mm.query(source, target, queryStartTime, queryEndTime);
                 auto end_time_2_hop_label = std::chrono::high_resolution_clock::now();
