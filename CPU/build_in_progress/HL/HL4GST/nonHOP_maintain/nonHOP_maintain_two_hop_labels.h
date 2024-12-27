@@ -159,7 +159,7 @@ namespace nonHop
 				cout << "L[" << i << "]=";
 				for (int j = 0; j < L[i].size(); j++)
 				{
-					cout << "{" << L[i][j].vertex << "," << L[i][j].distance << "," <<  L[i][j].t_s << ","<< L[i][j].t_e << "}";
+					cout << "{" << L[i][j].vertex << "," << L[i][j].distance << "," << L[i][j].t_s << "," << L[i][j].t_e << "}";
 				}
 				cout << endl;
 			}
@@ -269,8 +269,8 @@ namespace nonHop
 
 	bool compare_two_hop_label_small_to_large(two_hop_label &i, two_hop_label &j)
 	{
-		if (i.t_e != j.t_e) 
-			return i.t_e > j.t_e; // t_e降序
+		if (i.t_e != j.t_e)
+			return i.t_e > j.t_e;	// t_e降序
 		return i.vertex < j.vertex; // < is from small to big; > is from big to small
 	}
 
@@ -349,6 +349,40 @@ namespace nonHop
 
 		// 找到插入点，确保排序规则
 		input_vector.insert(input_vector.begin() + left, new_label); // 在 left 位置插入新标签
+	}
+
+	weightTYPE search_sorted_two_hop_label_custom_time_span(std::vector<two_hop_label> &input_vector, int key)
+	{
+
+		label_operation_times++;
+		int left = 0, right = input_vector.size() - 1;
+
+		while (left <= right)
+		{
+			int mid = left + ((right - left) / 2);
+
+			if (input_vector[mid].t_e == std::numeric_limits<int>::max())
+			{
+				if (input_vector[mid].vertex == key)
+				{
+					return input_vector[mid].distance;
+				}
+				else if (input_vector[mid].vertex < key)
+				{
+					left = mid + 1;
+				}
+				else
+				{
+					right = mid - 1;
+				}
+			}
+			else
+			{
+				right = mid - 1;
+			}
+		}
+
+		return std::numeric_limits<int>::max();
 	}
 
 	weightTYPE search_sorted_two_hop_label(std::vector<two_hop_label> &input_vector, int key)
@@ -570,6 +604,56 @@ namespace nonHop
 					distance = dis;
 					common_hub = vector1_check_pointer->vertex;
 				}
+				vector1_check_pointer++;
+			}
+			else if (vector1_check_pointer->vertex > vector2_check_pointer->vertex)
+			{
+				vector2_check_pointer++;
+			}
+			else
+			{
+				vector1_check_pointer++;
+			}
+		}
+
+		return {distance, common_hub};
+	}
+
+	pair<weightTYPE, vector<int>> graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc2_find_all_hub(vector<vector<two_hop_label>> &L, int source, int terminal)
+	{
+
+		global_query_times++;
+
+		/*return std::numeric_limits<double>::max() is not connected*/
+
+		vector<int> common_hub;
+		if (source == terminal)
+		{
+			common_hub.push_back(source);
+			return {0, common_hub};
+		}
+
+		weightTYPE distance = std::numeric_limits<weightTYPE>::max(); // if disconnected, return this large value
+
+		auto vector1_check_pointer = L[source].begin();
+		auto vector2_check_pointer = L[terminal].begin();
+		auto pointer_L_s_end = L[source].end(), pointer_L_t_end = L[terminal].end();
+		while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end && vector1_check_pointer->t_e == std::numeric_limits<int>::max() && vector2_check_pointer->t_e == std::numeric_limits<int>::max())
+		{
+			if (vector1_check_pointer->vertex == vector2_check_pointer->vertex)
+			{
+				weightTYPE dis = vector1_check_pointer->distance + vector2_check_pointer->distance;
+				if (distance > dis)
+				{
+					distance = dis;
+					vector<int>().swap(common_hub);
+					common_hub.push_back(vector1_check_pointer->vertex);
+				}
+				else if (distance == dis)
+				{
+					common_hub.push_back(vector1_check_pointer->vertex);
+				}
+
 				vector1_check_pointer++;
 			}
 			else if (vector1_check_pointer->vertex > vector2_check_pointer->vertex)
