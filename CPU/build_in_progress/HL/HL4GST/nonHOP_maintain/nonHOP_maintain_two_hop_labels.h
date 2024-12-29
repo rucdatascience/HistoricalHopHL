@@ -351,38 +351,17 @@ namespace nonHop
 		input_vector.insert(input_vector.begin() + left, new_label); // 在 left 位置插入新标签
 	}
 
-	weightTYPE search_sorted_two_hop_label_custom_time_span(std::vector<two_hop_label> &input_vector, int key)
+	bool search_sorted_two_hop_label_specify_time_span_cost(std::vector<two_hop_label> &input_vector, int key, int cost, int t_s, int t_e)
 	{
-
-		label_operation_times++;
-		int left = 0, right = input_vector.size() - 1;
-
-		while (left <= right)
+		// TODO: 这里使用的是傻瓜方法 之后修复 可以降到对数级别
+		for (int i = 0; i < input_vector.size(); i++)
 		{
-			int mid = left + ((right - left) / 2);
-
-			if (input_vector[mid].t_e == std::numeric_limits<int>::max())
+			if (input_vector[i].vertex == key && input_vector[i].distance == cost && (input_vector[i].t_s, t_s) <= min(input_vector[i].t_e, t_e))
 			{
-				if (input_vector[mid].vertex == key)
-				{
-					return input_vector[mid].distance;
-				}
-				else if (input_vector[mid].vertex < key)
-				{
-					left = mid + 1;
-				}
-				else
-				{
-					right = mid - 1;
-				}
-			}
-			else
-			{
-				right = mid - 1;
+				return true;
 			}
 		}
-
-		return std::numeric_limits<int>::max();
+		return false;
 	}
 
 	weightTYPE search_sorted_two_hop_label(std::vector<two_hop_label> &input_vector, int key)
@@ -619,7 +598,7 @@ namespace nonHop
 		return {distance, common_hub};
 	}
 
-	pair<weightTYPE, vector<int>> graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc2_find_all_hub(vector<vector<two_hop_label>> &L, int source, int terminal)
+	pair<vector<pair<weightTYPE, weightTYPE>>, vector<int>> graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc2_find_all_hub(vector<vector<two_hop_label>> &L, int source, int terminal)
 	{
 
 		global_query_times++;
@@ -630,11 +609,11 @@ namespace nonHop
 		if (source == terminal)
 		{
 			common_hub.push_back(source);
-			return {0, common_hub};
+			return {{{0, 0}}, common_hub};
 		}
 
-		weightTYPE distance = std::numeric_limits<weightTYPE>::max(); // if disconnected, return this large value
-
+		vector<pair<weightTYPE, weightTYPE>> distanceList = {{-1, -1}}; // if disconnected, return this large value
+		weightTYPE distance = std::numeric_limits<weightTYPE>::max();
 		auto vector1_check_pointer = L[source].begin();
 		auto vector2_check_pointer = L[terminal].begin();
 		auto pointer_L_s_end = L[source].end(), pointer_L_t_end = L[terminal].end();
@@ -646,14 +625,16 @@ namespace nonHop
 				if (distance > dis)
 				{
 					distance = dis;
+					vector<pair<weightTYPE, weightTYPE>>().swap(distanceList);
+					vector<pair<weightTYPE, weightTYPE>>{{vector1_check_pointer->distance, vector2_check_pointer->distance}}.swap(distanceList);
 					vector<int>().swap(common_hub);
 					common_hub.push_back(vector1_check_pointer->vertex);
 				}
 				else if (distance == dis)
 				{
+					distanceList.push_back({vector1_check_pointer->distance, vector2_check_pointer->distance});
 					common_hub.push_back(vector1_check_pointer->vertex);
 				}
-
 				vector1_check_pointer++;
 			}
 			else if (vector1_check_pointer->vertex > vector2_check_pointer->vertex)
@@ -666,7 +647,7 @@ namespace nonHop
 			}
 		}
 
-		return {distance, common_hub};
+		return {distanceList, common_hub};
 	}
 
 	weightTYPE graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc3(vector<two_hop_label> &L_s, vector<two_hop_label> &L_t)
