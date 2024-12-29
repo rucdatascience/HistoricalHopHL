@@ -1,3 +1,4 @@
+#pragma once
 #include "Historical/graph_v_of_v/graph_v_of_v_with_time_span.h"
 #include "CPU/build_in_progress/HL/HL4GST/nonHOP_maintain/nonHOP_maintain_two_hop_labels.h"
 #include "CPU/build_in_progress/HL/HL4GST/nonHOP_maintain/nonHOP_maintain_PLL.h"

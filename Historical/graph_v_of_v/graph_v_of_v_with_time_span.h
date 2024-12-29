@@ -61,7 +61,7 @@ public:
 		return ADJs.size();
 	}
 
-	std::vector<EdgeInfo<weight_type>> &operator[](int i)
+	vector<pair<int, vector<EdgeInfo<weight_type>>>> &operator[](int i)
 	{
 		return ADJs[i];
 	}
