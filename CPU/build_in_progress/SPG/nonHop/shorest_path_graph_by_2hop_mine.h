@@ -57,10 +57,11 @@ vector<int> process(int u, int v, int t_s, int t_e, two_hop_case_info &info, gra
     std::vector<int> status(graph_info.size(), 0);
     // SPG的结果集 res
     std::vector<int> res;
+    int mark = u + v;
     // hub一定是结果
     for (const int &hub : dis2hub.second)
     {
-        status[hub] = -1;
+        status[hub] = mark;
         res.push_back(hub);
     }
     if (dis2hub.second.size() == 1 && dis2hub.second[0] == u)
@@ -106,7 +107,7 @@ vector<int> process(int u, int v, int t_s, int t_e, two_hop_case_info &info, gra
             //     否则则在直接剪枝
             for (const EdgeInfo<weightTYPE> &edge : pair.second)
             {
-                if (status[edge.vertex] == -1)
+                if (status[edge.vertex] == mark - node.target || status[edge.vertex] == mark)
                 {
                     continue;
                 }
@@ -126,7 +127,7 @@ vector<int> process(int u, int v, int t_s, int t_e, two_hop_case_info &info, gra
                         }
                         else
                         {
-                            status[edge.vertex] = -1;
+                            status[edge.vertex] = mark;
                         }
                     }
                     else if (node.mode == 1)
@@ -140,17 +141,19 @@ vector<int> process(int u, int v, int t_s, int t_e, two_hop_case_info &info, gra
                         if (isValid)
                         {
                             Q_handles[edge.vertex] = Q.push(node_for_SPG_diffuse(edge.vertex, node.disx + edge.weight, node.hubElse, dis2hub.second, node.target, 1));
+                            status[edge.vertex] = mark;
                         }
                         else
                         {
-                            isValid = search_sorted_two_hop_label_specify_time_span_cost(info.L[edge.vertex], node.target, shortest_path_dis - (node.disx + edge.weight), t_s, t_e);
+                            isValid = search_sorted_two_hop_label_specify_time_span_cost(info.L[max(edge.vertex, node.target)], min(edge.vertex, node.target), shortest_path_dis - (node.disx + edge.weight), t_s, t_e);
                             if (isValid)
                             {
                                 Q_handles[edge.vertex] = Q.push(node_for_SPG_diffuse(edge.vertex, node.disx + edge.weight, node.hubElse, {node.target}, node.target, 0));
+                                status[edge.vertex] = mark;
                             }
                             else
                             {
-                                status[edge.vertex] = -1;
+                                status[edge.vertex] = mark - node.target;
                             }
                         }
                     }
