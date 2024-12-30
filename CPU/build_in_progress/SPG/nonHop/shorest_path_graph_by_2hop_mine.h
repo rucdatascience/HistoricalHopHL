@@ -36,42 +36,46 @@ bool operator<(node_for_SPG_diffuse const &x, node_for_SPG_diffuse const &y)
 }
 
 typedef typename boost::heap::fibonacci_heap<node_for_SPG_diffuse>::handle_type handle_t_for_SPG_diffuse; // pairing heap has a similar speed with fibonacci_heap here
+boost::heap::fibonacci_heap<node_for_SPG_diffuse> Q_SPG;
+std::vector<handle_t_for_SPG_diffuse> Q_SPG_handles;
+std::vector<int> status;
 
 template <typename WEIGHT_TYPE>
-vector<int> process(int u, int v, int t_s, int t_e, two_hop_case_info &info, graph_v_of_v_with_time_span_non_hop_constrained<WEIGHT_TYPE> &graph_info)
+void preInit(graph_v_of_v_with_time_span_non_hop_constrained<WEIGHT_TYPE> &graph_info)
+{
+    boost::heap::fibonacci_heap<node_for_SPG_diffuse>().swap(Q_SPG);
+    std::vector<handle_t_for_SPG_diffuse>(graph_info.size()).swap(Q_SPG_handles);
+    std::vector<int>(graph_info.size(), 0).swap(status);
+}
+
+void addNodeToQ(int u, int v, two_hop_case_info &info, int cost, vector<int> &res)
 {
     std::pair<std::vector<std::pair<int, int>>, std::vector<int>> dis2hub = graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc2_find_all_hub(info.L, u, v);
-    // 查询u-v的最短距离 shortest_cost
-    if (dis2hub.first == nullPair)
+
+    // // 查询u-v的最短距离 shortest_cost
+    // if (dis2hub.first == nullPair)
+    // {
+    //     return dis2hub.second;
+    // }
+    if (cost != (dis2hub.first[0].first + dis2hub.first[0].second))
     {
-        return dis2hub.second;
-    }
-    // 如果查询的是一个点 直接返回
-    if (dis2hub.first == samePair)
-    {
-        return dis2hub.second;
+        return;
     }
     int shortest_path_dis = dis2hub.first[0].first + dis2hub.first[0].second;
-    boost::heap::fibonacci_heap<node_for_SPG_diffuse> Q;
-    std::vector<handle_t_for_SPG_diffuse> Q_handles(graph_info.size());
-    std::vector<int> status(graph_info.size(), 0);
-    // SPG的结果集 res
-    std::vector<int> res;
-    int mark = u + v;
     // hub一定是结果
     for (const int &hub : dis2hub.second)
     {
-        status[hub] = mark;
+        status[hub] = 1;
         res.push_back(hub);
     }
     if (dis2hub.second.size() == 1 && dis2hub.second[0] == u)
     {
 
-        Q_handles[v] = Q.push(node_for_SPG_diffuse(v, 0, {shortest_path_dis}, dis2hub.second, u, 0));
+        Q_SPG_handles[v] = Q_SPG.push(node_for_SPG_diffuse(v, 0, {shortest_path_dis}, dis2hub.second, u, 0));
     }
     else if (dis2hub.second.size() == 1 && dis2hub.second[0] == v)
     {
-        Q_handles[u] = Q.push(node_for_SPG_diffuse(u, 0, {shortest_path_dis}, dis2hub.second, v, 0));
+        Q_SPG_handles[u] = Q_SPG.push(node_for_SPG_diffuse(u, 0, {shortest_path_dis}, dis2hub.second, v, 0));
     }
     else
     {
@@ -83,15 +87,25 @@ vector<int> process(int u, int v, int t_s, int t_e, two_hop_case_info &info, gra
             costU.push_back(dis2hub.first[i].first);
             costV.push_back(dis2hub.first[i].second);
         }
-        Q_handles[u] = Q.push(node_for_SPG_diffuse(u, 0, costU, dis2hub.second, v, 1));
-        Q_handles[v] = Q.push(node_for_SPG_diffuse(v, 0, costV, dis2hub.second, u, 1));
+        Q_SPG_handles[u] = Q_SPG.push(node_for_SPG_diffuse(u, 0, costU, dis2hub.second, v, 1));
+        Q_SPG_handles[v] = Q_SPG.push(node_for_SPG_diffuse(v, 0, costV, dis2hub.second, u, 1));
     }
+}
+
+template <typename WEIGHT_TYPE>
+vector<int> process(int u, int v, int t_s, int t_e, two_hop_case_info &info, graph_v_of_v_with_time_span_non_hop_constrained<WEIGHT_TYPE> &graph_info)
+{
+    preInit(graph_info);
+    std::vector<int> res;
+    int costAll = info.query(u, v, t_s, t_e);
+    addNodeToQ(u, v, info, costAll, res);
+    // SPG的结果集 res
     // 1.2 队列不为空 出队X并遍历邻居(TODO: 此处也可以并行 可以使用乐观锁)
-    while (!Q.empty())
+    while (!Q_SPG.empty())
     {
         // (TODO: 并行)
-        node_for_SPG_diffuse node = Q.top();
-        Q.pop();
+        node_for_SPG_diffuse node = Q_SPG.top();
+        Q_SPG.pop();
         res.push_back(node.index);
         int x = node.index;
         for (const pair<int, vector<EdgeInfo<weightTYPE>>> &pair : graph_info[x])
@@ -107,7 +121,7 @@ vector<int> process(int u, int v, int t_s, int t_e, two_hop_case_info &info, gra
             //     否则则在直接剪枝
             for (const EdgeInfo<weightTYPE> &edge : pair.second)
             {
-                if (status[edge.vertex] == mark - node.target || status[edge.vertex] == mark)
+                if (status[edge.vertex] == 1)
                 {
                     continue;
                 }
@@ -119,16 +133,13 @@ vector<int> process(int u, int v, int t_s, int t_e, two_hop_case_info &info, gra
                         bool isValid = false;
                         for (int i = 0; i < node.hub.size() && edge.vertex > node.hub[i] && !isValid; i++)
                         {
-                            isValid |= search_sorted_two_hop_label_specify_time_span_cost(info.L[edge.vertex], node.hub[i], shortest_path_dis - (node.disx + edge.weight), t_s, t_e);
+                            isValid |= search_sorted_two_hop_label_specify_time_span_cost(info.L[edge.vertex], node.hub[i], costAll - (node.disx + edge.weight), t_s, t_e);
                         }
                         if (isValid)
                         {
-                            Q_handles[edge.vertex] = Q.push(node_for_SPG_diffuse(edge.vertex, node.disx + edge.weight, node.hubElse, dis2hub.second, node.target, 0));
+                            Q_SPG_handles[edge.vertex] = Q_SPG.push(node_for_SPG_diffuse(edge.vertex, node.disx + edge.weight, node.hubElse, node.hub, node.target, 0));
                         }
-                        else
-                        {
-                            status[edge.vertex] = mark;
-                        }
+                        status[edge.vertex] = 1;
                     }
                     else if (node.mode == 1)
                     {
@@ -140,22 +151,13 @@ vector<int> process(int u, int v, int t_s, int t_e, two_hop_case_info &info, gra
                         }
                         if (isValid)
                         {
-                            Q_handles[edge.vertex] = Q.push(node_for_SPG_diffuse(edge.vertex, node.disx + edge.weight, node.hubElse, dis2hub.second, node.target, 1));
-                            status[edge.vertex] = mark;
+                            Q_SPG_handles[edge.vertex] = Q_SPG.push(node_for_SPG_diffuse(edge.vertex, node.disx + edge.weight, node.hubElse, node.hub, node.target, 1));
                         }
                         else
                         {
-                            isValid = search_sorted_two_hop_label_specify_time_span_cost(info.L[max(edge.vertex, node.target)], min(edge.vertex, node.target), shortest_path_dis - (node.disx + edge.weight), t_s, t_e);
-                            if (isValid)
-                            {
-                                Q_handles[edge.vertex] = Q.push(node_for_SPG_diffuse(edge.vertex, node.disx + edge.weight, node.hubElse, {node.target}, node.target, 0));
-                                status[edge.vertex] = mark;
-                            }
-                            else
-                            {
-                                status[edge.vertex] = mark - node.target;
-                            }
+                            addNodeToQ(edge.vertex, node.target, info, costAll - (node.disx + edge.weight), res);
                         }
+                        status[edge.vertex] = 1;
                     }
                 }
             }
