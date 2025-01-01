@@ -11,7 +11,7 @@ struct node_for_SPG_diffuse
     int index;
     // 已经走了的距离
     weightTYPE disx;
-    // 已经走了的距离
+    // 到这个hub剩余的距离
     vector<weightTYPE> hubElse;
     // hub
     vector<int> hub;
@@ -131,13 +131,22 @@ vector<int> process(int u, int v, int t_s, int t_e, two_hop_case_info &info, gra
                     {
                         // mode-0: 二分查找 hub
                         bool isValid = false;
-                        for (int i = 0; i < node.hub.size() && edge.vertex > node.hub[i] && !isValid; i++)
+                        vector<int> hubElse;
+                        vector<int> hub;
+                        node_for_SPG_diffuse tmp(edge.vertex, node.disx + edge.weight, hubElse, hub, node.target, 1);
+                        for (int i = 0; i < node.hub.size() && edge.vertex > node.hub[i]; i++)
                         {
-                            isValid |= search_sorted_two_hop_label_specify_time_span_cost(info.L[edge.vertex], node.hub[i], costAll - (node.disx + edge.weight), t_s, t_e);
+                            bool tmp_valid = search_sorted_two_hop_label_specify_time_span_cost(info.L[edge.vertex], node.hub[i], node.hubElse[i] - (node.disx + edge.weight), t_s, t_e);
+                            if (tmp_valid)
+                            {
+                                isValid |= tmp_valid;
+                                hubElse.push_back(node.hubElse[i] - (node.disx + edge.weight));
+                                hub.push_back(node.hub[i]);
+                            }
                         }
                         if (isValid)
                         {
-                            Q_SPG_handles[edge.vertex] = Q_SPG.push(node_for_SPG_diffuse(edge.vertex, node.disx + edge.weight, node.hubElse, node.hub, node.target, 0));
+                            Q_SPG_handles[edge.vertex] = Q_SPG.push(tmp);
                         }
                         status[edge.vertex] = 1;
                     }
@@ -145,17 +154,26 @@ vector<int> process(int u, int v, int t_s, int t_e, two_hop_case_info &info, gra
                     {
                         // mode-1: 二分查找 hub
                         bool isValid = false;
-                        for (int i = 0; i < node.hub.size() && edge.vertex > node.hub[i] && !isValid; i++)
+                        vector<int> hubElse;
+                        vector<int> hub;
+                        node_for_SPG_diffuse tmp(edge.vertex, node.disx + edge.weight, hubElse, hub, node.target, 1);
+                        for (int i = 0; i < node.hub.size() && edge.vertex > node.hub[i]; i++)
                         {
-                            isValid |= search_sorted_two_hop_label_specify_time_span_cost(info.L[edge.vertex], node.hub[i], node.hubElse[i] - (node.disx + edge.weight), t_s, t_e);
+                            bool tmp_valid = search_sorted_two_hop_label_specify_time_span_cost(info.L[edge.vertex], node.hub[i], node.hubElse[i] - (node.disx + edge.weight), t_s, t_e);
+                            if (tmp_valid)
+                            {
+                                isValid |= tmp_valid;
+                                hubElse.push_back(node.hubElse[i] - (node.disx + edge.weight));
+                                hub.push_back(node.hub[i]);
+                            }
+                            else
+                            {
+                                addNodeToQ(edge.vertex, node.target, info, costAll - (node.disx + edge.weight), res);
+                            }
                         }
                         if (isValid)
                         {
-                            Q_SPG_handles[edge.vertex] = Q_SPG.push(node_for_SPG_diffuse(edge.vertex, node.disx + edge.weight, node.hubElse, node.hub, node.target, 1));
-                        }
-                        else
-                        {
-                            addNodeToQ(edge.vertex, node.target, info, costAll - (node.disx + edge.weight), res);
+                            Q_SPG_handles[edge.vertex] = Q_SPG.push(tmp);
                         }
                         status[edge.vertex] = 1;
                     }
@@ -163,6 +181,5 @@ vector<int> process(int u, int v, int t_s, int t_e, two_hop_case_info &info, gra
             }
         }
     }
-
     return res;
 }
