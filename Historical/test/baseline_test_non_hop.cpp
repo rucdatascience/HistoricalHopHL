@@ -45,16 +45,16 @@ int testBaseLineAndBaseline2()
             mm.t_e = queryEndTime;
 
             two_hop_case_info mm2021;
-            mm.max_labal_byte_size = 6e9;
-            mm.max_run_time_seconds = 1e4;
-            mm.use_2M_prune = 1;
-            mm.use_rank_prune = 1;
-            mm.use_canonical_repair = 1;
-            mm.thread_num = 5;
-            mm.source = source;
-            mm.target = target;
-            mm.t_s = queryStartTime;
-            mm.t_e = queryEndTime;
+            mm2021.max_labal_byte_size = 6e9;
+            mm2021.max_run_time_seconds = 1e4;
+            mm2021.use_2M_prune = 1;
+            mm2021.use_rank_prune = 1;
+            mm2021.use_canonical_repair = 1;
+            mm2021.thread_num = 5;
+            mm2021.source = source;
+            mm2021.target = target;
+            mm2021.t_s = queryStartTime;
+            mm2021.t_e = queryEndTime;
 
             bool use_save_read = true;
             bool use_2_hop_label = true;
