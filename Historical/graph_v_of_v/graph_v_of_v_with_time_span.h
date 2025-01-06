@@ -44,7 +44,6 @@ public:
 
 	/*constructors*/
 	graph_v_of_v_with_time_span() {};
-
 	graph_v_of_v_with_time_span(int n, int e, weight_type weight_upper_limit, weight_type weight_lower_limit) : v_num(n), e_num(e), weight_dis(weight_lower_limit, weight_upper_limit), ADJs(n)
 	{
 		if (weight_lower_limit > weight_upper_limit || weight_lower_limit < 0 || weight_upper_limit < 0)
@@ -65,12 +64,11 @@ public:
 	{
 		return ADJs[i];
 	}
-	
+
 	inline void print();
 
 	inline void txt_save(std::string save_name);
 
-protected:
 	/* the maximum of time*/
 	int time_max;
 	/* the number of vertices */
