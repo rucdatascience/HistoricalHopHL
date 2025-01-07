@@ -211,13 +211,13 @@ public:
         mm.use_2M_prune = 1;
         mm.use_rank_prune = 1;
         mm.use_canonical_repair = 1;
-        mm.thread_num = 10;
+        mm.thread_num = 1;
         mm2021.max_labal_byte_size = 6e9;
         mm2021.max_run_time_seconds = 1e4;
         mm2021.use_2M_prune = 1;
         mm2021.use_rank_prune = 1;
         mm2021.use_canonical_repair = 1;
-        mm2021.thread_num = 10;
+        mm2021.thread_num = 1;
         return 0;
     }
     int process()
@@ -271,7 +271,7 @@ public:
                     weight_old_increase.push_back(old_weight);
                     weight_increase.push_back(weight);
                 }
-                else if (this->graphs[i - 1].ADJs[v1][v2].second < weight)
+                else if (this->graphs[i - 1].ADJs[v1][v2].second > weight)
                 {
                     // instance_graph_temp.add_edge(v1, this->graphs[i - 1].ADJs[v1][v2].first, weight);
                     path_decrease.push_back({v1, this->graphs[i - 1].ADJs[v1][v2].first});
