@@ -56,7 +56,7 @@ int testBaseLineAndBaseline2()
             mm2021.t_s = queryStartTime;
             mm2021.t_e = queryEndTime;
 
-            bool use_save_read = true;
+            bool use_save_read = false;
             bool use_2_hop_label = true;
 
             if (use_save_read)
