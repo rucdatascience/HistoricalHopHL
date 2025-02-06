@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <ProjectGuid>{3281313B-C5E0-4659-A9BC-D4621551BEFE}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>.\;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\\environment\\boost_1_85_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\\environment\\boost_1_85_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <WarningLevel>Level3</WarningLevel>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\\environment\\boost_1_85_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\\environment\\boost_1_85_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="cpu\build_in_progress\spg\nonhop\spg_baseline.cpp" />
+    <ClCompile Include="cpu\build_in_progress\spg\nonhop\try_spg.cpp" />
+    <ClCompile Include="cpu\try_generate_graph.cpp" />
+    <ClCompile Include="cpu\try_small_graph.cpp" />
+    <ClCompile Include="historical\graph_v_of_v\experiment_test_nonhop.cpp" />
+    <ClCompile Include="historical\test\baseline_test.cpp" />
+    <ClCompile Include="historical\test\baseline_test_non_hop.cpp" />
+    <ClCompile Include="historical\test\test.cpp" />
+    <ClCompile Include="historical\test\try.cpp" />
+    <ClCompile Include="historical\test\try_debug.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_maintain_hop_constrained_two_hop_labels.h" />
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_maintain_hop_constrained_two_hop_labels_generation.h" />
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_maintain_test.h" />
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_PPR.h" />
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_WeightDecrease2021_batch.h" />
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_WeightDecreaseMaintenance_improv_batch.h" />
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_WeightIncrease2021_batch.h" />
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_WeightIncreaseMaintenance_improv_batch.h" />
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\nonhop_maintain\nonHOP_maintain_PLL.h" />
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\nonhop_maintain\nonHOP_maintain_two_hop_labels.h" />
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\nonhop_maintain\nonHOP_PPR.h" />
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\nonhop_maintain\nonHOP_WeightDecrease2021_batch.h" />
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\nonhop_maintain\nonHOP_WeightDecreaseMaintenance_improv_batch.h" />
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\nonhop_maintain\nonHOP_WeightIncrease2021_batch.h" />
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\nonhop_maintain\nonHOP_WeightIncreaseMaintenance_improv_batch.h" />
+    <ClInclude Include="cpu\build_in_progress\spg\nonhop\shorest_path_graph_by_2hop.h" />
+    <ClInclude Include="cpu\build_in_progress\spg\nonhop\shorest_path_graph_by_2hop_mine.h" />
+    <ClInclude Include="cpu\build_in_progress\spg\nonhop\shorterst_path_graph_baseline.h" />
+    <ClInclude Include="cpu\graph_hash_of_mixed_weighted\graph_hash_of_mixed_weighted_binary_operations.h" />
+    <ClInclude Include="cpu\graph_v_of_v\graph_v_of_v.h" />
+    <ClInclude Include="cpu\graph_v_of_v\graph_v_of_v_generate_random_graph.h" />
+    <ClInclude Include="cpu\graph_v_of_v\graph_v_of_v_hop_constrained_shortest_distance.h" />
+    <ClInclude Include="cpu\graph_v_of_v\graph_v_of_v_shortest_paths.h" />
+    <ClInclude Include="cpu\graph_v_of_v\graph_v_of_v_update_vertexIDs_by_degrees_large_to_small.h" />
+    <ClInclude Include="cpu\text_mining\binary_save_read_vector.h" />
+    <ClInclude Include="cpu\text_mining\binary_save_read_vector_of_vectors.h" />
+    <ClInclude Include="cpu\text_mining\parse_string.h" />
+    <ClInclude Include="cpu\text_mining\print_items.h" />
+    <ClInclude Include="cpu\tool_functions\sorted_vector_binary_operations.h" />
+    <ClInclude Include="cpu\tool_functions\ThreadPool.h" />
+    <ClInclude Include="historical\experiment\mark_timer.h" />
+    <ClInclude Include="historical\graph_v_of_v\graph_v_of_v_with_time_span.h" />
+    <ClInclude Include="historical\graph_v_of_v\graph_v_of_v_with_time_span_experiment_reader.h" />
+    <ClInclude Include="historical\graph_v_of_v\graph_v_of_v_with_time_span_hop_constrained.h" />
+    <ClInclude Include="historical\graph_v_of_v\graph_v_of_v_with_time_span_non_hop_constrained.h" />
+    <ClInclude Include="historical\graph_v_of_v\Timer.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

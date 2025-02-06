@@ -11,11 +11,11 @@ using namespace nonHop;
 namespace nonHop
 {
 	void SPREAD1_batch(graph_v_of_v<int>& instance_graph, vector<vector<two_hop_label>>* L,
-		std::vector<affected_label>& al1, std::vector<pair_label>* al2, std::map<pair<int,int>,weightTYPE >& w_old_map,
-		ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic,int time) {
+		std::vector<affected_label>& al1, std::vector<pair_label>* al2, std::map<pair<int, int>, weightTYPE >& w_old_map,
+		ThreadPool& pool_dynamic, std::vector<std::future<int>>& results_dynamic, int time) {
 
-		for (auto &it : al1) {
-			results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, al2, &instance_graph, &w_old_map,time] {
+		for (auto& it : al1) {
+			results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, al2, &instance_graph, &w_old_map, time] {
 				queue<pair<int, weightTYPE> > q; //(u,d)
 				int v = it.second;
 				q.push(pair<int, weightTYPE>(it.first, it.dis));
@@ -24,23 +24,25 @@ namespace nonHop
 					weightTYPE dx = q.front().second;
 					q.pop();
 					mtx_595[x].lock();
-					insert_sorted_two_hop_label((*L)[x], v, MAX_VALUE,time); 
+					insert_sorted_two_hop_label((*L)[x], v, MAX_VALUE, time);
 					mtx_595[x].unlock();
 					mtx_595_1.lock();
 					al2->push_back(pair_label(x, v));
 					mtx_595_1.unlock();
 					for (auto nei : instance_graph[x]) {
 						if (v < nei.first) {
+							mtx_595[nei.first].lock();
 							weightTYPE search_weight = search_sorted_two_hop_label((*L)[nei.first], v);
+							mtx_595[nei.first].unlock();
 							weightTYPE w_old;
-							if(w_old_map.count(pair<int,int>(x,nei.first))>0){
-								w_old=w_old_map[pair<int,int>(x,nei.first)];
+							if (w_old_map.count(pair<int, int>(x, nei.first)) > 0) {
+								w_old = w_old_map[pair<int, int>(x, nei.first)];
 							}
-							else if(w_old_map.count(pair<int,int>(nei.first,x))>0){
-								w_old=w_old_map[pair<int,int>(nei.first,x)];
+							else if (w_old_map.count(pair<int, int>(nei.first, x)) > 0) {
+								w_old = w_old_map[pair<int, int>(nei.first, x)];
 							}
-							else{
-								w_old=nei.second;
+							else {
+								w_old = nei.second;
 							}
 							if (dx + w_old == search_weight && search_weight < MAX_VALUE) {
 								q.push(pair<int, weightTYPE>(nei.first, dx + w_old));
@@ -59,9 +61,9 @@ namespace nonHop
 	}
 
 	void SPREAD2_batch(graph_v_of_v<int>& instance_graph, vector<vector<two_hop_label>>* L, PPR_type* PPR,
-		std::vector<pair_label>& al2, std::vector<affected_label>* al3, ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic,int time) {
+		std::vector<pair_label>& al2, std::vector<affected_label>* al3, ThreadPool& pool_dynamic, std::vector<std::future<int>>& results_dynamic, int time) {
 
-		for (auto &it : al2) {
+		for (auto& it : al2) {
 			results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, PPR, al3, &instance_graph] {
 
 				int v = it.first, u = it.second;
@@ -73,10 +75,12 @@ namespace nonHop
 					if (v < t) {
 						long long d1 = MAX_VALUE;
 						for (auto nei : instance_graph[t]) {
+							mtx_595[nei.first].lock();
 							d1 = min(d1, search_sorted_two_hop_label((*L)[nei.first], v) + (long long)nei.second);
+							mtx_595[nei.first].unlock();
 						}
 						auto query_result = graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc2(*L, t, v);
-						if(d1 >= 2e6) continue;
+						if (d1 >= 2e6) continue;
 						if (query_result.first > d1) { // only add new label when it's absolutely necessary
 							mtx_595_1.lock();
 							al3->push_back(affected_label(t, v, d1));
@@ -98,9 +102,11 @@ namespace nonHop
 					else if (t < v) {
 						long long d1 = MAX_VALUE;
 						for (auto nei : instance_graph[v]) {
+							mtx_595[nei.first].lock();
 							d1 = min(d1, search_sorted_two_hop_label((*L)[nei.first], t) + (long long)nei.second);
+							mtx_595[nei.first].unlock();
 						}
-						if(d1 >= 2e6) continue;
+						if (d1 >= 2e6) continue;
 						auto query_result = graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc2(*L, v, t);
 						if (query_result.first > d1) {
 							mtx_595_1.lock();
@@ -131,45 +137,45 @@ namespace nonHop
 	}
 
 	void SPREAD3_batch(graph_v_of_v<int>& instance_graph, vector<vector<two_hop_label>>* L, PPR_type* PPR, std::vector<affected_label>& al3,
-	ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic,int time) {
+		ThreadPool& pool_dynamic, std::vector<std::future<int>>& results_dynamic, int time) {
 
 		// Deduplication (u,v,dis)
-		std::map<std::pair<int,int>,weightTYPE> al3_edge_map;
-		for(auto &it:al3){
-			if(al3_edge_map.count({it.first,it.second})==0){
-				al3_edge_map[{it.first,it.second}]=it.dis;
+		std::map<std::pair<int, int>, weightTYPE> al3_edge_map;
+		for (auto& it : al3) {
+			if (al3_edge_map.count({ it.first,it.second }) == 0) {
+				al3_edge_map[{it.first, it.second}] = it.dis;
 			}
-			else if(al3_edge_map[{it.first,it.second}]>it.dis){
-				al3_edge_map[{it.first,it.second}]=it.dis;
+			else if (al3_edge_map[{it.first, it.second}] > it.dis) {
+				al3_edge_map[{it.first, it.second}] = it.dis;
 			}
 		}
 
 		// extract each unique hub v and its (u,dis) list
-		std::map<int,std::vector<std::pair<int,weightTYPE>>> al3_map; // al3_map[v]=(u1,dis1),(u2,dis2)...
-		for(auto &it:al3_edge_map){
+		std::map<int, std::vector<std::pair<int, weightTYPE>>> al3_map; // al3_map[v]=(u1,dis1),(u2,dis2)...
+		for (auto& it : al3_edge_map) {
 			int u = it.first.first;
 			int v = it.first.second;
 			weightTYPE dis = it.second;
-			if(al3_map.count(v)==0){
+			if (al3_map.count(v) == 0) {
 				std::vector<std::pair<int, weightTYPE>> vec_with_hub_v;
 				vec_with_hub_v.emplace_back(make_pair(u, dis));
 				al3_map[v] = vec_with_hub_v;
 			}
-			else{
+			else {
 				std::vector<std::pair<int, weightTYPE>> vec_with_hub_v = al3_map[v];
 				vec_with_hub_v.emplace_back(make_pair(u, dis));
 				al3_map[v] = vec_with_hub_v;
 			}
 		}
 
-		std::vector<std::pair<int,std::vector<std::pair<int,weightTYPE>>>> al3_map_vec(al3_map.begin(),al3_map.end());
-		sort(al3_map_vec.begin(),al3_map_vec.end(),[](const std::pair<int,std::vector<std::pair<int,weightTYPE>>>& a, const std::pair<int,std::vector<std::pair<int,weightTYPE>>>& b){
-			return a.first<b.first;
-		});
+		std::vector<std::pair<int, std::vector<std::pair<int, weightTYPE>>>> al3_map_vec(al3_map.begin(), al3_map.end());
+		sort(al3_map_vec.begin(), al3_map_vec.end(), [](const std::pair<int, std::vector<std::pair<int, weightTYPE>>>& a, const std::pair<int, std::vector<std::pair<int, weightTYPE>>>& b) {
+			return a.first < b.first;
+			});
 
 		// std::cout<<"SPREAD3_batch"<<std::endl;
-		for (auto &it : al3_map_vec) {
-			results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, &instance_graph, PPR,time] {
+		for (auto& it : al3_map_vec) {
+			results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, &instance_graph, PPR, time] {
 
 				mtx_595_1.lock();
 				int current_tid = Qid_595.front();
@@ -187,9 +193,9 @@ namespace nonHop
 				// int u = it.first, v = it.second;
 				// weightTYPE du = it.dis;
 
-				mtx_595[v].lock_shared();
+				mtx_595[v].lock();
 				auto Lv = (*L)[v]; // to avoid interlocking
-				mtx_595[v].unlock_shared();
+				mtx_595[v].unlock();
 
 				vector<int> Dis_changed;
 				auto& DIS = Dis[current_tid];
@@ -201,7 +207,7 @@ namespace nonHop
 				// std::vector<weightTYPE> Q_VALUE(N, MAX_VALUE);
 				boost::heap::fibonacci_heap<node_for_DIFFUSE> pq;
 
-				for(auto &it:vec_with_hub_v){
+				for (auto& it : vec_with_hub_v) {
 					int u = it.first;
 					weightTYPE du = it.second;
 					// std::cout<<"u: "<<u<<" v: "<<v<<" du: "<<du<<"\n";
@@ -228,8 +234,8 @@ namespace nonHop
 						// mtx_595_1.unlock();
 						// return 1;
 					}
-					
-					if(flag == true){
+
+					if (flag == true) {
 						continue;
 					}
 
@@ -249,7 +255,7 @@ namespace nonHop
 					weightTYPE d_old = search_sorted_two_hop_label((*L)[x], v);
 					// std::cout<<"insert: "<<x<<" "<<v<<" "<<dx<<" "<<d_old<<"\n";
 					if (dx < d_old) {
-						insert_sorted_two_hop_label((*L)[x], v, dx,time);
+						insert_sorted_two_hop_label((*L)[x], v, dx, time);
 					}
 					else {
 						continue;
@@ -311,32 +317,34 @@ namespace nonHop
 	}
 
 
-	void nonHOP_WeightIncreaseMaintenance_improv_batch(graph_v_of_v<int>& instance_graph, two_hop_case_info& mm, vector<pair<int,int> >& v, vector<int>& w_old_vec,
-	ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic,int time) {
+	void nonHOP_WeightIncreaseMaintenance_improv_batch(graph_v_of_v<int>& instance_graph, two_hop_case_info& mm, vector<pair<int, int> >& v, vector<int>& w_old_vec,
+		ThreadPool& pool_dynamic, std::vector<std::future<int>>& results_dynamic, int time) {
 
 		label_operation_times = 0;
 		global_query_times = 0;
 
 		std::vector<affected_label> al1, al3;
 		std::vector<pair_label> al2;
-		std::map<pair<int,int>,weightTYPE > w_old_map;
+		std::map<pair<int, int>, weightTYPE > w_old_map;
 		int batch_size = v.size();
-		for(int i=0;i<batch_size;i++){
-			if(v[i].first>v[i].second){
-				swap(v[i].first,v[i].second);
+		for (int i = 0; i < batch_size; i++) {
+			if (v[i].first > v[i].second) {
+				swap(v[i].first, v[i].second);
 			}
-			if(w_old_map.count(v[i])==0){
-				w_old_map[v[i]]=w_old_vec[i];
+			if (w_old_map.count(v[i]) == 0) {
+				w_old_map[v[i]] = w_old_vec[i];
 			}
 		}
 
-		for(auto &it:w_old_map){
+		for (auto& it : w_old_map) {
 			results_dynamic.emplace_back(pool_dynamic.enqueue([it, &al1, &instance_graph, &mm, &w_old_map] {
-				int v1=it.first.first;
-				int v2=it.first.second;
-				weightTYPE w_old=it.second;
+				int v1 = it.first.first;
+				int v2 = it.first.second;
+				weightTYPE w_old = it.second;
 				for (auto it : mm.L[v1]) {
+					mtx_595[v2].lock();
 					long long search_weight = search_sorted_two_hop_label(mm.L[v2], it.vertex);
+					mtx_595[v2].unlock();
 					if (it.vertex <= v2 && search_weight == (long long)it.distance + w_old && search_weight < MAX_VALUE) {
 						mtx_595_1.lock();
 						al1.push_back(affected_label(v2, it.vertex, it.distance + w_old));
@@ -344,14 +352,16 @@ namespace nonHop
 					}
 				}
 				for (auto it : mm.L[v2]) {
+					mtx_595[v1].lock();
 					long long search_weight = search_sorted_two_hop_label(mm.L[v1], it.vertex);
+					mtx_595[v1].unlock();
 					if (it.vertex <= v1 && search_weight == (long long)it.distance + w_old && search_weight < MAX_VALUE) {
 						mtx_595_1.lock();
 						al1.push_back(affected_label(v1, it.vertex, it.distance + w_old));
 						mtx_595_1.unlock();
 					}
 				}
-			return 1; }));
+				return 1; }));
 		}
 
 		for (auto&& result : results_dynamic) {

@@ -46,7 +46,7 @@ namespace nonHop
 	bool global_use_2M_prune = false, global_use_rank_prune = true;
 	int TwoM_value = 2 * 1e6; // suppose that dummy edge has a weight of 1e6
 
-	bool operator<(two_hop_label const &x, two_hop_label const &y)
+	bool operator<(two_hop_label const& x, two_hop_label const& y)
 	{
 		return x.distance > y.distance; // < is the max-heap; > is the min heap
 	}
@@ -267,14 +267,14 @@ namespace nonHop
 
 	long long int label_operation_times = 0;
 
-	bool compare_two_hop_label_small_to_large(two_hop_label &i, two_hop_label &j)
+	bool compare_two_hop_label_small_to_large(two_hop_label& i, two_hop_label& j)
 	{
 		if (i.t_e != j.t_e)
 			return i.t_e > j.t_e;	// t_e降序
 		return i.vertex < j.vertex; // < is from small to big; > is from big to small
 	}
 
-	void insert_sorted_two_hop_label(std::vector<two_hop_label> &input_vector, int key, weightTYPE value, int time)
+	void insert_sorted_two_hop_label(std::vector<two_hop_label>& input_vector, int key, weightTYPE value, int time)
 	{
 		label_operation_times++;
 		int left = 0, right = input_vector.size() - 1;
@@ -351,7 +351,7 @@ namespace nonHop
 		input_vector.insert(input_vector.begin() + left, new_label); // 在 left 位置插入新标签
 	}
 
-	bool search_sorted_two_hop_label_specify_time_span_cost(std::vector<two_hop_label> &input_vector, int key, int cost, int t_s, int t_e)
+	bool search_sorted_two_hop_label_specify_time_span_cost(std::vector<two_hop_label>& input_vector, int key, int cost, int t_s, int t_e)
 	{
 		// TODO: 这里使用的是傻瓜方法 之后修复 可以降到对数级别
 		for (int i = 0; i < input_vector.size(); i++)
@@ -364,7 +364,80 @@ namespace nonHop
 		return false;
 	}
 
-	weightTYPE search_sorted_two_hop_label(std::vector<two_hop_label> &input_vector, int key)
+	two_hop_label& search_sorted_two_hop_label_entity(std::vector<two_hop_label>& input_vector, int key)
+	{
+		label_operation_times++;
+		int left = 0, right = input_vector.size() - 1;
+
+		while (left <= right)
+		{
+			int mid = left + ((right - left) / 2);
+
+			if (input_vector[mid].t_e == std::numeric_limits<int>::max())
+			{
+				if (input_vector[mid].vertex == key)
+				{
+					return input_vector[mid];
+				}
+				else if (input_vector[mid].vertex < key)
+				{
+					left = mid + 1;
+				}
+				else
+				{
+					right = mid - 1;
+				}
+			}
+			else
+			{
+				right = mid - 1;
+			}
+		}
+		auto res = two_hop_label{ -1 };
+		res.distance = std::numeric_limits<int>::max();
+		res.vertex = -1;
+		return res;
+	}
+
+	two_hop_label& search_sorted_two_hop_label_entity_not_realTime(std::vector<two_hop_label>& input_vector, int key, int time)
+	{
+		label_operation_times++;
+		int left = 0, right = input_vector.size() - 1;
+
+		while (left <= right)
+		{
+			int mid = left + ((right - left) / 2);
+
+			if (input_vector[mid].t_e == std::numeric_limits<int>::max())
+			{
+				if (input_vector[mid].vertex == key && input_vector[mid].t_s != time)
+				{
+					return input_vector[mid];
+				}
+				else if (input_vector[mid].t_s == time) {
+					break;
+				}
+				else if (input_vector[mid].vertex < key)
+				{
+					left = mid + 1;
+				}
+				else
+				{
+					right = mid - 1;
+				}
+			}
+			else
+			{
+				right = mid - 1;
+			}
+		}
+		auto res = two_hop_label{ -1 };
+		res.distance = std::numeric_limits<int>::max();
+		res.vertex = -1;
+		return res;
+	}
+
+	weightTYPE search_sorted_two_hop_label(std::vector<two_hop_label>& input_vector, int key)
 	{
 
 		label_operation_times++;
@@ -398,7 +471,7 @@ namespace nonHop
 		return std::numeric_limits<int>::max();
 	}
 
-	pair<weightTYPE, int> search_sorted_two_hop_label2(std::vector<two_hop_label> &input_vector, int key)
+	pair<weightTYPE, int> search_sorted_two_hop_label2(std::vector<two_hop_label>& input_vector, int key)
 	{
 
 		label_operation_times++;
@@ -412,7 +485,7 @@ namespace nonHop
 			{
 				if (input_vector[mid].vertex == key)
 				{
-					return {input_vector[mid].distance, mid};
+					return { input_vector[mid].distance, mid };
 				}
 				else if (input_vector[mid].vertex < key)
 				{
@@ -429,12 +502,12 @@ namespace nonHop
 			}
 		}
 
-		return {std::numeric_limits<int>::max(), -1};
+		return { std::numeric_limits<int>::max(), -1 };
 	}
 
 #define Query(x, y) graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc(L, x, y)	 // reduction is not used here
 #define Query2(x, y) graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc2(L, x, y) // reduction is not used here
-// #define MAX_VALUE std::numeric_limits<int>::max()
+	// #define MAX_VALUE std::numeric_limits<int>::max()
 #define MAX_VALUE 1e7
 
 	class affected_label
@@ -484,7 +557,7 @@ namespace nonHop
 		}
 	}; // define the node in the queue
 
-	bool operator<(node_for_DIFFUSE const &x, node_for_DIFFUSE const &y)
+	bool operator<(node_for_DIFFUSE const& x, node_for_DIFFUSE const& y)
 	{
 		return x.disx > y.disx; // < is the max-heap; > is the min heap
 	}
@@ -503,7 +576,7 @@ namespace nonHop
 		queue<int>().swap(Qid_595);
 		for (int i = 0; i < thread_num; i++)
 		{
-			Dis[i].resize(N, {-1, -1});
+			Dis[i].resize(N, { -1, -1 });
 			Q_value[i].resize(N, MAX_VALUE);
 			Q_handles[i].resize(N);
 			Qid_595.push(i);
@@ -514,7 +587,7 @@ namespace nonHop
 
 	long long int global_query_times = 0;
 
-	weightTYPE graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc(vector<vector<two_hop_label>> &L, int source, int terminal)
+	weightTYPE graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc(vector<vector<two_hop_label>>& L, int source, int terminal)
 	{
 
 		global_query_times++;
@@ -555,7 +628,7 @@ namespace nonHop
 		return distance;
 	}
 
-	pair<weightTYPE, int> graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc2(vector<vector<two_hop_label>> &L, int source, int terminal)
+	pair<weightTYPE, int> graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc2(vector<vector<two_hop_label>>& L, int source, int terminal)
 	{
 
 		global_query_times++;
@@ -564,7 +637,7 @@ namespace nonHop
 
 		if (source == terminal)
 		{
-			return {0, source};
+			return { 0, source };
 		}
 
 		weightTYPE distance = std::numeric_limits<weightTYPE>::max(); // if disconnected, return this large value
@@ -595,10 +668,10 @@ namespace nonHop
 			}
 		}
 
-		return {distance, common_hub};
+		return { distance, common_hub };
 	}
 
-	pair<vector<pair<weightTYPE, weightTYPE>>, vector<int>> graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc2_find_all_hub(vector<vector<two_hop_label>> &L, int source, int terminal)
+	pair<vector<pair<weightTYPE, weightTYPE>>, vector<int>> graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc2_find_all_hub(vector<vector<two_hop_label>>& L, int source, int terminal)
 	{
 
 		global_query_times++;
@@ -609,10 +682,10 @@ namespace nonHop
 		if (source == terminal)
 		{
 			common_hub.push_back(source);
-			return {{{0, 0}}, common_hub};
+			return { {{0, 0}}, common_hub };
 		}
 
-		vector<pair<weightTYPE, weightTYPE>> distanceList = {{-1, -1}}; // if disconnected, return this large value
+		vector<pair<weightTYPE, weightTYPE>> distanceList = { {-1, -1} }; // if disconnected, return this large value
 		weightTYPE distance = std::numeric_limits<weightTYPE>::max();
 		auto vector1_check_pointer = L[source].begin();
 		auto vector2_check_pointer = L[terminal].begin();
@@ -632,7 +705,7 @@ namespace nonHop
 				}
 				else if (distance == dis)
 				{
-					distanceList.push_back({vector1_check_pointer->distance, vector2_check_pointer->distance});
+					distanceList.push_back({ vector1_check_pointer->distance, vector2_check_pointer->distance });
 					common_hub.push_back(vector1_check_pointer->vertex);
 				}
 				vector1_check_pointer++;
@@ -647,10 +720,10 @@ namespace nonHop
 			}
 		}
 
-		return {distanceList, common_hub};
+		return { distanceList, common_hub };
 	}
 
-	weightTYPE graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc3(vector<two_hop_label> &L_s, vector<two_hop_label> &L_t)
+	weightTYPE graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc3(vector<two_hop_label>& L_s, vector<two_hop_label>& L_t)
 	{
 
 		global_query_times++;
@@ -686,7 +759,7 @@ namespace nonHop
 		return distance;
 	}
 
-	pair<weightTYPE, int> graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc4(vector<two_hop_label> &L_s, vector<two_hop_label> &L_t)
+	pair<weightTYPE, int> graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc4(vector<two_hop_label>& L_s, vector<two_hop_label>& L_t)
 	{
 
 		global_query_times++;
@@ -721,15 +794,15 @@ namespace nonHop
 			}
 		}
 
-		return {distance, common_hub};
+		return { distance, common_hub };
 	}
 
 	/*querying distances or paths*/
 
-	int extract_distance(two_hop_case_info &case_info, int source, int terminal)
+	int extract_distance(two_hop_case_info& case_info, int source, int terminal)
 	{
 
-		auto &L = case_info.L;
+		auto& L = case_info.L;
 
 		/*return std::numeric_limits<double>::max() is not connected*/
 

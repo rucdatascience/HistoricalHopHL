@@ -1,0 +1,159 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="cpu\try_generate_graph.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpu\try_small_graph.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpu\build_in_progress\spg\nonhop\spg_baseline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpu\build_in_progress\spg\nonhop\try_spg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="historical\graph_v_of_v\experiment_test_nonhop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="historical\test\baseline_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="historical\test\baseline_test_non_hop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="historical\test\test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="historical\test\try.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="historical\test\try_debug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_maintain_hop_constrained_two_hop_labels.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_maintain_hop_constrained_two_hop_labels_generation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_maintain_test.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_PPR.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_WeightDecrease2021_batch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_WeightDecreaseMaintenance_improv_batch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_WeightIncrease2021_batch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_WeightIncreaseMaintenance_improv_batch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\nonhop_maintain\nonHOP_maintain_PLL.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\nonhop_maintain\nonHOP_maintain_two_hop_labels.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\nonhop_maintain\nonHOP_PPR.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\nonhop_maintain\nonHOP_WeightDecrease2021_batch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\nonhop_maintain\nonHOP_WeightDecreaseMaintenance_improv_batch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\nonhop_maintain\nonHOP_WeightIncrease2021_batch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\hl\hl4gst\nonhop_maintain\nonHOP_WeightIncreaseMaintenance_improv_batch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\spg\nonhop\shorest_path_graph_by_2hop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\spg\nonhop\shorest_path_graph_by_2hop_mine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\build_in_progress\spg\nonhop\shorterst_path_graph_baseline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\graph_hash_of_mixed_weighted\graph_hash_of_mixed_weighted_binary_operations.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\graph_v_of_v\graph_v_of_v.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\graph_v_of_v\graph_v_of_v_generate_random_graph.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\graph_v_of_v\graph_v_of_v_hop_constrained_shortest_distance.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\graph_v_of_v\graph_v_of_v_shortest_paths.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\graph_v_of_v\graph_v_of_v_update_vertexIDs_by_degrees_large_to_small.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\text_mining\binary_save_read_vector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\text_mining\binary_save_read_vector_of_vectors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\text_mining\parse_string.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\text_mining\print_items.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\tool_functions\sorted_vector_binary_operations.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu\tool_functions\ThreadPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="historical\experiment\mark_timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="historical\graph_v_of_v\graph_v_of_v_with_time_span.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="historical\graph_v_of_v\graph_v_of_v_with_time_span_experiment_reader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="historical\graph_v_of_v\graph_v_of_v_with_time_span_hop_constrained.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="historical\graph_v_of_v\graph_v_of_v_with_time_span_non_hop_constrained.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="historical\graph_v_of_v\Timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

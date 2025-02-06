@@ -2,3 +2,6 @@
 
 **/**.exe
 **/try*.cpp
+HistoricalHopHL/x64/
+.vs/
+x64/

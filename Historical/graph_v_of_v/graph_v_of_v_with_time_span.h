@@ -30,7 +30,6 @@ public:
 /**
  * define a graph where each edge has an associated time span
  */
-template <typename weight_type> // weight_type may be int, long long int, float, double...
 class graph_v_of_v_with_time_span
 {
 public:
@@ -40,17 +39,17 @@ public:
 	this class is for undirected and edge-weighted-time-span-label graph
 	*/
 	// i - 0,j - 0->pair->first=1,second = vector:{<1,23,0,0> <1,30,1,1> <1,11,2,3> <1,8,4,6> <1,17,7,2147483647>}
-	vector<vector<pair<int, vector<EdgeInfo<weight_type>>>>> ADJs;
+	vector<vector<pair<int, vector<EdgeInfo<int>>>>> ADJs;
 
 	/*constructors*/
-	graph_v_of_v_with_time_span() {};
-	graph_v_of_v_with_time_span(int n, int e, weight_type weight_upper_limit, weight_type weight_lower_limit) : v_num(n), e_num(e), weight_dis(weight_lower_limit, weight_upper_limit), ADJs(n)
+	graph_v_of_v_with_time_span() :v_num(0), e_num(0), time_max(0) {};
+	graph_v_of_v_with_time_span(int n, int e, int weight_upper_limit, int weight_lower_limit, int time_max) : v_num(n), e_num(e), weight_dis(weight_lower_limit, weight_upper_limit), ADJs(n), time_max(time_max)
 	{
 		if (weight_lower_limit > weight_upper_limit || weight_lower_limit < 0 || weight_upper_limit < 0)
 		{
 			cout << "weight_lower_limit should be greater than 0 and weight_upper_limit shoule be greater 0 and the weight_lower_limit should be less than weight_upper_limit"
-				 << "weight_upper_limit is :" << weight_upper_limit
-				 << "weight_lower_limit is :" << weight_lower_limit << endl;
+				<< "weight_upper_limit is :" << weight_upper_limit
+				<< "weight_lower_limit is :" << weight_lower_limit << endl;
 			exit(1);
 		}
 	}
@@ -60,7 +59,7 @@ public:
 		return ADJs.size();
 	}
 
-	vector<pair<int, vector<EdgeInfo<weight_type>>>> &operator[](int i)
+	vector<pair<int, vector<EdgeInfo<int>>>>& operator[](int i)
 	{
 		return ADJs[i];
 	}
@@ -76,30 +75,29 @@ public:
 	/* the number of edges */
 	int e_num;
 	/* weighted random number generator */
-	uniform_int_distribution<weight_type> weight_dis;
+	boost::random::uniform_int_distribution<> weight_dis;
 
-	inline void add_edge(int, int, weight_type, int);
+	inline void add_edge(int, int, int, int);
 
-	inline void add_graph_time(graph_v_of_v<weight_type>, int);
+	inline void add_graph_time(graph_v_of_v<int>, int);
 
 	inline void clear();
 
-	inline void process(graph_v_of_v<weight_type> &instance_graph, vector<pair<int, int>> &path, vector<int> &weight, int t);
+	inline void process(graph_v_of_v<int>& instance_graph, vector<pair<int, int>>& path, vector<int>& weight, int t);
 };
 
-template <typename weight_type>
-void graph_v_of_v_with_time_span<weight_type>::print()
+void graph_v_of_v_with_time_span::print()
 {
 	std::cout << "graph_v_of_v_with_time_span_print:" << std::endl;
 	int size = this->ADJs.size();
 	for (int i = 0; i < size; i++)
 	{
 		std::cout << "Vertex " << i << " Adj List: " << endl;
-		for (const auto &edges : ADJs[i])
+		for (const auto& edges : ADJs[i])
 		{
 			int v_id = edges.first;
 			cout << "\t";
-			for (const auto &info : edges.second)
+			for (const auto& info : edges.second)
 			{
 				std::cout << "<" << v_id << "," << info.weight << "," << info.startTimeLabel << "," << info.endTimeLabel << "> ";
 			}
@@ -109,8 +107,7 @@ void graph_v_of_v_with_time_span<weight_type>::print()
 	std::cout << "graph_v_of_v_with_time_span_print END" << std::endl;
 }
 
-template <typename weight_type>
-inline void graph_v_of_v_with_time_span<weight_type>::txt_save(std::string save_name)
+inline void graph_v_of_v_with_time_span::txt_save(std::string save_name)
 {
 	std::ofstream outputFile;
 	outputFile.precision(10);
@@ -132,7 +129,7 @@ inline void graph_v_of_v_with_time_span<weight_type>::txt_save(std::string save_
 			{
 				if (i < this->ADJs[i][j].first)
 				{
-					vector<EdgeInfo<weight_type>> list = ADJs[i][j].second;
+					vector<EdgeInfo<int>> list = ADJs[i][j].second;
 					for (int k = 0; k < list.size() && list[k].startTimeLabel <= index; k++)
 					{
 						if (this->ADJs[i][j].second[k].startTimeLabel == index)
@@ -150,19 +147,18 @@ inline void graph_v_of_v_with_time_span<weight_type>::txt_save(std::string save_
 	outputFile.close();
 }
 
-template <typename weight_type>
-void graph_v_of_v_with_time_span<weight_type>::add_edge(int e1, int e2, weight_type ec, int time)
+void graph_v_of_v_with_time_span::add_edge(int e1, int e2, int ec, int time)
 {
 	/* initialize a graph with a time span */
 	if (time == 0)
 	{
-		this->ADJs[e1].push_back({e2, {EdgeInfo(e2, ec, time)}});
-		this->ADJs[e2].push_back({e1, {EdgeInfo(e1, ec, time)}});
+		this->ADJs[e1].push_back({ e2, {EdgeInfo(e2, ec, time)} });
+		this->ADJs[e2].push_back({ e1, {EdgeInfo(e1, ec, time)} });
 	}
 	else
 	{
-		int index_e1 = sorted_vector_binary_operations_search_position<vector<EdgeInfo<weight_type>>>(this->ADJs[e1], e2);
-		int index_e2 = sorted_vector_binary_operations_search_position<vector<EdgeInfo<weight_type>>>(this->ADJs[e2], e1);
+		int index_e1 = sorted_vector_binary_operations_search_position<vector<EdgeInfo<int>>>(this->ADJs[e1], e2);
+		int index_e2 = sorted_vector_binary_operations_search_position<vector<EdgeInfo<int>>>(this->ADJs[e2], e1);
 		if (this->ADJs[e1][index_e1].second.back().weight != ec)
 		{
 			this->ADJs[e1][index_e1].second.back().endTimeLabel = time - 1;
@@ -173,14 +169,13 @@ void graph_v_of_v_with_time_span<weight_type>::add_edge(int e1, int e2, weight_t
 	}
 }
 
-template <typename weight_type>
-void graph_v_of_v_with_time_span<weight_type>::add_graph_time(graph_v_of_v<weight_type> graph, int time)
+void graph_v_of_v_with_time_span::add_graph_time(graph_v_of_v<int> graph, int time)
 {
 	int N = graph.size();
 	for (int i = 0; i < N; i++)
 	{
-		std::vector<std::pair<int, weight_type>> list = graph.ADJs[i];
-		for (const auto &edges : list)
+		std::vector<std::pair<int, int>> list = graph.ADJs[i];
+		for (const auto& edges : list)
 		{
 			if (edges.first < i)
 			{
@@ -191,17 +186,15 @@ void graph_v_of_v_with_time_span<weight_type>::add_graph_time(graph_v_of_v<weigh
 	}
 }
 
-template <typename weight_type>
-inline void graph_v_of_v_with_time_span<weight_type>::clear()
+inline void graph_v_of_v_with_time_span::clear()
 {
-	vector<vector<pair<int, vector<EdgeInfo<weight_type>>>>>().swap(this->ADJs);
+	vector<vector<pair<int, vector<EdgeInfo<int>>>>>().swap(this->ADJs);
 	this->e_num = 0;
 	this->v_num = 0;
 	this->time_max = 0;
 }
 
-template <typename weight_type>
-inline void graph_v_of_v_with_time_span<weight_type>::process(graph_v_of_v<weight_type> &instance_graph, vector<pair<int, int>> &path, vector<int> &weight, int t)
+inline void graph_v_of_v_with_time_span::process(graph_v_of_v<int>& instance_graph, vector<pair<int, int>>& path, vector<int>& weight, int t)
 {
 	for (int index = 0; index < path.size(); index++)
 	{

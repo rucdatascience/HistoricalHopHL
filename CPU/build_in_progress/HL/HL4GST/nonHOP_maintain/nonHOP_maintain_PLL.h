@@ -109,10 +109,12 @@ namespace nonHop
 					{
 						continue;
 					}
+					mtx_595[adj_v].lock();
 					if (P_dij[adj_v] == std::numeric_limits<int>::max())
 					{ // 尚未到达的点
 						node.vertex = adj_v;
 						node.distance = P_u + ec;
+
 						Q_handles[adj_v] = Q.push(node);
 						P_dij[adj_v] = node.distance;
 						P_changed_vertices.push_back(adj_v);
@@ -124,6 +126,7 @@ namespace nonHop
 						Q.update(Q_handles[adj_v], node);
 						P_dij[adj_v] = node.distance;
 					}
+					mtx_595[adj_v].unlock();
 				}
 			}
 			else if (PLL_dynamic_generate_PPR)
@@ -347,7 +350,7 @@ namespace nonHop
 				//	continue;
 				// }
 				results.emplace_back(
-					pool.enqueue([v_k, &input_graph] { // pass const type value j to thread; [] can be empty
+					pool.enqueue([v_k, &input_graph, last_check_vID] { // pass const type value j to thread; [] can be empty
 						PLL_dij_function(v_k, input_graph);
 						return 1; // return to results; the return type must be the same with results
 					}));
