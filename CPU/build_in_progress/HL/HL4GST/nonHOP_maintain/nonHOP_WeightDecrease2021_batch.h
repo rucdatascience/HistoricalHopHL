@@ -8,10 +8,13 @@ namespace nonHop
 	void ProDecreasep_batch(graph_v_of_v<int>& instance_graph, vector<vector<two_hop_label>>* L, PPR_type* PPR,
 		std::vector<affected_label>& CL_curr, std::vector<affected_label>* CL_next, ThreadPool& pool_dynamic, std::vector<std::future<int>>& results_dynamic, int time)
 	{
-
+		bool is_debug = false;
+		if (CL_next->size() > 100000) {
+			is_debug = true;
+		}
 		for (auto it : CL_curr)
 		{
-			results_dynamic.emplace_back(pool_dynamic.enqueue([time, it, L, PPR, CL_next, &instance_graph]
+			results_dynamic.emplace_back(pool_dynamic.enqueue([time, it, L, PPR, CL_next, &instance_graph, is_debug]
 				{
 
 					if (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - begin_time).count() > max_run_time_nanosec) {
@@ -21,7 +24,9 @@ namespace nonHop
 					int v = it.first, u = it.second;
 
 					mtx_595[u].lock();
-					auto Lu = (*L)[u]; // to avoid interlocking
+					std::vector<nonHop::two_hop_label> Lu = (*L)[u]; // to avoid interlocking
+					//std::cout << "lu address is " << &Lu << std::endl;
+					//std::cout << "L[u] address is " << &((*(L))[u]) << std::endl;
 					mtx_595[u].unlock();
 
 					for (auto nei : instance_graph[v]) {
@@ -30,10 +35,16 @@ namespace nonHop
 
 						if (u < vnei) {
 							mtx_595[vnei].lock();
-							auto query_result = graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc4((*L)[vnei], Lu); // query_result is {distance, common hub}
+							auto query_result = graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc4_two_hop_label((*L)[vnei], Lu); // query_result is {distance, common hub}
 							mtx_595[vnei].unlock();
-							if (query_result.first > dnew) {
+							if (query_result.first.t_s == -1 || (query_result.first.distance + query_result.second.distance) > dnew) {
 								mtx_595[vnei].lock();
+								//if (is_debug) {
+								//	std::cout << "2021 decrease function two hop label1 is from " << query_result.first.t_s << " cost " << query_result.first.distance
+								//		<< " hop label2 is from " << query_result.second.t_s << " cost " << query_result.second.distance
+								//		<< " and all time is " << query_result.first.distance + query_result.second.distance << " greater than " << dnew << std::endl;
+								//}
+
 								insert_sorted_two_hop_label((*L)[vnei], u, dnew, time);
 								mtx_595[vnei].unlock();
 								mtx_595_1.lock();
@@ -42,25 +53,26 @@ namespace nonHop
 							}
 							else {
 								mtx_595[vnei].lock();
-								auto search_result = search_sorted_two_hop_label2((*L)[vnei], u);
+								two_hop_label search_result = search_sorted_two_hop_label_entity((*L)[vnei], u);
 								mtx_595[vnei].unlock();
-								if (search_result.first < MAX_VALUE && search_result.first > dnew) {
+								if (search_result.distance < MAX_VALUE && search_result.distance > dnew) {
 									mtx_595[vnei].lock();
-									insert_sorted_two_hop_label((*L)[vnei], search_result.second, dnew, time);
+									//std::cout << "decrease label has better answer : old label is " << vnei << " to " << search_result.vertex << " old value is " << search_result.distance << " to " << dnew << " t_s is " << search_result.t_s << std::endl;
+									insert_sorted_two_hop_label((*L)[vnei], search_result.vertex, dnew, time);
 									// (*L)[vnei][search_result.second].distance = dnew;
 									mtx_595[vnei].unlock();
 									mtx_595_1.lock();
 									CL_next->push_back(affected_label(vnei, u, dnew));
 									mtx_595_1.unlock();
 								}
-								if (query_result.second != u) {
+								if (query_result.first.vertex != u) {
 									mtx_5952[vnei].lock();
-									PPR_insert(*PPR, vnei, query_result.second, u);
+									PPR_insert(*PPR, vnei, query_result.first.vertex, u);
 									mtx_5952[vnei].unlock();
 								}
-								if (query_result.second != vnei) {
+								if (query_result.first.vertex != vnei) {
 									mtx_5952[u].lock();
-									PPR_insert(*PPR, u, query_result.second, vnei);
+									PPR_insert(*PPR, u, query_result.first.vertex, vnei);
 									mtx_5952[u].unlock();
 								}
 							}
@@ -166,6 +178,7 @@ namespace nonHop
 
 		while (CL_curr.size())
 		{
+			std::cout << "2021 decrease cur_list size is" << CL_curr.size() << std::endl;
 			ProDecreasep_batch(instance_graph, &mm.L, &mm.PPR, CL_curr, &CL_next, pool_dynamic, results_dynamic, time);
 			CL_curr = CL_next;
 			std::vector<affected_label>().swap(CL_next);

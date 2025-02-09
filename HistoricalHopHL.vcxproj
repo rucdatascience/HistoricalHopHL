@@ -130,7 +130,7 @@
     <ClCompile Include="cpu\build_in_progress\spg\nonhop\try_spg.cpp" />
     <ClCompile Include="cpu\try_generate_graph.cpp" />
     <ClCompile Include="cpu\try_small_graph.cpp" />
-    <ClCompile Include="historical\graph_v_of_v\experiment_test_nonhop.cpp" />
+    <ClCompile Include="Historical\experiment\experiment_test_nonhop.cpp" />
     <ClCompile Include="historical\test\baseline_test.cpp" />
     <ClCompile Include="historical\test\baseline_test_non_hop.cpp" />
     <ClCompile Include="historical\test\test.cpp" />
@@ -168,6 +168,7 @@
     <ClInclude Include="cpu\text_mining\print_items.h" />
     <ClInclude Include="cpu\tool_functions\sorted_vector_binary_operations.h" />
     <ClInclude Include="cpu\tool_functions\ThreadPool.h" />
+    <ClInclude Include="Historical\experiment\experiment.h" />
     <ClInclude Include="historical\experiment\mark_timer.h" />
     <ClInclude Include="historical\graph_v_of_v\graph_v_of_v_with_time_span.h" />
     <ClInclude Include="historical\graph_v_of_v\graph_v_of_v_with_time_span_experiment_reader.h" />

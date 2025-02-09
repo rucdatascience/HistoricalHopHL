@@ -21,6 +21,8 @@ namespace nonHop
 		{
 			t_s = start_time;
 			t_e = INT_MAX;
+			vertex = std::numeric_limits<int>::max();
+			distance = std::numeric_limits<int>::max();
 		}
 	};
 
@@ -515,6 +517,7 @@ namespace nonHop
 	public:
 		int first, second;
 		weightTYPE dis;
+		int t_s, t_e;
 		affected_label() {}
 		affected_label(int _first, int _second, weightTYPE _dis)
 		{
@@ -757,6 +760,47 @@ namespace nonHop
 		}
 
 		return distance;
+	}
+
+	pair<two_hop_label, two_hop_label> graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc4_two_hop_label(vector<two_hop_label>& L_s, vector<two_hop_label>& L_t)
+	{
+
+		global_query_times++;
+
+		/*return std::numeric_limits<double>::max() is not connected*/
+
+		weightTYPE distance = std::numeric_limits<weightTYPE>::max(); // if disconnected, return this large value
+		int common_hub;
+		two_hop_label res1 = two_hop_label{ -1 };
+		two_hop_label res2 = two_hop_label{ -1 };
+		auto vector1_check_pointer = L_s.begin();
+		auto vector2_check_pointer = L_t.begin();
+		auto pointer_L_s_end = L_s.end(), pointer_L_t_end = L_t.end();
+		while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end && vector1_check_pointer->t_e == std::numeric_limits<int>::max() && vector2_check_pointer->t_e == std::numeric_limits<int>::max())
+		{
+			if (vector1_check_pointer->vertex == vector2_check_pointer->vertex)
+			{
+				weightTYPE dis = vector1_check_pointer->distance + vector2_check_pointer->distance;
+				if (distance > dis)
+				{
+					distance = dis;
+					common_hub = vector1_check_pointer->vertex;
+					res1 = *vector1_check_pointer;
+					res2 = *vector2_check_pointer;
+				}
+				vector1_check_pointer++;
+			}
+			else if (vector1_check_pointer->vertex > vector2_check_pointer->vertex)
+			{
+				vector2_check_pointer++;
+			}
+			else
+			{
+				vector1_check_pointer++;
+			}
+		}
+
+		return { res1, res2 };
 	}
 
 	pair<weightTYPE, int> graph_hash_of_mixed_weighted_two_hop_v1_extract_distance_no_reduc4(vector<two_hop_label>& L_s, vector<two_hop_label>& L_t)

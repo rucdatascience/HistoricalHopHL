@@ -47,6 +47,7 @@ public:
 	}
 
 	mark_timer() {
+		this->experiment_time.resize(0);
 	};
 	~mark_timer() {
 

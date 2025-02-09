@@ -27,9 +27,6 @@
     <ClCompile Include="cpu\build_in_progress\spg\nonhop\try_spg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="historical\graph_v_of_v\experiment_test_nonhop.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="historical\test\baseline_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -43,6 +40,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="historical\test\try_debug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Historical\experiment\experiment_test_nonhop.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -153,6 +153,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="historical\graph_v_of_v\Timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Historical\experiment\experiment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

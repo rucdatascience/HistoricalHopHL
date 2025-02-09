@@ -50,6 +50,7 @@ class experiment_config
 private:
 	const fs::path experiment_path;
 	std::ofstream outputFile;
+	//std::ofstream resultOutputFile;
 	const fs::path save_path;
 	int iteration;
 	const int change_num;
@@ -68,6 +69,22 @@ private:
 
 	two_hop_case_info mm2021;
 	mark_timer mm2021_mark_timer;
+	//void txt_save_label(vector<vector<two_hop_label>>& labels, fs::path _save_path) {
+	//	std::ofstream label_save_path;
+	//	label_save_path.precision(10);
+	//	label_save_path.setf(std::ios::fixed);
+	//	label_save_path.setf(std::ios::showpoint);
+	//	label_save_path.open(_save_path.generic_u8string());
+	//	for (int i = 0; i < labels.size(); i++) {
+	//		for (const two_hop_label& label : labels[i]) {
+	//			this->outputFile << i << " " << label.vertex << " " << label.distance << " " << label.t_s << " " << label.t_s << "\n";
+	//		}
+	//	}
+	//}
+
+	//void txt_read_label(fs::path _read_path, vector<vector<two_hop_label>> labels) {
+	//	std::ifstream myfile(_read_path);
+	//}
 
 	void txt_read_base()
 	{
@@ -123,7 +140,7 @@ private:
 							instance_graph.resize(std::stoi(Parsed_content[2]));
 							this->v_num = std::stoi(Parsed_content[2]);
 							this->outputFile << "vertex" << " " << this->v_num << std::endl;
-							this->random_v = boost::random::uniform_int_distribution<>(0, this->v_num);
+							this->random_v = boost::random::uniform_int_distribution<>(0, this->v_num - 1);
 						}
 						else if (!Parsed_content[1].compare("Edges"))
 						{
@@ -148,8 +165,9 @@ private:
 			if (!this->is_debug)
 			{
 				// 迭代指定次数 生成随机改变的边的数组 并保存到硬盘
-				for (int i = 1; i < this->iteration; i++)
+				for (int i = 1; i <= this->iteration; i++)
 				{
+					std::map<pair<int, int>, int> diff;
 					std::cout << i << std::endl;
 					for (int j = 0; j < this->change_num; j++)
 					{
@@ -157,9 +175,19 @@ private:
 						boost::random::uniform_int_distribution<> dis_inner(0, this->graphs[0].ADJs[index_i].size() - 1);
 						int index_j = dis_inner(boost_random_time_seed);
 						int i_j_weight = this->random_weight(boost_random_time_seed);
+						diff[{index_i, index_j}] = i_j_weight;
 						q_list[i].push({ index_i, index_j, i_j_weight, i });
 						// 持久化
 						txt_save(index_i, index_j, i_j_weight, i);
+					}
+					for (auto& iter : diff) {
+						int v1 = iter.first.first;
+						int v2 = iter.first.second;
+						int w = iter.second;
+
+						q_list[i].push({ v1, v2, w, i });
+						// 持久化
+						txt_save(v1, v2, w, i);
 					}
 				}
 			}
@@ -203,6 +231,7 @@ public:
 			this->outputFile << "time" << " " << this->iteration << std::endl;
 		}
 	}
+
 	int init()
 	{
 		mm.max_labal_byte_size = 6e9;
@@ -217,12 +246,12 @@ public:
 		mm2021.use_rank_prune = 1;
 		mm2021.use_canonical_repair = 1;
 		mm2021.thread_num = 10;
+		// 读取图的数据到指定的对象中 graphs为原始图的列表 graph_with_time_span为时序图的对象
+		this->txt_read_base();
 		return 0;
 	}
 	int process()
 	{
-		// 读取图的数据到指定的对象中 graphs为原始图的列表 graph_with_time_span为时序图的对象
-		this->txt_read_base();
 		// 初始化nonhop
 		initialize_experiment_global_values_dynamic(this->v_num, this->mm.thread_num);
 		mm_mark_timer.mark();
@@ -231,12 +260,12 @@ public:
 		mm_mark_timer.push();
 		std::cout << "PLL1 finished" << std::endl;
 		PLL_experiment_clear_global_values();
-		initialize_experiment_global_values_dynamic(this->v_num, this->mm.thread_num);
-		mm2021_mark_timer.mark();
-		PLL(this->graphs[0], this->mm2021);
-		mm2021_mark_timer.add();
-		mm2021_mark_timer.push();
-		std::cout << "PLL2 finished" << std::endl;
+		//initialize_experiment_global_values_dynamic(this->v_num, this->mm.thread_num);
+		//mm2021_mark_timer.mark();
+		//PLL(this->graphs[0], this->mm2021);
+		//mm2021_mark_timer.add();
+		//mm2021_mark_timer.push();
+		//std::cout << "PLL2 finished" << std::endl;
 		PLL_experiment_clear_global_values();
 		// 动态维护
 		int time = 0;
@@ -289,8 +318,8 @@ public:
 						instance_graph_temp.add_edge(v1, v2, w);
 					}
 					initialize_experiment_global_values_dynamic(this->v_num, this->mm.thread_num);
-					mm_mark_timer.mark();
 					std::cout << "decrease ruc maintain" << std::endl;
+					mm_mark_timer.mark();
 					nonHOP_WeightDecreaseMaintenance_improv_batch(instance_graph_temp, mm, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
 					mm_mark_timer.add();
 					std::cout << "decrease ruc maintain finished" << std::endl;
@@ -314,8 +343,8 @@ public:
 						instance_graph_temp.add_edge(v1, v2, w);
 					}
 					initialize_experiment_global_values_dynamic(this->v_num, this->mm.thread_num);
-					mm_mark_timer.mark();
 					std::cout << "increase ruc maintain" << std::endl;
+					mm_mark_timer.mark();
 					nonHOP_WeightIncreaseMaintenance_improv_batch(instance_graph_temp, mm, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
 					mm_mark_timer.add();
 					std::cout << "increase ruc maintain finished" << std::endl;
@@ -340,8 +369,8 @@ public:
 					instance_graph_temp.add_edge(v1, v2, w);
 				}
 				initialize_experiment_global_values_dynamic(this->v_num, this->mm.thread_num);
-				mm_mark_timer.mark();
 				std::cout << "decrease ruc maintain" << std::endl;
+				mm_mark_timer.mark();
 				nonHOP_WeightDecreaseMaintenance_improv_batch(instance_graph_temp, mm, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
 				mm_mark_timer.add();
 				std::cout << "decrease ruc maintain finished" << std::endl;
@@ -365,8 +394,8 @@ public:
 					instance_graph_temp.add_edge(v1, v2, w);
 				}
 				initialize_experiment_global_values_dynamic(this->v_num, this->mm.thread_num);
-				mm_mark_timer.mark();
 				std::cout << "increase ruc maintain finished" << std::endl;
+				mm_mark_timer.mark();
 				nonHOP_WeightIncreaseMaintenance_improv_batch(instance_graph_temp, mm, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
 				mm_mark_timer.add();
 				//initialize_experiment_global_values_dynamic(this->v_num, this->mm2021.thread_num);
@@ -379,7 +408,6 @@ public:
 				vector<int>().swap(weight_old_increase);
 			}
 			mm_mark_timer.push();
-			mm2021_mark_timer.push();
 			this->graphs.push_back(instance_graph_temp);
 			PLL_experiment_clear_global_values();
 		}
@@ -387,8 +415,6 @@ public:
 	}
 
 	int process_2021() {
-		// 读取图的数据到指定的对象中 graphs为原始图的列表 graph_with_time_span为时序图的对象
-		this->txt_read_base();
 		// 初始化nonhop
 		/*initialize_experiment_global_values_dynamic(this->v_num, this->mm.thread_num);
 		mm_mark_timer.mark();
@@ -418,7 +444,7 @@ public:
 
 		for (int i = 1; i <= this->iteration; i++)
 		{
-			std::cout << "iteration " << i << std::endl;
+			std::cout << "============iteration " << i << "==============" << std::endl;
 			initialize_experiment_global_values_dynamic(this->v_num, this->mm.thread_num);
 			std::queue<change_edge_info> q = this->q_list[i];
 			graph_v_of_v<int> instance_graph_temp(this->graphs[i - 1]);
@@ -461,8 +487,8 @@ public:
 					//mm_mark_timer.add();
 					//std::cout << "decrease ruc maintain finished" << std::endl;
 					initialize_experiment_global_values_dynamic(this->v_num, this->mm2021.thread_num);
-					mm2021_mark_timer.mark();
 					std::cout << "decrease 2021 maintain" << std::endl;
+					mm2021_mark_timer.mark();
 					nonHOP_WeightDecrease2021_batch(instance_graph_temp, mm2021, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
 					mm2021_mark_timer.add();
 					std::cout << "decrease 2021 maintain finished" << std::endl;
@@ -486,8 +512,8 @@ public:
 					//mm_mark_timer.add();
 					//std::cout << "increase ruc maintain finished" << std::endl;
 					initialize_experiment_global_values_dynamic(this->v_num, this->mm2021.thread_num);
-					mm2021_mark_timer.mark();
 					std::cout << "increase 2021 maintain" << std::endl;
+					mm2021_mark_timer.mark();
 					nonHOP_WeightIncrease2021_batch(instance_graph_temp, mm2021, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
 					mm2021_mark_timer.add();
 					std::cout << "increase 2021 maintain finished" << std::endl;
@@ -512,8 +538,8 @@ public:
 				//mm_mark_timer.add();
 				//std::cout << "decrease ruc maintain finished" << std::endl;
 				initialize_experiment_global_values_dynamic(this->v_num, this->mm2021.thread_num);
-				mm2021_mark_timer.mark();
 				std::cout << "decrease 2021 maintain" << std::endl;
+				mm2021_mark_timer.mark();
 				nonHOP_WeightDecrease2021_batch(instance_graph_temp, mm2021, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
 				mm2021_mark_timer.add();
 				std::cout << "decrease 2021 maintain finished" << std::endl;
@@ -536,15 +562,14 @@ public:
 				//nonHOP_WeightIncreaseMaintenance_improv_batch(instance_graph_temp, mm, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
 				//mm_mark_timer.add();
 				initialize_experiment_global_values_dynamic(this->v_num, this->mm2021.thread_num);
-				mm2021_mark_timer.mark();
 				std::cout << "increase 2021 maintain finished" << std::endl;
+				mm2021_mark_timer.mark();
 				nonHOP_WeightIncrease2021_batch(instance_graph_temp, mm2021, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
 				mm2021_mark_timer.add();
 				vector<pair<int, int>>().swap(path_increase);
 				vector<int>().swap(weight_increase);
 				vector<int>().swap(weight_old_increase);
 			}
-			mm_mark_timer.push();
 			mm2021_mark_timer.push();
 			this->graphs.push_back(instance_graph_temp);
 			PLL_experiment_clear_global_values();
@@ -557,18 +582,38 @@ public:
 
 		std::cout << "the 2024 maintain algorithm L size is " << mm.compute_L_byte_size() + mm.compute_PPR_byte_size() << std::endl;
 		std::cout << "the 2021 maintain algorithm L size is " << mm2021.compute_L_byte_size() + mm2021.compute_PPR_byte_size() << std::endl;
-		std::cout << "2021 result is" << mm2021.query(300, 600, 0, 10);
-		std::cout << "ruc result is" << mm.query(300, 600, 0, 10);
-		//std::cout << "the 2024 maintain algorithm takes slot 0 time is"
-		//	<< std::accumulate(this->mm_mark_timer.get_experiment_time().begin() + 1, this->mm_mark_timer.get_experiment_time().begin() + this->iteration / 2, 0.0) / (this->mm_mark_timer.get_experiment_time().size() / 2)
-		//	<< "slot 1 time is"
-		//	<< std::accumulate(this->mm_mark_timer.get_experiment_time().begin() + this->iteration / 2 + 1, this->mm_mark_timer.get_experiment_time().begin() + this->iteration, 0.0) / (this->mm_mark_timer.get_experiment_time().size() / 2)
-		//	<< std::endl;
-		//std::cout << "the 2021 maintain algorithm takes slot 0 time is"
-		//	<< std::accumulate(this->mm2021_mark_timer.get_experiment_time().begin() + 1, this->mm2021_mark_timer.get_experiment_time().begin() + this->iteration / 2, 0.0) / (this->mm2021_mark_timer.get_experiment_time().size() / 2)
-		//	<< "slot 1 time is"
-		//	<< std::accumulate(this->mm2021_mark_timer.get_experiment_time().begin() + this->iteration / 2 + 1, this->mm2021_mark_timer.get_experiment_time().begin() + this->iteration, 0.0) / (this->mm2021_mark_timer.get_experiment_time().size() / 2)
-		//	<< std::endl;
+		std::cout << "2021 result is" << mm2021.query(26100, 28900, 40, 60) << std::endl;
+		std::cout << "ruc result is" << mm.query(26100, 28900, 40, 60) << std::endl;
+		double slot0_2021 = 0;
+		double slot1_2021 = 0;
+		double slot0_2024 = 0;
+		double slot1_2024 = 0;
+		int pre = 0;
+		int after = 0;
+		for (int i = 1; i <= this->iteration; i++) {
+			if (i < ceil(this->iteration / 2)) {
+				pre++;
+				slot0_2021 += this->mm2021_mark_timer.get_experiment_time()[i];
+				slot0_2024 += this->mm_mark_timer.get_experiment_time()[i];
+			}
+			else {
+				after++;
+				slot1_2021 += this->mm2021_mark_timer.get_experiment_time()[i];
+				slot1_2024 += this->mm_mark_timer.get_experiment_time()[i];
+			}
+		}
+		std::cout << "In the 2024 algorithm, the index construction time is " << this->mm_mark_timer.get_experiment_time()[0]
+			<< ", the maintenance time for slot0 is "
+			<< slot0_2024 / pre
+			<< ", and the maintenance time for slot1 is "
+			<< slot1_2024 / after
+			<< "." << std::endl;
+		std::cout << "In the 2021 algorithm, the index construction time is" << this->mm2021_mark_timer.get_experiment_time()[0]
+			<< ", the maintenance time for slot0 is "
+			<< slot0_2021 / pre
+			<< ", and the maintenance time for slot1 is "
+			<< slot1_2021 / after
+			<< std::endl;
 		return 0;
 	}
 
