@@ -162,7 +162,7 @@ private:
 				{
 					std::map<pair<int, int>, int> diff;
 					std::cout << "Generate the change information of Sequence Diagram " << i << std::endl;
-					for (int j = 0; j < this->change_num; j++)
+					for (int j = 0; j < this->change_num;)
 					{
 						int index_i = this->random_v(boost_random_time_seed);
 						if (this->graphs[0].ADJs[index_i].size() == 0) {
@@ -172,7 +172,8 @@ private:
 						int index_j = dis_inner(boost_random_time_seed);
 						int i_j_weight = this->random_weight(boost_random_time_seed);
 						diff[{index_i, index_j}] = i_j_weight;
-						q_list[i].push({ index_i, index_j, i_j_weight, i });
+						j++;
+						//q_list[i].push({ index_i, index_j, i_j_weight, i });
 						// 持久化
 						txt_save(index_i, index_j, i_j_weight, i);
 					}
