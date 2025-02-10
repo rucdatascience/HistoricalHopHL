@@ -366,7 +366,7 @@ namespace nonHop
 		return false;
 	}
 
-	two_hop_label& search_sorted_two_hop_label_entity(std::vector<two_hop_label>& input_vector, int key)
+	two_hop_label search_sorted_two_hop_label_entity(std::vector<two_hop_label>& input_vector, int key)
 	{
 		label_operation_times++;
 		int left = 0, right = input_vector.size() - 1;
@@ -401,7 +401,7 @@ namespace nonHop
 		return res;
 	}
 
-	two_hop_label& search_sorted_two_hop_label_entity_not_realTime(std::vector<two_hop_label>& input_vector, int key, int time)
+	two_hop_label search_sorted_two_hop_label_entity_not_realTime(std::vector<two_hop_label>& input_vector, int key, int time)
 	{
 		label_operation_times++;
 		int left = 0, right = input_vector.size() - 1;
