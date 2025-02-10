@@ -395,7 +395,7 @@ namespace nonHop
 				right = mid - 1;
 			}
 		}
-		auto res = two_hop_label{ -1 };
+		auto res = two_hop_label(-1);
 		res.distance = std::numeric_limits<int>::max();
 		res.vertex = -1;
 		return res;
@@ -433,7 +433,7 @@ namespace nonHop
 				right = mid - 1;
 			}
 		}
-		auto res = two_hop_label{ -1 };
+		auto res = two_hop_label(-1);
 		res.distance = std::numeric_limits<int>::max();
 		res.vertex = -1;
 		return res;
