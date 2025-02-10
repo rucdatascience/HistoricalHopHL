@@ -10,10 +10,11 @@ struct ExperimentConfig {
 	std::string data_source;
 	int max_value = 0;
 	int min_value = 0;
+	bool markL = false;
 };
 
 void print_usage() {
-	std::cout << "Usage: experiment -m <iterations> -c <change_count> -p <save_path> -t <threads> -f <data_source> -max <max_value> -min <min_value> [-d]" << std::endl;
+	std::cout << "Usage: experiment -m <iterations> -c <change_count> -p <save_path> -t <threads> -f <data_source> -max <max_value> -min <min_value> [-d] [-L]" << std::endl;
 	std::exit(EXIT_FAILURE);
 }
 
@@ -65,6 +66,9 @@ ExperimentConfig parse_arguments(int argc, char* argv[]) {
 		else if (arg == "-d") {
 			config.debug = true;
 		}
+		else if (arg == "-l") {
+			config.markL = true;
+		}
 		else {
 			std::cerr << "Unknown or malformed argument: " << arg << std::endl;
 			print_usage();
@@ -91,7 +95,7 @@ int main(int argc, char* argv[]) {
 		config.iterations,// iteration must be greater than 2
 		config.change_count,
 		config.debug,
-		config.max_value, config.min_value);
+		config.max_value, config.min_value, config.markL);
 	experiment.init();
 	experiment.process_2021();
 	experiment.process();

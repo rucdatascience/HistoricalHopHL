@@ -65,6 +65,7 @@ private:
 	const int upper;
 	const int lower;
 	const bool is_debug;
+	const bool mark_L;
 	int v_num = 0;
 	int e_num = 0;
 	boost::random::uniform_int_distribution<> random_v;
@@ -232,7 +233,7 @@ private:
 public:
 	graph_v_of_v_with_time_span graph_with_time_span;
 	vector<graph_v_of_v<int>> graphs;
-	experiment_config(fs::path _experiment_path, fs::path _save_path, int _iteration, int _change_num, bool _is_debug, int _upper, int _lower) : experiment_path(_experiment_path), save_dir_path(_save_path), iteration(_iteration), change_num(_change_num), is_debug(_is_debug), upper(_upper), lower(_lower)
+	experiment_config(fs::path _experiment_path, fs::path _save_path, int _iteration, int _change_num, bool _is_debug, int _upper, int _lower, bool mark_L) : experiment_path(_experiment_path), save_dir_path(_save_path), iteration(_iteration), change_num(_change_num), is_debug(_is_debug), upper(_upper), lower(_lower), mark_L(mark_L)
 	{
 		random_weight = boost::random::uniform_int_distribution<>(lower, upper);
 		this->init_path();
@@ -630,34 +631,36 @@ public:
 
 	int close()
 	{
-		std::ofstream L2021OutStream;
-		std::ofstream LRucOutStream;
-		L2021OutStream.precision(10);
-		L2021OutStream.setf(std::ios::fixed);
-		L2021OutStream.setf(std::ios::showpoint);
-		L2021OutStream.open(this->save_l_2021_label_path.generic_string());
-		int index = 0;
-		for (const auto& labels : this->mm2021.L) {
-			L2021OutStream << "Vertex: " << index << std::endl;
-			for (const auto& label : labels) {
-				L2021OutStream << label.vertex << "," << label.distance << "," << label.t_s << "," << label.t_e << std::endl;
+		if (this->mark_L) {
+			std::ofstream L2021OutStream;
+			std::ofstream LRucOutStream;
+			L2021OutStream.precision(10);
+			L2021OutStream.setf(std::ios::fixed);
+			L2021OutStream.setf(std::ios::showpoint);
+			L2021OutStream.open(this->save_l_2021_label_path.generic_string());
+			int index = 0;
+			for (const auto& labels : this->mm2021.L) {
+				L2021OutStream << "Vertex: " << index << std::endl;
+				for (const auto& label : labels) {
+					L2021OutStream << label.vertex << "," << label.distance << "," << label.t_s << "," << label.t_e << std::endl;
+				}
+				++index;
 			}
-			++index;
-		}
-		L2021OutStream.close();
-		LRucOutStream.precision(10);
-		LRucOutStream.setf(std::ios::fixed);
-		LRucOutStream.setf(std::ios::showpoint);
-		LRucOutStream.open(this->save_l_2024_label_path.generic_string());
-		int index_ruc = 0;
-		for (const auto& labels : this->mm.L) {
-			LRucOutStream << "Vertex: " << index_ruc << std::endl;
-			for (const auto& label : labels) {
-				LRucOutStream << label.vertex << "," << label.distance << "," << label.t_s << "," << label.t_e << std::endl;
+			L2021OutStream.close();
+			LRucOutStream.precision(10);
+			LRucOutStream.setf(std::ios::fixed);
+			LRucOutStream.setf(std::ios::showpoint);
+			LRucOutStream.open(this->save_l_2024_label_path.generic_string());
+			int index_ruc = 0;
+			for (const auto& labels : this->mm.L) {
+				LRucOutStream << "Vertex: " << index_ruc << std::endl;
+				for (const auto& label : labels) {
+					LRucOutStream << label.vertex << "," << label.distance << "," << label.t_s << "," << label.t_e << std::endl;
+				}
+				++index_ruc;
 			}
-			++index_ruc;
+			LRucOutStream.close();
 		}
-		LRucOutStream.close();
 		return 0;
 	}
 };
