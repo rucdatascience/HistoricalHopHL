@@ -165,6 +165,9 @@ private:
 					for (int j = 0; j < this->change_num; j++)
 					{
 						int index_i = this->random_v(boost_random_time_seed);
+						if (this->graphs[0].ADJs[index_i].size() == 0) {
+							continue;
+						}
 						boost::random::uniform_int_distribution<> dis_inner(0, this->graphs[0].ADJs[index_i].size() - 1);
 						int index_j = dis_inner(boost_random_time_seed);
 						int i_j_weight = this->random_weight(boost_random_time_seed);

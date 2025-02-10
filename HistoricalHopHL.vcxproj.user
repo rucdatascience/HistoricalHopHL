@@ -5,7 +5,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-m 10 -c 10 -p "E:\project\postgraduate\HistoricalHopHL - 副本\Historical\experiment\Ermon-test" -t 20 -f "E:\project\postgraduate\HistoricalHopHL - 副本\Historical\experiment\Email-Enron.txt" -max 200 -min 1</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-m 10 -c 10 -p "E:\project\postgraduate\HistoricalHopHL - 副本\Historical\experiment\youtube-test" -t 20 -f "E:\project\postgraduate\HistoricalHopHL - 副本\Historical\experiment\com-youtube.ungraph.txt" -max 200 -min 1</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>
