@@ -57,14 +57,14 @@ void initialize_global_values_dynamic_hop_constrained(int N, int thread_num, int
 
 		Qid_599_v2.push(i);
 		Qid_599_v3.push(i);
-		dist_hop_599_v2[i].resize(N, {-1, 0});
-		dist_hop_599_v3[i].resize(N, {-1, 0});
+		dist_hop_599_v2[i].resize(N, { -1, 0 });
+		dist_hop_599_v3[i].resize(N, { -1, 0 });
 		Q_value[i].resize(N, vector<weightTYPE>(upper_k + 1, MAX_VALUE));
 	}
 }
 
 /* override the operator for hop_constrained_two_hop_label to use the Fibonacci minimum heap */
-bool operator<(hop_constrained_two_hop_label const &x, hop_constrained_two_hop_label const &y)
+bool operator<(hop_constrained_two_hop_label const& x, hop_constrained_two_hop_label const& y)
 {
 	if (x.distance != y.distance)
 	{
@@ -107,12 +107,12 @@ void HSDL_thread_function(int v_k)
 	// cout << "HSDL_thread_function" << endl;
 	if (labal_size_599 > max_labal_size_599)
 	{
-		throw reach_limit_error_string_MB;
+		//throw reach_limit_error_string_MB;
 	}
 	/* exceeding the maximum time limit*/
 	if (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - begin_time_599).count() > max_run_time_nanoseconds_599)
 	{
-		throw reach_limit_error_string_time;
+		//throw reach_limit_error_string_time;
 	}
 
 	/* get unique thread id */
@@ -125,11 +125,11 @@ void HSDL_thread_function(int v_k)
 	/* store the Temp L and dist_hop in current thread*/
 	vector<int> Temp_L_vk_changes, dist_hop_changes;
 	/* Temp_L_vk stores the dest_vertex_id and distance and hop */
-	auto &Temp_L_vk = Temp_L_vk_599[used_id];
-	auto &dist_hop = dist_hop_599[used_id]; // record the minimum distance (and the corresponding hop) of a searched vertex in Q
+	auto& Temp_L_vk = Temp_L_vk_599[used_id];
+	auto& dist_hop = dist_hop_599[used_id]; // record the minimum distance (and the corresponding hop) of a searched vertex in Q
 	vector<pair<int, int>> Q_handle_priorities_changes;
 	/* get the label list in current thread*/
-	auto &Q_handle_priorities = Q_handle_priorities_599[used_id];
+	auto& Q_handle_priorities = Q_handle_priorities_599[used_id];
 
 	long long int new_label_num = 0;
 
@@ -141,25 +141,25 @@ void HSDL_thread_function(int v_k)
 	node.hub_vertex = v_k;
 	node.hop = 0;
 	node.distance = 0;
-	Q_handle_priorities[v_k][0] = {Q.push({node}), node.distance};
-	Q_handle_priorities_changes.push_back({v_k, 0});
+	Q_handle_priorities[v_k][0] = { Q.push({node}), node.distance };
+	Q_handle_priorities_changes.push_back({ v_k, 0 });
 
 	/* Temp_L_vk_599 stores the label (dist and hop) of vertex v_k */
 	mtx_599[v_k].lock();
 	L_temp_599[v_k].push_back(node);
 	new_label_num++;
 	/* root is vk-> vk->obj info -> vector<obj> -> index-> vertexId obj-><distance,hop> */
-	for (auto &xx : L_temp_599[v_k])
+	for (auto& xx : L_temp_599[v_k])
 	{
 		int L_vk_vertex = xx.hub_vertex;
-		Temp_L_vk[L_vk_vertex].push_back({xx.distance, xx.hop});
+		Temp_L_vk[L_vk_vertex].push_back({ xx.distance, xx.hop });
 		Temp_L_vk_changes.push_back(L_vk_vertex);
 	}
 	mtx_599[v_k].unlock();
 
 	/*  dist_hop_599 stores the shortest distance from vk to any other vertices with its hop_cst,
 		note that the hop_cst is determined by the shortest distance */
-	dist_hop[v_k] = {0, 0};
+	dist_hop[v_k] = { 0, 0 };
 	dist_hop_changes.push_back(v_k);
 
 	while (Q.size() > 0)
@@ -196,10 +196,10 @@ void HSDL_thread_function(int v_k)
 		int query_v_k_u_opt = std::numeric_limits<int>::max();
 
 		mtx_599[u].lock();
-		for (auto &xx : L_temp_599[u])
+		for (auto& xx : L_temp_599[u])
 		{
 			int common_v = xx.hub_vertex;
-			for (auto &yy : Temp_L_vk[common_v])
+			for (auto& yy : Temp_L_vk[common_v])
 			{
 				long long int dis_opt = (long long int)xx.distance + yy.first;
 				if (query_v_k_u_opt > dis_opt)
@@ -263,7 +263,7 @@ void HSDL_thread_function(int v_k)
 
 			/* update adj */
 			/* Traverse neighboring nodes */
-			for (auto &xx : ideal_graph_599[u])
+			for (auto& xx : ideal_graph_599[u])
 			{
 				/* adh_v is the neighborhood and the ec is the distance from u to ajd_v*/
 				int adj_v = xx.first, ec = xx.second;
@@ -278,7 +278,7 @@ void HSDL_thread_function(int v_k)
 				node.distance = P_u + ec;
 				node.hop = u_hop + 1;
 
-				auto &yy = Q_handle_priorities[adj_v][node.hop];
+				auto& yy = Q_handle_priorities[adj_v][node.hop];
 
 				/*directly using the following codes without dist_hop is OK, but is slower; dist_hop is a pruning technique without increasing the time complexity*/
 				// if (yy.second != std::numeric_limits<int>::max()) {
@@ -299,8 +299,8 @@ void HSDL_thread_function(int v_k)
 				/* the vertex has not been visited*/
 				if (dist_hop[adj_v].first == std::numeric_limits<int>::max())
 				{ // adj_v has not been reached
-					yy = {Q.push({node}), node.distance};
-					Q_handle_priorities_changes.push_back({adj_v, node.hop});
+					yy = { Q.push({node}), node.distance };
+					Q_handle_priorities_changes.push_back({ adj_v, node.hop });
 					dist_hop[adj_v].first = node.distance;
 					dist_hop[adj_v].second = node.hop;
 					dist_hop_changes.push_back(adj_v);
@@ -316,8 +316,8 @@ void HSDL_thread_function(int v_k)
 						}
 						else
 						{
-							yy = {Q.push(node), node.distance};
-							Q_handle_priorities_changes.push_back({adj_v, node.hop});
+							yy = { Q.push(node), node.distance };
+							Q_handle_priorities_changes.push_back({ adj_v, node.hop });
 						}
 						dist_hop[adj_v].first = node.distance;
 						dist_hop[adj_v].second = node.hop;
@@ -331,8 +331,8 @@ void HSDL_thread_function(int v_k)
 						}
 						else
 						{
-							yy = {Q.push(node), node.distance};
-							Q_handle_priorities_changes.push_back({adj_v, node.hop});
+							yy = { Q.push(node), node.distance };
+							Q_handle_priorities_changes.push_back({ adj_v, node.hop });
 						}
 					}
 				}
@@ -356,18 +356,18 @@ void HSDL_thread_function(int v_k)
 		}
 	}
 
-	for (auto &xx : Temp_L_vk_changes)
+	for (auto& xx : Temp_L_vk_changes)
 	{
 		vector<pair<int, int>>().swap(Temp_L_vk[xx]);
 	}
-	for (auto &xx : dist_hop_changes)
+	for (auto& xx : dist_hop_changes)
 	{
-		dist_hop[xx] = {std::numeric_limits<int>::max(), 0};
+		dist_hop[xx] = { std::numeric_limits<int>::max(), 0 };
 	}
 	hop_constrained_node_handle handle_x;
-	for (auto &xx : Q_handle_priorities_changes)
+	for (auto& xx : Q_handle_priorities_changes)
 	{
-		Q_handle_priorities[xx.first][xx.second] = {handle_x, std::numeric_limits<int>::max()};
+		Q_handle_priorities[xx.first][xx.second] = { handle_x, std::numeric_limits<int>::max() };
 	}
 
 	mtx_599[v_k].lock();
@@ -385,11 +385,11 @@ void _2023WWW_thread_function(int v_k)
 
 	if (labal_size_599 > max_labal_size_599)
 	{
-		throw reach_limit_error_string_MB;
+		//throw reach_limit_error_string_MB;
 	}
 	if (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - begin_time_599).count() > max_run_time_nanoseconds_599)
 	{
-		throw reach_limit_error_string_time;
+		//throw reach_limit_error_string_time;
 	}
 
 	/* get unique thread id */
@@ -399,9 +399,9 @@ void _2023WWW_thread_function(int v_k)
 	mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
 
 	vector<int> Temp_L_vk_changes, dist_hop_changes;
-	auto &Temp_L_vk = Temp_L_vk_599[used_id];
-	auto &dist_hop = dist_hop_599[used_id]; // record {dis, predecessor}
-	auto &Vh = Vh_599[used_id];
+	auto& Temp_L_vk = Temp_L_vk_599[used_id];
+	auto& dist_hop = dist_hop_599[used_id]; // record {dis, predecessor}
+	auto& Vh = Vh_599[used_id];
 
 	long long int new_label_num = 0;
 
@@ -413,17 +413,17 @@ void _2023WWW_thread_function(int v_k)
 	/* Temp_L_vk_599 stores the label (dist and hop) of vertex v_k */
 	mtx_599[v_k].lock();
 	// L_temp_599[v_k].push_back(node); new_label_num++;
-	for (auto &xx : L_temp_599[v_k])
+	for (auto& xx : L_temp_599[v_k])
 	{
 		int L_vk_vertex = xx.hub_vertex;
-		Temp_L_vk[L_vk_vertex].push_back({xx.distance, xx.hop});
+		Temp_L_vk[L_vk_vertex].push_back({ xx.distance, xx.hop });
 		Temp_L_vk_changes.push_back(L_vk_vertex);
 	}
 	mtx_599[v_k].unlock();
 
 	Vh[0].push_back(v_k);
 
-	dist_hop[v_k] = {0, v_k};
+	dist_hop[v_k] = { 0, v_k };
 	dist_hop_changes.push_back(v_k);
 
 	vector<tuple<int, int, int>> dh_updates;
@@ -431,11 +431,11 @@ void _2023WWW_thread_function(int v_k)
 	for (int h = 0; h <= global_upper_k; h++)
 	{
 
-		for (auto &xx : dh_updates)
+		for (auto& xx : dh_updates)
 		{
 			if (dist_hop[get<0>(xx)].first > get<1>(xx))
 			{
-				dist_hop[get<0>(xx)] = {get<1>(xx), get<2>(xx)};
+				dist_hop[get<0>(xx)] = { get<1>(xx), get<2>(xx) };
 				dist_hop_changes.push_back(get<0>(xx));
 			}
 		}
@@ -447,7 +447,7 @@ void _2023WWW_thread_function(int v_k)
 
 			if (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - begin_time_599).count() > max_run_time_nanoseconds_599)
 			{
-				throw reach_limit_error_string_time;
+				//throw reach_limit_error_string_time;
 			}
 
 			// if (u < v_k) { // rank pruning ò�Ʋ��������Լ���_2023WWW_thread_function��_2023WWW_thread_function֮����������ΪBFS�����˹�����������Ҫ����ϴ��label������ıȷ�����Ķ༸��һ����������
@@ -456,10 +456,10 @@ void _2023WWW_thread_function(int v_k)
 
 			int query_v_k_u = std::numeric_limits<int>::max();
 			mtx_599[u].lock();
-			for (auto &xx : L_temp_599[u])
+			for (auto& xx : L_temp_599[u])
 			{
 				int common_v = xx.hub_vertex;
-				for (auto &yy : Temp_L_vk[common_v])
+				for (auto& yy : Temp_L_vk[common_v])
 				{
 					if (xx.hop + yy.second <= h)
 					{
@@ -485,20 +485,20 @@ void _2023WWW_thread_function(int v_k)
 				new_label_num++;
 
 				/* update adj */
-				for (auto &xx : ideal_graph_599[u])
+				for (auto& xx : ideal_graph_599[u])
 				{
 					int adj_v = xx.first, ec = xx.second;
 					if (P_u + ec < dist_hop[adj_v].first)
 					{
 						Vh[h + 1].push_back(adj_v);
-						dh_updates.push_back({adj_v, P_u + ec, u});
+						dh_updates.push_back({ adj_v, P_u + ec, u });
 					}
 				}
 			}
 		}
 	}
 
-	for (auto &xx : Temp_L_vk_changes)
+	for (auto& xx : Temp_L_vk_changes)
 	{
 		vector<pair<int, int>>().swap(Temp_L_vk[xx]);
 	}
@@ -506,9 +506,9 @@ void _2023WWW_thread_function(int v_k)
 	{
 		vector<int>().swap(Vh[i]);
 	}
-	for (auto &xx : dist_hop_changes)
+	for (auto& xx : dist_hop_changes)
 	{
-		dist_hop[xx] = {std::numeric_limits<int>::max(), 0};
+		dist_hop[xx] = { std::numeric_limits<int>::max(), 0 };
 	}
 
 	mtx_599[v_k].lock();
@@ -551,27 +551,27 @@ vector<vector<hop_constrained_two_hop_label>> hop_constrained_sortL(int num_of_t
 	for (int v_k = 0; v_k < N; v_k++)
 	{
 		results.emplace_back(
-			pool.enqueue([&output_L, v_k] 
-			{ // pass const type value j to thread; [] can be empty
-				sort(L_temp_599[v_k].begin(), L_temp_599[v_k].end(), compare_hop_constrained_two_hop_label);
-				vector<hop_constrained_two_hop_label>(L_temp_599[v_k]).swap(L_temp_599[v_k]); // 使用vector的swap优化内存占用，释放多余的空间
-				output_L[v_k] = L_temp_599[v_k];
-				vector<hop_constrained_two_hop_label>().swap(L_temp_599[v_k]); // clear new labels for RAM efficiency
+			pool.enqueue([&output_L, v_k]
+				{ // pass const type value j to thread; [] can be empty
+					sort(L_temp_599[v_k].begin(), L_temp_599[v_k].end(), compare_hop_constrained_two_hop_label);
+					vector<hop_constrained_two_hop_label>(L_temp_599[v_k]).swap(L_temp_599[v_k]); // 使用vector的swap优化内存占用，释放多余的空间
+					output_L[v_k] = L_temp_599[v_k];
+					vector<hop_constrained_two_hop_label>().swap(L_temp_599[v_k]); // clear new labels for RAM efficiency
 
-				return 1; // return to results; the return type must be the same with results
-			}));
+					return 1; // return to results; the return type must be the same with results
+				}));
 	}
-	for (auto &&result : results)
+	for (auto&& result : results)
 		result.get(); // all threads finish here
 
 	return output_L;
 }
 
 /*canonical_repair*/
-void hop_constrained_clean_L(hop_constrained_case_info &case_info, int thread_num)
+void hop_constrained_clean_L(hop_constrained_case_info& case_info, int thread_num)
 {
 
-	auto &L = case_info.L;
+	auto& L = case_info.L;
 	int N = L.size();
 	label_size_before_canonical_repair_599 = 0;
 	label_size_after_canonical_repair_599 = 0;
@@ -588,7 +588,7 @@ void hop_constrained_clean_L(hop_constrained_case_info &case_info, int thread_nu
 	// list.push_back(3); 
 	// for (int v = 0; v < N; v++)
 	// for (int index = 0; index < N; index++)
-	for(int v=0;v<N;v++)
+	for (int v = 0; v < N; v++)
 	{
 		results.emplace_back(
 			pool.enqueue([v, &L] { // pass const type value j to thread; [] can be empty
@@ -610,7 +610,7 @@ void hop_constrained_clean_L(hop_constrained_case_info &case_info, int thread_nu
 				/**
 				 * the temp_L in this thread
 				*/
-				auto &T = Temp_L_vk_599[used_id];
+				auto& T = Temp_L_vk_599[used_id];
 
 				/**
 				 * Traverse the L-list of the current vertex
@@ -631,9 +631,9 @@ void hop_constrained_clean_L(hop_constrained_case_info &case_info, int thread_nu
 					 * traverse downward from the perfectly correct first vertex
 					*/
 					int min_dis = std::numeric_limits<int>::max();
-					for (auto &label1 : Lu)
+					for (auto& label1 : Lu)
 					{
-						for (auto &label2 : T[label1.hub_vertex])
+						for (auto& label2 : T[label1.hub_vertex])
 						{
 							if (label1.hop + label2.second <= u_hop)
 							{
@@ -649,7 +649,7 @@ void hop_constrained_clean_L(hop_constrained_case_info &case_info, int thread_nu
 					if (min_dis > Lvi.distance)
 					{
 						Lv_final.push_back(Lvi);
-						T[u].push_back({Lvi.distance, Lvi.hop});
+						T[u].push_back({ Lvi.distance, Lvi.hop });
 					}
 				}
 
@@ -669,10 +669,10 @@ void hop_constrained_clean_L(hop_constrained_case_info &case_info, int thread_nu
 				mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
 
 				return 1; // return to results; the return type must be the same with results
-			}));
+				}));
 	}
 
-	for (auto &&result : results)
+	for (auto&& result : results)
 		result.get(); // all threads finish here
 	results.clear();
 
@@ -681,7 +681,7 @@ void hop_constrained_clean_L(hop_constrained_case_info &case_info, int thread_nu
 	case_info.canonical_repair_remove_label_ratio = (double)(label_size_before_canonical_repair_599 - label_size_after_canonical_repair_599) / label_size_before_canonical_repair_599;
 }
 
-void hop_constrained_two_hop_labels_generation(graph_v_of_v<int> &input_graph, hop_constrained_case_info &case_info)
+void hop_constrained_two_hop_labels_generation(graph_v_of_v<int>& input_graph, hop_constrained_case_info& case_info)
 {
 
 	//----------------------------------- step 1: initialization -----------------------------------
@@ -717,12 +717,12 @@ void hop_constrained_two_hop_labels_generation(graph_v_of_v<int> &input_graph, h
 	case_info.time_initialization = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1e9;
 
 	//----------------------------------------------- step 2: generate labels ---------------------------------------------------------------
-	/** 
-	 * Use Temp_L_vk_599 to mark the positional relationship between the iterated nodes 
+	/**
+	 * Use Temp_L_vk_599 to mark the positional relationship between the iterated nodes
 	 * and the nodes with already generated labels. This is done to reduce the process of
 	 * traversing the L labels of the iterated nodes. Additionally, register multithreaded
-	 * tasks and retrieve the results 
-	 */ 
+	 * tasks and retrieve the results
+	 */
 	begin = std::chrono::high_resolution_clock::now();
 
 	global_upper_k = case_info.upper_k == 0 ? std::numeric_limits<int>::max() : case_info.upper_k;
@@ -735,11 +735,11 @@ void hop_constrained_two_hop_labels_generation(graph_v_of_v<int> &input_graph, h
 	for (int i = 0; i < num_of_threads; i++)
 	{
 		Temp_L_vk_599[i].resize(N);
-		dist_hop_599[i].resize(N, {std::numeric_limits<int>::max(), 0});
+		dist_hop_599[i].resize(N, { std::numeric_limits<int>::max(), 0 });
 		Q_handle_priorities_599[i].resize(N);
 		for (int j = 0; j < N; j++)
 		{
-			Q_handle_priorities_599[i][j].resize(global_upper_k + 1, {handle_x, std::numeric_limits<int>::max()});
+			Q_handle_priorities_599[i][j].resize(global_upper_k + 1, { handle_x, std::numeric_limits<int>::max() });
 		}
 		Vh_599[i].resize(global_upper_k + 2);
 		Qid_599.push(i);
@@ -750,9 +750,9 @@ void hop_constrained_two_hop_labels_generation(graph_v_of_v<int> &input_graph, h
 		{
 			results.emplace_back(
 				pool.enqueue([v_k]
-							 {
-					_2023WWW_thread_function(v_k);
-					return 1; }));
+					{
+						_2023WWW_thread_function(v_k);
+						return 1; }));
 		}
 	}
 	else
@@ -777,12 +777,12 @@ void hop_constrained_two_hop_labels_generation(graph_v_of_v<int> &input_graph, h
 			// }
 			results.emplace_back(
 				pool.enqueue([v_k]
-							 {
-					HSDL_thread_function(v_k);
-					return 1; }));
+					{
+						HSDL_thread_function(v_k);
+						return 1; }));
 		}
 	}
-	for (auto &&result : results)
+	for (auto&& result : results)
 		result.get();
 
 	end = std::chrono::high_resolution_clock::now();

@@ -9,19 +9,19 @@
 namespace nonHop
 {
 	bool PLL_dynamic_generate_PPR = true;
-	void PLL_dij_function(int v_k, graph_v_of_v<int> &input_graph)
+	void PLL_dij_function(int v_k, graph_v_of_v<int>& input_graph)
 	{
 
 		/*Pruned Dijkstra from vertex v_k*/
 
 		if (labal_num_595 > max_labal_num_595)
 		{
-			throw reach_limit_error_string_MB; // after catching error, must call PLL_clear_global_values(), otherwise PLL cannot be reused
+			//throw reach_limit_error_string_MB; // after catching error, must call PLL_clear_global_values(), otherwise PLL cannot be reused
 		}
 
 		if (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - begin_time_595).count() > max_run_time_nanoseconds_595)
 		{
-			throw reach_limit_error_string_time; // after catching error, must call PLL_clear_global_values(), otherwise PLL cannot be reused
+			//throw reach_limit_error_string_time; // after catching error, must call PLL_clear_global_values(), otherwise PLL cannot be reused
 		}
 
 		mtx_595[max_N_ID_for_mtx_595 - 1].lock();
@@ -30,8 +30,8 @@ namespace nonHop
 		mtx_595[max_N_ID_for_mtx_595 - 1].unlock();
 
 		vector<int> P_changed_vertices, T_changed_vertices;
-		vector<int> &T_dij = T_dij_595[used_id], P_dij = P_dij_595[used_id];
-		vector<PLL_handle_t_for_sp> &Q_handles = Q_handles_595[used_id];
+		vector<int>& T_dij = T_dij_595[used_id], P_dij = P_dij_595[used_id];
+		vector<PLL_handle_t_for_sp>& Q_handles = Q_handles_595[used_id];
 
 		boost::heap::fibonacci_heap<two_hop_label> Q;
 		two_hop_label node(0);
@@ -161,10 +161,10 @@ namespace nonHop
 		mtx_595[max_N_ID_for_mtx_595 - 1].unlock();
 	}
 
-	void clean_L(two_hop_case_info &case_info, int thread_num)
+	void clean_L(two_hop_case_info& case_info, int thread_num)
 	{
 
-		auto &L = case_info.L;
+		auto& L = case_info.L;
 		int N = L.size();
 		label_size_before_canonical_repair_595 = 0;
 		label_size_after_canonical_repair_595 = 0;
@@ -188,7 +188,7 @@ namespace nonHop
 					mtx_595[v].unlock_shared();
 					label_size_before_canonical_repair_595 += Lv.size();
 
-					auto &T = T_dij_595[used_id];
+					auto& T = T_dij_595[used_id];
 
 					for (auto Lvi : Lv)
 					{
@@ -236,10 +236,10 @@ namespace nonHop
 					mtx_595[max_N_ID_for_mtx_595 - 1].unlock();
 
 					return 1; // return to results; the return type must be the same with results
-				}));
+					}));
 		}
 
-		for (auto &&result : results)
+		for (auto&& result : results)
 			result.get(); // all threads finish here
 		results.clear();
 
@@ -269,9 +269,9 @@ namespace nonHop
 					vector<two_hop_label>().swap(L_temp_595[v_k]); // clear new labels for RAM efficiency
 
 					return 1; // return to results; the return type must be the same with results
-				}));
+					}));
 		}
-		for (auto &&result : results)
+		for (auto&& result : results)
 			result.get(); // all threads finish here
 		results.clear();
 
@@ -280,7 +280,7 @@ namespace nonHop
 
 	/*the following parallel PLL_with_non_adj_reduction code cannot be run parallelly, due to the above globel values*/
 
-	void PLL(graph_v_of_v<int> &input_graph, two_hop_case_info &case_info)
+	void PLL(graph_v_of_v<int>& input_graph, two_hop_case_info& case_info)
 	{
 
 		//----------------------------------- step 1: initialization ------------------------------------------------------------------
@@ -353,9 +353,9 @@ namespace nonHop
 					pool.enqueue([v_k, &input_graph, last_check_vID] { // pass const type value j to thread; [] can be empty
 						PLL_dij_function(v_k, input_graph);
 						return 1; // return to results; the return type must be the same with results
-					}));
+						}));
 			}
-			for (auto &&result : results)
+			for (auto&& result : results)
 				result.get(); // all threads finish here
 			results.clear();
 		}
