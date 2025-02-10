@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <chrono>
 #include <string>
 #include <iostream>
@@ -11,16 +11,18 @@ public:
 
 	void begin_timing()
 	{
-		start_time = std::chrono::high_resolution_clock::now();
+		start_time = std::chrono::steady_clock::now();
 	}
-	void mark_time(std::string current_step)
+
+	void mark_time(const std::string& current_step)
 	{
 		if (is_debug)
 		{
-			auto now = std::chrono::high_resolution_clock::now();
-			double runtime_base_line_with_span = std::chrono::duration_cast<std::chrono::nanoseconds>(now - start_time).count() / 1e9;
-			std::cout << current_step << ": " << runtime_base_line_with_span << std::endl;
+			auto now = std::chrono::steady_clock::now();
+			double elapsed_time = std::chrono::duration<double>(now - start_time).count();
+			std::cout << current_step << ": " << elapsed_time << "s" << std::endl;
 		}
 	}
 };
+
 static Timer timer;

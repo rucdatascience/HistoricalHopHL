@@ -1,55 +1,40 @@
-#pragma once
+﻿#pragma once
 #include <vector>
-class mark_timer
-{
+#include <chrono>
+
+class mark_timer {
 private:
-	// 0 is init
-	// 1 is the slot time1
-	// .....
 	std::vector<double> experiment_time;
 	std::chrono::steady_clock::time_point time1;
 	double time_cost = 0;
-	int addTimeMark(double time)
-	{
-		time_cost = time_cost + (time);
-		return 0;
+
+	void addTimeMark(double time) {
+		time_cost += time;
 	}
-	int pushTimeMarkToVector(double time)
-	{
-		this->experiment_time.push_back(time);
-		return 0;
+
+	void pushTimeMarkToVector(double time) {
+		experiment_time.push_back(time);
 	}
 
 public:
-	int mark()
-	{
-		this->time1 = std::chrono::high_resolution_clock::now();
-		return 0;
+	void mark() {
+		time1 = std::chrono::steady_clock::now();
 	}
 
-	int add()
-	{
-		std::chrono::steady_clock::time_point time2 = std::chrono::high_resolution_clock::now();
-		addTimeMark(std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count() / 1e9);
-		return 0;
+	void add() {
+		auto time2 = std::chrono::steady_clock::now();
+		addTimeMark(std::chrono::duration<double>(time2 - time1).count());
 	}
 
-	int push()
-	{
-		pushTimeMarkToVector(this->time_cost);
-		this->time_cost = 0;
-		return 0;
+	void push() {
+		pushTimeMarkToVector(time_cost);
+		time_cost = 0;
 	}
 
-	std::vector<double> get_experiment_time()
-	{
-		return this->experiment_time;
+	std::vector<double> get_experiment_time() const {
+		return experiment_time;
 	}
 
-	mark_timer() {
-		this->experiment_time.resize(0);
-	};
-	~mark_timer() {
-
-	};
+	mark_timer() = default;
+	~mark_timer() = default;
 };
