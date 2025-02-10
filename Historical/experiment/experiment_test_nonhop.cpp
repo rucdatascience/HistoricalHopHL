@@ -81,7 +81,9 @@ int main(int argc, char* argv[]) {
 		<< "Save Path: " << config.save_path << "\n"
 		<< "Threads: " << config.thread_count << "\n"
 		<< "Data Source: " << config.data_source << "\n"
-		<< "Debug Mode: " << (config.debug ? "Enabled" : "Disabled") << "\n";
+		<< "Debug Mode: " << (config.debug ? "Enabled" : "Disabled") << "\n"
+		<< "Max edge weight:" << config.max_value << "\n"
+		<< "Min edge weight:" << config.min_value << "\n";
 
 	experiment_config experiment(
 		config.data_source,

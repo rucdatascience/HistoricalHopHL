@@ -48,10 +48,18 @@ class experiment_config
 {
 
 private:
+	// save dir_path
+	// {dir_path}//L.txt -> save the label
+	// {dir_path}//result.txt -> save the experiment result
+	// {dir_path}//save.txt -> save the iterations' detail
+	const fs::path save_dir_path;
+	fs::path save_l_2021_label_path;
+	fs::path save_l_2024_label_path;
+	fs::path save_experiment_result_path;
+	fs::path save_random_graph_path;
+	// data source path
 	const fs::path experiment_path;
 	std::ofstream outputFile;
-	//std::ofstream resultOutputFile;
-	const fs::path save_path;
 	int iteration;
 	const int change_num;
 	const int upper;
@@ -69,26 +77,10 @@ private:
 
 	two_hop_case_info mm2021;
 	mark_timer mm2021_mark_timer;
-	//void txt_save_label(vector<vector<two_hop_label>>& labels, fs::path _save_path) {
-	//	std::ofstream label_save_path;
-	//	label_save_path.precision(10);
-	//	label_save_path.setf(std::ios::fixed);
-	//	label_save_path.setf(std::ios::showpoint);
-	//	label_save_path.open(_save_path.generic_u8string());
-	//	for (int i = 0; i < labels.size(); i++) {
-	//		for (const two_hop_label& label : labels[i]) {
-	//			this->outputFile << i << " " << label.vertex << " " << label.distance << " " << label.t_s << " " << label.t_s << "\n";
-	//		}
-	//	}
-	//}
-
-	//void txt_read_label(fs::path _read_path, vector<vector<two_hop_label>> labels) {
-	//	std::ifstream myfile(_read_path);
-	//}
 
 	void txt_read_base()
 	{
-		std::string readPath = this->is_debug ? this->save_path.generic_u8string() : this->experiment_path.generic_u8string();
+		std::string readPath = this->is_debug ? this->save_random_graph_path.generic_string() : this->experiment_path.generic_string();
 		std::string line_content;
 		graph_v_of_v<int> instance_graph;
 		// 读取文件
@@ -168,7 +160,7 @@ private:
 				for (int i = 1; i <= this->iteration; i++)
 				{
 					std::map<pair<int, int>, int> diff;
-					std::cout << i << std::endl;
+					std::cout << "Generate the change information of Sequence Diagram " << i << std::endl;
 					for (int j = 0; j < this->change_num; j++)
 					{
 						int index_i = this->random_v(boost_random_time_seed);
@@ -190,6 +182,7 @@ private:
 						txt_save(v1, v2, w, i);
 					}
 				}
+				std::cout << "generation finish" << std::endl;
 			}
 			myfile.close(); // close the file
 			if (!this->is_debug)
@@ -214,22 +207,35 @@ private:
 		this->outputFile << "EOF" << std::endl;
 		this->outputFile.close();
 	}
-
-public:
-	graph_v_of_v_with_time_span graph_with_time_span;
-	vector<graph_v_of_v<int>> graphs;
-	experiment_config(fs::path _experiment_path, fs::path _save_path, int _iteration, int _change_num, bool _is_debug, int _upper, int _lower) : experiment_path(_experiment_path), save_path(_save_path), iteration(_iteration), change_num(_change_num), is_debug(_is_debug), upper(_upper), lower(_lower)
-	{
-		random_weight = boost::random::uniform_int_distribution<>(lower, upper);
+	void init_path() {
+		if (std::filesystem::exists(this->save_dir_path)) {
+			if (std::filesystem::remove_all(this->save_dir_path)) {
+				std::cout << "reset save_dir successful " << this->save_dir_path << std::endl;
+			}
+		}
+		std::filesystem::create_directories(this->save_dir_path);
+		this->save_random_graph_path = this->save_dir_path / "save.txt"; // 追加文件名
+		this->save_experiment_result_path = this->save_dir_path / "result.txt"; // 追加文件名
+		this->save_l_2021_label_path = this->save_dir_path / "L2021.txt"; // 追加文件名
+		this->save_l_2024_label_path = this->save_dir_path / "Lruc.txt"; // 追加文件名
 		if (!this->is_debug)
 		{
+			// generation random graph
 			q_list = vector<std::queue<change_edge_info>>(this->iteration + 1, std::queue<change_edge_info>());
 			this->outputFile.precision(10);
 			this->outputFile.setf(std::ios::fixed);
 			this->outputFile.setf(std::ios::showpoint);
-			this->outputFile.open(_save_path.generic_u8string());
+			this->outputFile.open(this->save_random_graph_path.generic_string());
 			this->outputFile << "time" << " " << this->iteration << std::endl;
 		}
+	}
+public:
+	graph_v_of_v_with_time_span graph_with_time_span;
+	vector<graph_v_of_v<int>> graphs;
+	experiment_config(fs::path _experiment_path, fs::path _save_path, int _iteration, int _change_num, bool _is_debug, int _upper, int _lower) : experiment_path(_experiment_path), save_dir_path(_save_path), iteration(_iteration), change_num(_change_num), is_debug(_is_debug), upper(_upper), lower(_lower)
+	{
+		random_weight = boost::random::uniform_int_distribution<>(lower, upper);
+		this->init_path();
 	}
 
 	int init()
@@ -281,7 +287,7 @@ public:
 
 		for (int i = 1; i <= this->iteration; i++)
 		{
-			std::cout << "iteration " << i << std::endl;
+			std::cout << "=============iteration " << i << "=========" << std::endl;
 			initialize_experiment_global_values_dynamic(this->v_num, this->mm.thread_num);
 			std::queue<change_edge_info> q = this->q_list[i];
 			graph_v_of_v<int> instance_graph_temp(this->graphs[i - 1]);
@@ -579,11 +585,15 @@ public:
 
 	int print_experiment_result()
 	{
-
-		std::cout << "the 2024 maintain algorithm L size is " << mm.compute_L_byte_size() + mm.compute_PPR_byte_size() << std::endl;
-		std::cout << "the 2021 maintain algorithm L size is " << mm2021.compute_L_byte_size() + mm2021.compute_PPR_byte_size() << std::endl;
-		std::cout << "2021 result is" << mm2021.query(26100, 28900, 40, 60) << std::endl;
-		std::cout << "ruc result is" << mm.query(26100, 28900, 40, 60) << std::endl;
+		std::ofstream resultOutStream;
+		resultOutStream.precision(10);
+		resultOutStream.setf(std::ios::fixed);
+		resultOutStream.setf(std::ios::showpoint);
+		resultOutStream.open(this->save_experiment_result_path.generic_string());
+		resultOutStream << "the 2024 maintain algorithm L size is " << mm.compute_L_byte_size() + mm.compute_PPR_byte_size() << std::endl;
+		resultOutStream << "the 2021 maintain algorithm L size is " << mm2021.compute_L_byte_size() + mm2021.compute_PPR_byte_size() << std::endl;
+		resultOutStream << "2021 result is" << mm2021.query(26100, 28900, 40, 60) << std::endl;
+		resultOutStream << "ruc result is" << mm.query(26100, 28900, 40, 60) << std::endl;
 		double slot0_2021 = 0;
 		double slot1_2021 = 0;
 		double slot0_2024 = 0;
@@ -602,23 +612,52 @@ public:
 				slot1_2024 += this->mm_mark_timer.get_experiment_time()[i];
 			}
 		}
-		std::cout << "In the 2024 algorithm, the index construction time is " << this->mm_mark_timer.get_experiment_time()[0]
+		resultOutStream << "In the 2024 algorithm, the index construction time is " << this->mm_mark_timer.get_experiment_time()[0]
 			<< ", the maintenance time for slot0 is "
 			<< slot0_2024 / pre
 			<< ", and the maintenance time for slot1 is "
 			<< slot1_2024 / after
 			<< "." << std::endl;
-		std::cout << "In the 2021 algorithm, the index construction time is" << this->mm2021_mark_timer.get_experiment_time()[0]
+		resultOutStream << "In the 2021 algorithm, the index construction time is " << this->mm2021_mark_timer.get_experiment_time()[0]
 			<< ", the maintenance time for slot0 is "
 			<< slot0_2021 / pre
 			<< ", and the maintenance time for slot1 is "
 			<< slot1_2021 / after
 			<< std::endl;
+		resultOutStream.close();
 		return 0;
 	}
 
 	int close()
 	{
+		std::ofstream L2021OutStream;
+		std::ofstream LRucOutStream;
+		L2021OutStream.precision(10);
+		L2021OutStream.setf(std::ios::fixed);
+		L2021OutStream.setf(std::ios::showpoint);
+		L2021OutStream.open(this->save_l_2021_label_path.generic_string());
+		int index = 0;
+		for (const auto& labels : this->mm2021.L) {
+			L2021OutStream << "Vertex: " << index << std::endl;
+			for (const auto& label : labels) {
+				L2021OutStream << label.vertex << "," << label.distance << "," << label.t_s << "," << label.t_e << std::endl;
+			}
+			++index;
+		}
+		L2021OutStream.close();
+		LRucOutStream.precision(10);
+		LRucOutStream.setf(std::ios::fixed);
+		LRucOutStream.setf(std::ios::showpoint);
+		LRucOutStream.open(this->save_l_2024_label_path.generic_string());
+		int index_ruc = 0;
+		for (const auto& labels : this->mm.L) {
+			LRucOutStream << "Vertex: " << index_ruc << std::endl;
+			for (const auto& label : labels) {
+				LRucOutStream << label.vertex << "," << label.distance << "," << label.t_s << "," << label.t_e << std::endl;
+			}
+			++index_ruc;
+		}
+		LRucOutStream.close();
 		return 0;
 	}
 };
