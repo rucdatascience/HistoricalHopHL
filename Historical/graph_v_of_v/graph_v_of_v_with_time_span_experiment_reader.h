@@ -8,7 +8,17 @@
 #include <fstream>
 #include <numeric>
 #include <functional>
-
+struct ExperimentConfig {
+	int iterations = 0;
+	int change_count = 0;
+	std::filesystem::path save_path;
+	int thread_count = 0;
+	bool debug = false;
+	std::string data_source;
+	int max_value = 0;
+	int min_value = 0;
+	bool markL = false;
+};
 void PLL_experiment_clear_global_values()
 {
 	this_parallel_PLL_is_running_595 = false;
@@ -61,6 +71,7 @@ private:
 	const fs::path experiment_path;
 	std::ofstream outputFile;
 	int iteration;
+	int thread_num;
 	const int change_num;
 	const int upper;
 	const int lower;
@@ -237,7 +248,8 @@ private:
 public:
 	graph_v_of_v_with_time_span graph_with_time_span;
 	vector<graph_v_of_v<int>> graphs;
-	experiment_config(fs::path _experiment_path, fs::path _save_path, int _iteration, int _change_num, bool _is_debug, int _upper, int _lower, bool mark_L) : experiment_path(_experiment_path), save_dir_path(_save_path), iteration(_iteration), change_num(_change_num), is_debug(_is_debug), upper(_upper), lower(_lower), mark_L(mark_L)
+	experiment_config(ExperimentConfig config) : experiment_path(config.data_source), save_dir_path(config.save_path), iteration(config.iterations)
+		, change_num(config.change_count), is_debug(config.debug), upper(config.max_value), lower(config.min_value), mark_L(config.markL),thread_num(config.thread_count)
 	{
 		random_weight = boost::random::uniform_int_distribution<>(lower, upper);
 		this->init_path();
