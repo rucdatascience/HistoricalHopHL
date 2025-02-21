@@ -35,8 +35,9 @@ int main(int argc, char* argv[]) {
 			if (config.hop_limit != 0) {
 				//k-constrained pll
 				std::string graph_res_filename = "binary_hop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_graph";
-				std::string experiment_res_filename = "hop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result";
-				std::filesystem::path resultPath = saveDir.append(graph_res_filename);
+				std::string experiment_res_filename = "hop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result.txt";
+				std::filesystem::path graphPath = saveDir.string() + "//" + graph_res_filename;
+				std::filesystem::path resultPath = saveDir.string() + "//" + experiment_res_filename;
 				experiment::hop::two_hop_case_info hop_info;
 				hop_info.thread_num = config.threads;
 				hop_info.upper_k = config.hop_limit;
@@ -48,6 +49,7 @@ int main(int argc, char* argv[]) {
 				experiment::saveBinary(FILE, graph_time);
 				experiment::saveBinary(FILE, hop_info);
 				FILE.close();
+				timer.writeStatsToFile(resultPath.string());
 			}
 			else {
 				std::string graph_res_filename = "binary_nonhop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_graph";

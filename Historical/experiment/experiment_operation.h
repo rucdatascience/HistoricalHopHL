@@ -362,7 +362,7 @@ namespace experiment {
 		std::queue<int> Qid_599;
 		int max_N_ID_for_mtx_599 = 1e7;
 		std::vector<std::shared_mutex> mtx_599(max_N_ID_for_mtx_599);
-		
+
 		int global_upper_k = 0;
 
 		template <typename weight_type>
@@ -768,6 +768,7 @@ namespace experiment {
 		template <typename weight_type>
 		void pll(graph<weight_type>& graph, hop::two_hop_case_info& case_info) {
 			//----------------------------------- step 1: initialization -----------------------------------
+			timer.startSubtask("step 1: initialization");
 			int N = graph.size();
 			/* store the L Label and PPR*/
 			L_temp_599.resize(N);
@@ -776,6 +777,7 @@ namespace experiment {
 			int num_of_threads = case_info.thread_num;
 			ThreadPool pool(num_of_threads);
 			std::vector<std::future<int>> results;
+			timer.endSubtask();
 			//----------------------------------------------- step 2: generate labels ---------------------------------------------------------------
 			/**
 			 * Use Temp_L_vk_599 to mark the positional relationship between the iterated nodes
@@ -783,6 +785,7 @@ namespace experiment {
 			 * traversing the L labels of the iterated nodes. Additionally, register multithreaded
 			 * tasks and retrieve the results
 			 */
+			timer.startSubtask("step 2: generate labels");
 			global_upper_k = case_info.upper_k;
 			ideal_graph_599<weight_type> = graph;
 			Temp_L_vk_599.resize(num_of_threads);
@@ -813,17 +816,20 @@ namespace experiment {
 							HSDL_thread_function<weight_type>(v_k);
 							return 1; }));
 			}
-			
+
 			for (auto&& result : results)
 				result.get();
-
-			//----------------------------------------------- step 3: sortL---------------------------------------------------------------
+			timer.endSubtask();
+			//----------------------------------------------- step 3: sortL ---------------------------------------------------------------
+			timer.startSubtask("step 3: sortL");
 			case_info.L = L_temp_599;
 			case_info.L = hop_constrained_sortL(num_of_threads);
 			case_info.PPR = PPR_599;
-
+			timer.endSubtask();
 			//----------------------------------------------- step 4: canonical_repair---------------------------------------------------------------
+			timer.startSubtask("step 4: canonical_repair");
 			hop_constrained_clean_L(case_info, num_of_threads);
+			timer.endSubtask();
 			//---------------------------------------------------------------------------------------------------------------------------------------
 			hop_constrained_clear_global_values<weight_type>();
 		}
