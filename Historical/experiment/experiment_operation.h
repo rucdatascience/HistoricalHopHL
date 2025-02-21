@@ -359,10 +359,473 @@ namespace experiment {
 	}
 
 	namespace hop {
+		std::queue<int> Qid_599;
+		int max_N_ID_for_mtx_599 = 1e7;
+		std::vector<std::shared_mutex> mtx_599(max_N_ID_for_mtx_599);
+		
+		int global_upper_k = 0;
+
+		template <typename weight_type>
+		graph<weight_type> ideal_graph_599;
+
+		typedef typename boost::heap::fibonacci_heap<two_hop_label>::handle_type hop_constrained_node_handle;
+		std::vector<std::vector<two_hop_label>> L_temp_599;
+		PPR_TYPE::PPR_type PPR_599;
+		std::vector<std::vector<std::vector<std::pair<int, int>>>> Temp_L_vk_599;
+		std::vector<std::vector<std::pair<int, int>>> dist_hop_599;
+		std::vector<std::vector<std::vector<std::pair<hop_constrained_node_handle, int>>>> Q_handle_priorities_599;
+		std::vector<std::vector<std::vector<int>>> Vh_599;
+
+		/* use asynchronous tasks to generate L labels and the parameter v_k should be the index of the endpoint */
+		template <typename weight_type>
+		void HSDL_thread_function(int v_k)
+		{
+			/* get unique thread id */
+			/* critical section obtain array index  */
+			mtx_599[max_N_ID_for_mtx_599 - 1].lock();
+			int used_id = Qid_599.front();
+			Qid_599.pop();
+			mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
+
+			/* store the Temp L and dist_hop in current thread*/
+			std::vector<int> Temp_L_vk_changes, dist_hop_changes;
+			/* Temp_L_vk stores the dest_vertex_id and distance and hop */
+			auto& Temp_L_vk = Temp_L_vk_599[used_id];
+			auto& dist_hop = dist_hop_599[used_id]; // record the minimum distance (and the corresponding hop) of a searched vertex in Q
+			std::vector<std::pair<int, int>> Q_handle_priorities_changes;
+			/* get the label list in current thread*/
+			auto& Q_handle_priorities = Q_handle_priorities_599[used_id];
+
+			long long int new_label_num = 0;
+
+			/* a class contains information about destination vertex, hop count, and cost in the priority queue */
+			boost::heap::fibonacci_heap<two_hop_label> Q;
+
+			/* generate a label for the starting vertex itself */
+			two_hop_label node;
+			node.hub_vertex = v_k;
+			node.hop = 0;
+			node.distance = 0;
+			Q_handle_priorities[v_k][0] = { Q.push({node}), node.distance };
+			Q_handle_priorities_changes.push_back({ v_k, 0 });
+
+			/* Temp_L_vk_599 stores the label (dist and hop) of vertex v_k */
+			mtx_599[v_k].lock();
+			L_temp_599[v_k].push_back(node);
+			new_label_num++;
+			/* root is vk-> vk->obj info -> vector<obj> -> index-> vertexId obj-><distance,hop> */
+			for (auto& xx : L_temp_599[v_k])
+			{
+				int L_vk_vertex = xx.hub_vertex;
+				Temp_L_vk[L_vk_vertex].push_back({ xx.distance, xx.hop });
+				Temp_L_vk_changes.push_back(L_vk_vertex);
+			}
+			mtx_599[v_k].unlock();
+
+			/*  dist_hop_599 stores the shortest distance from vk to any other vertices with its hop_cst,
+				note that the hop_cst is determined by the shortest distance */
+			dist_hop[v_k] = { 0, 0 };
+			dist_hop_changes.push_back(v_k);
+
+			while (Q.size() > 0)
+			{
+				/* poll the vertex from heap.In other words, poll the vertex with the minimal cost */
+				node = Q.top();
+				Q.pop();
+
+				/* current node, u, which is the node generating the labels*/
+				int u = node.hub_vertex;
+
+				int u_hop = node.hop;
+				int P_u = node.distance;
+				int common_hub_for_query_v_k_u = -1;
+				int common_hub_for_query_v_k_u_opt = -1;
+				int query_v_k_u = std::numeric_limits<int>::max();
+				int query_v_k_u_opt = std::numeric_limits<int>::max();
+
+				mtx_599[u].lock();
+				for (auto& xx : L_temp_599[u])
+				{
+					int common_v = xx.hub_vertex;
+					for (auto& yy : Temp_L_vk[common_v])
+					{
+						long long int dis_opt = (long long int)xx.distance + yy.first;
+						if (query_v_k_u_opt > dis_opt)
+						{
+							query_v_k_u_opt = dis_opt;
+							common_hub_for_query_v_k_u_opt = xx.hub_vertex;
+						}
+						if (xx.hop + yy.second <= u_hop)
+						{
+							long long int dis = (long long int)xx.distance + yy.first;
+							if (query_v_k_u > dis)
+							{
+								query_v_k_u = dis;
+								common_hub_for_query_v_k_u = xx.hub_vertex;
+							}
+							break;
+						}
+					}
+				}
+				mtx_599[u].unlock();
+
+				// Either a shorter path to the current label exists, or the node is v_k
+				if (P_u < query_v_k_u || query_v_k_u == 0)
+				{ // query_v_k_u == 0 is to start the while loop by searching neighbors of v_k
+
+					if (P_u < query_v_k_u)
+					{
+						node.hub_vertex = v_k;
+						node.hop = u_hop;
+						node.distance = P_u;
+						mtx_599[u].lock();
+						L_temp_599[u].push_back(node);
+						mtx_599[u].unlock();
+						new_label_num++;
+					}
+
+					// if (HSDL_dynamic_generate_PPR && query_v_k_u_opt < P_u)
+					// {
+					// 	if (common_hub_for_query_v_k_u_opt != v_k)
+					// 	{
+					// 		mtx_599[u].lock();
+					// 		PPR_insert(PPR_599, u, common_hub_for_query_v_k_u_opt, v_k);
+					// 		mtx_599[u].unlock();
+					// 	}
+					// 	if (common_hub_for_query_v_k_u_opt != u)
+					// 	{
+					// 		mtx_599[v_k].lock();
+					// 		PPR_insert(PPR_599, v_k, common_hub_for_query_v_k_u_opt, u);
+					// 		mtx_599[v_k].unlock();
+					// 	}
+					// }
+
+					if (u_hop + 1 > global_upper_k)
+					{
+						continue;
+					}
+
+					/* update adj */
+					/* Traverse neighboring nodes */
+					for (auto& xx : ideal_graph_599<weight_type>[u])
+					{
+						/* adh_v is the neighborhood and the ec is the distance from u to ajd_v*/
+						int adj_v = xx.first, ec = xx.second;
+
+						/* update node info */
+						node.hub_vertex = adj_v;
+						node.distance = P_u + ec;
+						node.hop = u_hop + 1;
+
+						auto& yy = Q_handle_priorities[adj_v][node.hop];
+
+						/*directly using the following codes without dist_hop is OK, but is slower; dist_hop is a pruning technique without increasing the time complexity*/
+						// if (yy.second != std::numeric_limits<int>::max()) {
+						//	if (yy.second > node.distance) {
+						//		Q.update(yy.first, node);
+						//		yy.second = node.distance;
+						//	}
+						// }
+						// else {
+						//	yy = { Q.push(node), node.distance };
+						//	Q_handle_priorities_changes.push_back({ adj_v, node.hop });
+						// }
+
+						if (yy.second <= node.distance)
+						{ // adj_v has been reached with a smaller distance and the same hop
+							continue;
+						}
+						/* the vertex has not been visited*/
+						if (dist_hop[adj_v].first == std::numeric_limits<int>::max())
+						{ // adj_v has not been reached
+							yy = { Q.push({node}), node.distance };
+							Q_handle_priorities_changes.push_back({ adj_v, node.hop });
+							dist_hop[adj_v].first = node.distance;
+							dist_hop[adj_v].second = node.hop;
+							dist_hop_changes.push_back(adj_v);
+						}
+						else
+						{
+							if (node.distance < dist_hop[adj_v].first)
+							{ // adj_v has been reached with a less distance
+								if (yy.second != std::numeric_limits<int>::max())
+								{
+									Q.update(yy.first, node);
+									yy.second = node.distance;
+								}
+								else
+								{
+									yy = { Q.push(node), node.distance };
+									Q_handle_priorities_changes.push_back({ adj_v, node.hop });
+								}
+								dist_hop[adj_v].first = node.distance;
+								dist_hop[adj_v].second = node.hop;
+							}
+							else if (node.hop < dist_hop[adj_v].second)
+							{ // adj_v has been reached with a less hop
+								if (yy.second != std::numeric_limits<int>::max())
+								{
+									Q.update(yy.first, node);
+									yy.second = node.distance;
+								}
+								else
+								{
+									yy = { Q.push(node), node.distance };
+									Q_handle_priorities_changes.push_back({ adj_v, node.hop });
+								}
+							}
+						}
+					}
+				}
+
+				/* add v_k into PPR(u,common_hub_for_query_v_k_u), and add u into PPR(v_k,common_hub_for_query_v_k_u)*/
+				if (common_hub_for_query_v_k_u != v_k)
+				{
+					mtx_599[u].lock();
+					PPR_TYPE::PPR_insert(PPR_599, u, common_hub_for_query_v_k_u, v_k);
+					mtx_599[u].unlock();
+				}
+				if (common_hub_for_query_v_k_u != u)
+				{
+					mtx_599[v_k].lock();
+					PPR_TYPE::PPR_insert(PPR_599, v_k, common_hub_for_query_v_k_u, u);
+					mtx_599[v_k].unlock();
+				}
+			}
+
+			for (auto& xx : Temp_L_vk_changes)
+			{
+				std::vector<std::pair<int, int>>().swap(Temp_L_vk[xx]);
+			}
+			for (auto& xx : dist_hop_changes)
+			{
+				dist_hop[xx] = { std::numeric_limits<int>::max(), 0 };
+			}
+			hop_constrained_node_handle handle_x;
+			for (auto& xx : Q_handle_priorities_changes)
+			{
+				Q_handle_priorities[xx.first][xx.second] = { handle_x, std::numeric_limits<int>::max() };
+			}
+
+			mtx_599[v_k].lock();
+			std::vector<two_hop_label>(L_temp_599[v_k]).swap(L_temp_599[v_k]);
+			mtx_599[v_k].unlock();
+
+			mtx_599[max_N_ID_for_mtx_599 - 1].lock();
+			Qid_599.push(used_id);
+			mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
+		}
+
+		std::vector<std::vector<two_hop_label>> hop_constrained_sortL(int num_of_threads)
+		{
+
+			/*time complexity: O(V*L*logL), where L is average number of labels per vertex*/
+
+			int N = L_temp_599.size();
+			std::vector<std::vector<two_hop_label>> output_L(N);
+
+			/*time complexity: O(V*L*logL), where L is average number of labels per vertex*/
+			ThreadPool pool(num_of_threads);
+			std::vector<std::future<int>> results; // return typename: xxx
+			for (int v_k = 0; v_k < N; v_k++)
+			{
+				results.emplace_back(
+					pool.enqueue([&output_L, v_k]
+						{ // pass const type value j to thread; [] can be empty
+							sort(L_temp_599[v_k].begin(), L_temp_599[v_k].end(), compare_hop_constrained_two_hop_label);
+							std::vector<two_hop_label>(L_temp_599[v_k]).swap(L_temp_599[v_k]); // 使用vector的swap优化内存占用，释放多余的空间
+							output_L[v_k] = L_temp_599[v_k];
+							std::vector<two_hop_label>().swap(L_temp_599[v_k]); // clear new labels for RAM efficiency
+
+							return 1; // return to results; the return type must be the same with results
+						}));
+			}
+			for (auto&& result : results)
+				result.get(); // all threads finish here
+
+			return output_L;
+		}
+
+		/*canonical_repair*/
+		void hop_constrained_clean_L(two_hop_case_info& case_info, int thread_num)
+		{
+
+			auto& L = case_info.L;
+			int N = L.size();
+
+			ThreadPool pool(thread_num);
+			std::vector<std::future<int>> results;
+			/* test the correctness of async */
+			// vector<int> list;
+			// list.push_back(4);
+			// list.push_back(5);
+			// list.push_back(0);
+			// list.push_back(1);
+			// list.push_back(2);
+			// list.push_back(3); 
+			// for (int v = 0; v < N; v++)
+			// for (int index = 0; index < N; index++)
+			for (int v = 0; v < N; v++)
+			{
+				results.emplace_back(
+					pool.enqueue([v, &L] { // pass const type value j to thread; [] can be empty
+						mtx_599[max_N_ID_for_mtx_599 - 1].lock();
+						int used_id = Qid_599.front();
+						Qid_599.pop();
+						mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
+
+						std::vector<two_hop_label> Lv_final;
+
+						/**
+						 * get the L result of the current vertex
+						*/
+						mtx_599[v].lock_shared();
+						std::vector<two_hop_label> Lv = L[v];
+						mtx_599[v].unlock_shared();
+
+						/**
+						 * the temp_L in this thread
+						*/
+						auto& T = Temp_L_vk_599[used_id];
+
+						/**
+						 * Traverse the L-list of the current vertex
+						*/
+						for (auto Lvi : Lv)
+						{
+							int u = Lvi.hub_vertex;
+							int u_hop = Lvi.hop;
+
+							/**
+							 * Traverse the L on the opposite vertex of the current label.
+							*/
+							mtx_599[u].lock_shared();
+							auto Lu = L[u];
+							mtx_599[u].unlock_shared();
+
+							/**
+							 * traverse downward from the perfectly correct first vertex
+							*/
+							int min_dis = std::numeric_limits<int>::max();
+							for (auto& label1 : Lu)
+							{
+								for (auto& label2 : T[label1.hub_vertex])
+								{
+									if (label1.hop + label2.second <= u_hop)
+									{
+										long long int query_dis = label1.distance + (long long int)label2.first;
+										if (query_dis < min_dis)
+										{
+											min_dis = query_dis;
+										}
+									}
+								}
+							}
+
+							if (min_dis > Lvi.distance)
+							{
+								Lv_final.push_back(Lvi);
+								T[u].push_back({ Lvi.distance, Lvi.hop });
+							}
+						}
+
+						for (const auto& label : Lv_final)
+						{
+							std::vector<std::pair<int, int>>().swap(T[label.hub_vertex]);
+						}
+
+						mtx_599[v].lock();
+						L[v] = Lv_final;
+						L[v].shrink_to_fit();
+						mtx_599[v].unlock();
+
+						mtx_599[max_N_ID_for_mtx_599 - 1].lock();
+						Qid_599.push(used_id);
+						mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
+
+						return 1; // return to results; the return type must be the same with results
+						}));
+			}
+
+			for (auto&& result : results)
+				result.get(); // all threads finish here
+			results.clear();
+		}
+
+		template <typename weight_type>
+		void hop_constrained_clear_global_values()
+		{
+			std::vector<std::vector<two_hop_label>>().swap(L_temp_599);
+			ideal_graph_599<weight_type>.clear();
+			std::vector<std::vector<std::vector<std::pair<int, int>>>>().swap(Temp_L_vk_599);
+			std::vector<std::vector<std::pair<int, int>>>().swap(dist_hop_599);
+			std::vector<std::vector<std::vector<std::pair<hop_constrained_node_handle, int>>>>().swap(Q_handle_priorities_599);
+			std::vector<std::vector<std::vector<int>>>().swap(Vh_599);
+			std::queue<int>().swap(Qid_599);
+			PPR_TYPE::PPR_type().swap(PPR_599);
+		}
+
 		template <typename weight_type>
 		void pll(graph<weight_type>& graph, hop::two_hop_case_info& case_info) {
+			//----------------------------------- step 1: initialization -----------------------------------
+			int N = graph.size();
+			/* store the L Label and PPR*/
+			L_temp_599.resize(N);
+			PPR_599.resize(N);
 
+			int num_of_threads = case_info.thread_num;
+			ThreadPool pool(num_of_threads);
+			std::vector<std::future<int>> results;
+			//----------------------------------------------- step 2: generate labels ---------------------------------------------------------------
+			/**
+			 * Use Temp_L_vk_599 to mark the positional relationship between the iterated nodes
+			 * and the nodes with already generated labels. This is done to reduce the process of
+			 * traversing the L labels of the iterated nodes. Additionally, register multithreaded
+			 * tasks and retrieve the results
+			 */
+			global_upper_k = case_info.upper_k;
+			ideal_graph_599<weight_type> = graph;
+			Temp_L_vk_599.resize(num_of_threads);
+			dist_hop_599.resize(num_of_threads);
+			Q_handle_priorities_599.resize(num_of_threads);
+			Vh_599.resize(num_of_threads);
+			hop_constrained_node_handle handle_x;
+			for (int i = 0; i < num_of_threads; i++)
+			{
+				Temp_L_vk_599[i].resize(N);
+				dist_hop_599[i].resize(N, { std::numeric_limits<int>::max(), 0 });
+				Q_handle_priorities_599[i].resize(N);
+				for (int j = 0; j < N; j++)
+				{
+					Q_handle_priorities_599[i][j].resize(global_upper_k + 1, { handle_x, std::numeric_limits<int>::max() });
+				}
+				Vh_599[i].resize(global_upper_k + 2);
+				Qid_599.push(i);
+			}
+
+			int last_check_vID = N - 1;
+
+			for (int v_k = 0; v_k <= last_check_vID; v_k++)
+			{
+				results.emplace_back(
+					pool.enqueue([v_k]
+						{
+							HSDL_thread_function<weight_type>(v_k);
+							return 1; }));
+			}
+			
+			for (auto&& result : results)
+				result.get();
+
+			//----------------------------------------------- step 3: sortL---------------------------------------------------------------
+			case_info.L = L_temp_599;
+			case_info.L = hop_constrained_sortL(num_of_threads);
+			case_info.PPR = PPR_599;
+
+			//----------------------------------------------- step 4: canonical_repair---------------------------------------------------------------
+			hop_constrained_clean_L(case_info, num_of_threads);
+			//---------------------------------------------------------------------------------------------------------------------------------------
+			hop_constrained_clear_global_values<weight_type>();
 		}
 	}
-
 }

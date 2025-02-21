@@ -339,6 +339,41 @@ namespace experiment {
 			}
 		};
 
+		bool compare_hop_constrained_two_hop_label(two_hop_label& i, two_hop_label& j)
+		{
+			if (i.t_e != j.t_e)
+			{
+				return i.t_e > j.t_e;
+			}
+			else if (i.hub_vertex != j.hub_vertex)
+			{
+				return i.hub_vertex < j.hub_vertex;
+			}
+			else if (i.hop != j.hop)
+			{
+				return i.hop < j.hop;
+			}
+			else if (i.t_s != j.t_s)
+			{
+				return i.t_s < j.t_s;
+			}
+			else
+			{
+				return i.distance < j.distance;
+			}
+		}
+
+		bool operator<(two_hop_label const& x, two_hop_label const& y)
+		{
+			if (x.distance != y.distance)
+			{
+				return x.distance > y.distance; // < is the max-heap; > is the min heap
+			}
+			else
+			{
+				return x.hop > y.hop; // < is the max-heap; > is the min heap
+			}
+		}
 
 		class two_hop_case_info {
 		public:
