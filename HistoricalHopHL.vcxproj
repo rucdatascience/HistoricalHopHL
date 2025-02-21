@@ -68,7 +68,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>.\;$(IncludePath)</IncludePath>
+    <IncludePath>.\;E:\project\github\argparse\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
@@ -131,6 +131,7 @@
     <ClCompile Include="cpu\try_generate_graph.cpp" />
     <ClCompile Include="cpu\try_small_graph.cpp" />
     <ClCompile Include="Historical\experiment\experiment_test_nonhop.cpp" />
+    <ClCompile Include="Historical\graph_with_time_span\graph_binary_save_load_test.cpp" />
     <ClCompile Include="historical\test\baseline_test.cpp" />
     <ClCompile Include="historical\test\baseline_test_non_hop.cpp" />
     <ClCompile Include="historical\test\test.cpp" />
@@ -169,12 +170,20 @@
     <ClInclude Include="cpu\tool_functions\sorted_vector_binary_operations.h" />
     <ClInclude Include="cpu\tool_functions\ThreadPool.h" />
     <ClInclude Include="Historical\experiment\experiment.h" />
+    <ClInclude Include="Historical\experiment\experiment_operation.h" />
     <ClInclude Include="historical\experiment\mark_timer.h" />
     <ClInclude Include="historical\graph_v_of_v\graph_v_of_v_with_time_span.h" />
     <ClInclude Include="historical\graph_v_of_v\graph_v_of_v_with_time_span_experiment_reader.h" />
     <ClInclude Include="historical\graph_v_of_v\graph_v_of_v_with_time_span_hop_constrained.h" />
     <ClInclude Include="historical\graph_v_of_v\graph_v_of_v_with_time_span_non_hop_constrained.h" />
     <ClInclude Include="historical\graph_v_of_v\Timer.h" />
+    <ClInclude Include="Historical\graph_with_time_span\graph.h" />
+    <ClInclude Include="Historical\graph_with_time_span\graph_search_baseline.h" />
+    <ClInclude Include="Historical\graph_with_time_span\graph_with_time_span.h" />
+    <ClInclude Include="Historical\graph_with_time_span\two_hop_label.h" />
+    <ClInclude Include="Historical\utils\BinaryPersistence.h" />
+    <ClInclude Include="Historical\utils\ExecutionTimer .h" />
+    <ClInclude Include="Historical\utils\vector_operations.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

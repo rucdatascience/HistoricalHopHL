@@ -45,6 +45,9 @@
     <ClCompile Include="Historical\experiment\experiment_test_nonhop.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Historical\graph_with_time_span\graph_binary_save_load_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cpu\build_in_progress\hl\hl4gst\hop_maintain\HOP_maintain_hop_constrained_two_hop_labels.h">
@@ -156,6 +159,30 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Historical\experiment\experiment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Historical\graph_with_time_span\graph.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Historical\graph_with_time_span\graph_with_time_span.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Historical\graph_with_time_span\graph_search_baseline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Historical\experiment\experiment_operation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Historical\graph_with_time_span\two_hop_label.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Historical\utils\vector_operations.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Historical\utils\BinaryPersistence.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Historical\utils\ExecutionTimer .h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
