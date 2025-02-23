@@ -1,0 +1,4 @@
+experiment generate-label -t 20 -f "E:\project\postgraduate\HistoricalHopHL - 副本\Historical\experiment\Email-Enron.txt" -p "E:\project\postgraduate\HistoricalHopHL - 副本\Historical\experiment\experiment1" -k 0
+experiment generate-label -t 20 -f "E:\project\postgraduate\HistoricalHopHL - 副本\Historical\experiment\Email-Enron.txt" -p "E:\project\postgraduate\HistoricalHopHL - 副本\Historical\experiment\experiment1" -k 3
+experiment maintain-label -t 20 -f "E:\project\postgraduate\HistoricalHopHL - 副本\Historical\experiment\experiment1" -p "E:\project\postgraduate\HistoricalHopHL - 副本\Historical\experiment\experiment1" -m 10 -c 20 -max 200 -min 1 -k 0
+experiment maintain-label -t 20 -f "E:\project\postgraduate\HistoricalHopHL - 副本\Historical\experiment\experiment1" -p "E:\project\postgraduate\HistoricalHopHL - 副本\Historical\experiment\experiment1" -m 10 -c 20 -max 200 -min 1 -k 3

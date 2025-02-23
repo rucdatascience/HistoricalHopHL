@@ -253,16 +253,16 @@
 //						int w = weight_decrease[i];
 //						instance_graph_temp.add_edge(v1, v2, w);
 //					}
-//					initialize_experiment_global_values_dynamic(this->v_num, this->mm.thread_num);
+					//initialize_experiment_global_values_dynamic(this->v_num, this->mm.thread_num);
 //					mm_mark_timer.mark();
 //					std::cout << "decrease ruc maintain" << std::endl;
-//					nonHOP_WeightDecreaseMaintenance_improv_batch(instance_graph_temp, mm, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+//nonHOP_WeightDecreaseMaintenance_improv_batch(instance_graph_temp, mm, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
 //					mm_mark_timer.add();
 //					std::cout << "decrease ruc maintain finished" << std::endl;
 //					//initialize_experiment_global_values_dynamic(this->v_num, this->mm2021.thread_num);
 //					//mm2021_mark_timer.mark();
 //					//std::cout << "decrease 2021 maintain" << std::endl;
-//					//nonHOP_WeightDecrease2021_batch(instance_graph_temp, mm2021, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+					//nonHOP_WeightDecrease2021_batch(instance_graph_temp, mm2021, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
 //					//mm2021_mark_timer.add();
 //					//std::cout << "decrease 2021 maintain finished" << std::endl;
 //					vector<pair<int, int>>().swap(path_decrease);

@@ -1,11 +1,18 @@
 #pragma once
 #include <filesystem>
+#include <vector>
+#include <queue>
 #include "argparse/argparse.hpp"
 #include "Historical/graph_with_time_span/graph_with_time_span.h"
+#include "Historical/graph_with_time_span/graph.h"
 #include "Historical/utils/BinaryPersistence.h"
 #include "Historical/graph_with_time_span/two_hop_label.h"
+#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/heap/fibonacci_heap.hpp>
 #include <iostream>
 namespace experiment {
+	boost::random::mt19937 boost_random_time_seed{ static_cast<std::uint32_t>(std::time(0)) };
 	struct ExperimentConfig {
 		enum Mode { GENERATE_LABEL, MAINTAIN_LABEL } mode;
 		int threads = 0;
@@ -105,35 +112,48 @@ namespace experiment {
 		return Parsed_content;
 	}
 
-	//template <typename weight_type>
-	//class experiment_1_generate_pll_nonhop_result
-	//{
-	//public:
-	//	std::vector<graph<weight_type>> graph_list;
-	//	graph_with_time_span<weight_type> graph_with_time_span;
-	//	nonhop::two_hop_case_info case_info;
-	//	experiment_1_generate_pll_nonhop_result(std::vector<graph<weight_type>> graph_list, experiment::graph_with_time_span<weight_type> graph_time, experiment::nonhop::two_hop_case_info case_info) :graph_list(graph_list), graph_with_time_span(graph_time), case_info(case_info) {
-	//	};
-	//	void serialize(std::ofstream& out) const {
-	//		saveBinary(out, graph_list);
-	//		saveBinary(out, graph_with_time_span);
-	//		saveBinary(out, case_info);
-	//	}
+	struct change_edge_info
+	{
+		int v1;
+		int v2;
+		int weight;
+		int time;
+	};
+	template <typename weight_type>
+	class iteration_info {
+	private:
+		const int _v_num;
+		const int _iteration;
+		const int _change_num;
+		const int _upper;
+		const int _lower;
+		boost::random::uniform_int_distribution<> _random_v;
+		boost::random::uniform_int_distribution<> _random_weight;
+		graph <weight_type> instance_graph;
+	public:
+		// 保存每一个time slot的变化队列
+		std::vector<std::queue<change_edge_info>> q_list;
+		iteration_info(int v_num, int iteration, int change_num, int upper, int lower, graph<weight_type> graph) :_v_num(v_num), _iteration(iteration), _change_num(change_num), _upper(upper), _lower(lower), instance_graph(graph) {
+			this->_random_v = boost::random::uniform_int_distribution<>(0, this->_v_num);
+			this->_random_weight = boost::random::uniform_int_distribution<>(this->_lower, this->_upper);
+			q_list = std::vector<std::queue<change_edge_info>>(this->_iteration + 1, std::queue<change_edge_info>());
+		}
 
-	//	void deserialize(std::ifstream& in) {
-	//		loadBinary(in, graph_list);
-	//		loadBinary(in, graph_with_time_span);
-	//		loadBinary(in, case_info);
-	//	}
-	//};
-
-	//template <typename weight_type>
-	//void saveBinary(std::ofstream& out, const experiment_1_generate_pll_nonhop_result<weight_type>& data) {
-	//	data.serialize(out);
-	//}
-
-	//template <typename weight_type>
-	//void loadBinary(std::ifstream& in, experiment_1_generate_pll_nonhop_result<weight_type>& data) {
-	//	data.deserialize(in);
-	//}
+		void build_random_change() {
+			std::map<std::pair<int, int>, int> pair2dis;
+			for (int i = 1; i <= this->_iteration; i++)
+			{
+				for (int j = 0; j < this->_change_num; j++)
+				{
+					int index_i = this->_random_v(boost_random_time_seed);
+					boost::random::uniform_int_distribution<> dis_inner(0, instance_graph[index_i].size() - 1);
+					int index_j = dis_inner(boost_random_time_seed);
+					int i_j_weight = this->_random_weight(boost_random_time_seed);
+					change_edge_info info = { index_i, index_j, i_j_weight, i };
+					std::pair index = std::make_pair(index_j, index_j);
+					q_list[i].push(info);
+				}
+			}
+		}
+	};
 }

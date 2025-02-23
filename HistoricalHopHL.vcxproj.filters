@@ -30,10 +30,22 @@
     <ClCompile Include="historical\test\test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Historical\experiment\experiment_test_nonhop.cpp">
+    <ClCompile Include="Historical\experiment\experiment_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Historical\graph_with_time_span\graph_binary_save_load_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpu\try_generate_graph.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpu\try_small_graph.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="historical\test\try.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="historical\test\try_debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -170,7 +182,10 @@
     <ClInclude Include="Historical\utils\BinaryPersistence.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Historical\utils\ExecutionTimer .h">
+    <ClInclude Include="Historical\utils\ExecutionTimer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Historical\experiment\experiment_maintain_operation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

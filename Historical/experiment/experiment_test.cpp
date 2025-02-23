@@ -1,0 +1,482 @@
+#include <iostream>
+#include <string>
+#include <filesystem>
+#include "Historical/utils/BinaryPersistence.h"
+#include "Historical/experiment/experiment_operation.h"
+#include "Historical/experiment/experiment_maintain_operation.h"
+#include "Historical/experiment/experiment_config.h"
+#include "Historical/graph_with_time_span/two_hop_label.h"
+#include <Historical/utils/ExecutionTimer.h>
+experiment::ExecutionTimer timer;
+int main(int argc, char* argv[]) {
+	try {
+		experiment::ExperimentConfig config = experiment::parse_arguments(argc, argv);
+
+		std::cout << "Mode: " << (config.mode == experiment::ExperimentConfig::GENERATE_LABEL ? "Generate Label" : "Maintain Label") << "\n"
+			<< "Threads: " << config.threads << "\n"
+			<< "Data Source: " << config.data_source << "\n"
+			<< "Save Path: " << config.save_path << "\n"
+			<< "Hop Limit (k): " << config.hop_limit << "\n";
+
+		if (config.mode == experiment::ExperimentConfig::MAINTAIN_LABEL) {
+			std::cout << "Iterations: " << config.iterations << "\n"
+				<< "Change Count: " << config.change_count << "\n"
+				<< "Max Value: " << config.max_value << "\n"
+				<< "Min Value: " << config.min_value << "\n";
+		}
+		if (config.mode == experiment::ExperimentConfig::GENERATE_LABEL) {
+			experiment::graph<int> instance_graph;
+			experiment::read_graph(instance_graph, config);
+			experiment::graph_with_time_span<int> graph_time;
+			graph_time.add_graph_time(instance_graph, 0);
+			std::filesystem::path saveDir = std::filesystem::path(config.save_path);
+			std::filesystem::create_directory(saveDir);
+			if (config.hop_limit != 0) {
+				//k-constrained pll
+				std::string graph_res_filename = "binary_hop_constrained_" + std::to_string(config.hop_limit) + "_graph";
+				std::string experiment_res_filename = "GENERATE_LABEL__hop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result.txt";
+				std::filesystem::path graphPath = saveDir.string() + "//" + graph_res_filename;
+				std::filesystem::path resultPath = saveDir.string() + "//" + experiment_res_filename;
+				experiment::hop::two_hop_case_info hop_info;
+				hop_info.thread_num = config.threads;
+				hop_info.upper_k = config.hop_limit;
+				timer.startTask("generate graph and 2hop label " + std::to_string(config.hop_limit) + " hop constrained");
+				experiment::hop::pll(instance_graph, hop_info);
+				timer.endSubtask();
+				//hop_info.print_L();
+				std::ofstream FILE_GRAPH(graphPath.string(), std::ios::out | std::ifstream::binary);
+				experiment::saveBinary(FILE_GRAPH, instance_graph);
+				experiment::saveBinary(FILE_GRAPH, graph_time);
+				experiment::saveBinary(FILE_GRAPH, hop_info);
+				FILE_GRAPH.close();
+				std::ofstream outFile;
+				outFile.precision(6);
+				outFile.setf(std::ios::fixed);
+				outFile.setf(std::ios::showpoint);
+				outFile.open(resultPath.string());
+				timer.writeStatsToFile(outFile);
+			}
+			else {
+				std::string graph_res_filename = "binary_nonhop_constrained_" + std::to_string(config.hop_limit) + "_graph";
+				std::string experiment_res_filename = "GENERATE_LABEL_nonhop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result.txt";
+				std::filesystem::path graphPath = saveDir.string() + "//" + graph_res_filename;
+				std::filesystem::path resultPath = saveDir.string() + "//" + experiment_res_filename;
+				experiment::nonhop::two_hop_case_info hop_info;
+				hop_info.thread_num = config.threads;
+				timer.startTask("generate graph and 2hop label " + std::to_string(config.hop_limit) + " nonhop constrained");
+				experiment::nonhop::pll(instance_graph, hop_info);
+				timer.endSubtask();
+				//hop_info.print_L();
+				//experiment::experiment_1_generate_pll_nonhop_result<int> res(graph_list, graph_time, hop_info);
+				std::ofstream FILE_GRAPH(graphPath.string(), std::ios::out | std::ifstream::binary);
+				experiment::saveBinary(FILE_GRAPH, instance_graph);
+				experiment::saveBinary(FILE_GRAPH, graph_time);
+				experiment::saveBinary(FILE_GRAPH, hop_info);
+				FILE_GRAPH.close();
+				std::ofstream outFile;
+				outFile.precision(6);
+				outFile.setf(std::ios::fixed);
+				outFile.setf(std::ios::showpoint);
+				outFile.open(resultPath.string());
+				timer.writeStatsToFile(outFile);
+			}
+		}
+		else if (config.mode == experiment::ExperimentConfig::MAINTAIN_LABEL) {
+			experiment::ExecutionTimer timer_ruc;
+			experiment::ExecutionTimer timer_2021;
+			std::vector<experiment::graph<int>> graph_list;
+			experiment::graph<int> init_graph;
+			experiment::graph_with_time_span<int> graph_time;
+			std::filesystem::path saveDir = std::filesystem::path(config.save_path);
+			std::filesystem::create_directory(saveDir);
+			timer_ruc.startTask("maintain graph and 2hop label " + std::to_string(config.hop_limit) + (config.hop_limit == 0 ? "nonhop_constrained" : "hop constrained"));
+			timer_2021.startTask("maintain graph and 2hop label " + std::to_string(config.hop_limit) + (config.hop_limit == 0 ? "nonhop_constrained" : "hop constrained"));
+			timer_ruc.startSubtask("step-1 read graph and original 2hop label");
+			timer_2021.startSubtask("step-1 read graph and original 2hop label");
+			if (config.hop_limit != 0) {
+				experiment::hop::two_hop_case_info hop_info;
+				std::string graph_res_filename = "binary_hop_constrained_" + std::to_string(config.hop_limit) + "_graph";
+				std::string dataSource = config.data_source.string() + "//" + graph_res_filename;
+
+				std::string hop_label_res_filename = "binary_hop_constrained_" + std::to_string(config.hop_limit) + "_2_hop_label_info";
+				std::string experiment_res_filename = "MAINTAIN_LABEL_hop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result.txt";
+				std::filesystem::path hopLabelPath = saveDir.string() + "//" + hop_label_res_filename;
+				std::filesystem::path resultPath = saveDir.string() + "//" + experiment_res_filename;
+
+				std::ifstream FILE_GRAPH(dataSource, std::ios::in | std::ifstream::binary);
+				experiment::loadBinary(FILE_GRAPH, init_graph);
+				experiment::loadBinary(FILE_GRAPH, graph_time);
+				experiment::loadBinary(FILE_GRAPH, hop_info);
+				hop_info.thread_num = config.threads;
+				hop_info.upper_k = config.hop_limit;
+				experiment::hop::two_hop_case_info hop_info_2021;
+				hop_info_2021 = hop_info;
+				graph_list.push_back(init_graph);
+				timer_ruc.endSubtask();
+				timer_2021.endSubtask();
+
+				experiment::iteration_info<int> change_info(
+					graph_time.v_num, config.iterations, config.change_count, config.max_value, config.min_value, init_graph
+				);
+				change_info.build_random_change();
+				std::vector<std::pair<int, int>> path_decrease;
+				std::map<std::pair<int, int>, int> path2Index4Decrease;
+				std::vector<int> weight_decrease;
+
+				std::vector<std::pair<int, int>> path_increase;
+				std::vector<int> weight_increase;
+				std::vector<int> weight_old_increase;
+				std::map<std::pair<int, int>, int> path2Index4Increase;
+
+				ThreadPool pool_dynamic(hop_info.thread_num);
+				std::vector<std::future<int>> results_dynamic;
+				timer_ruc.startSubtask("step-2 maintain 2 hop label 0 - " + std::to_string(config.iterations / 2));
+				timer_2021.startSubtask("step-2 maintain 2 hop label 0 - " + std::to_string(config.iterations / 2));
+				for (int i = 1; i <= config.iterations; i++)
+				{
+					if (i == config.iterations / 2 + 1) {
+						timer_ruc.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
+						timer_2021.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
+					}
+					std::cout << "iteration " << i << std::endl;
+					std::queue<experiment::change_edge_info> q = change_info.q_list[i];
+					experiment::graph<int>& instance_graph_temp = graph_list[i - 1];
+					while (!q.empty())
+					{
+						experiment::change_edge_info info = q.front();
+						q.pop();
+						// 1. 读取数据
+						int v1 = info.v1;
+						int v2 = info.v2;
+						int weight = info.weight;
+						if (instance_graph_temp.ADJs[v1][v2].second < weight)
+						{
+							auto pairPathV = std::make_pair(v1, instance_graph_temp.ADJs[v1][v2].first);
+							auto it = path2Index4Increase.find(pairPathV);
+							// increase
+							if (it == path2Index4Increase.end()) {
+								int old_weight = instance_graph_temp.ADJs[v1][v2].second;
+								path_increase.push_back(pairPathV);
+								weight_old_increase.push_back(old_weight);
+								weight_increase.push_back(weight);
+								path2Index4Increase[pairPathV] = weight_increase.size() - 1;
+							}
+							else {
+								weight_increase[path2Index4Increase[pairPathV]] = weight;
+							}
+						}
+						else if (instance_graph_temp.ADJs[v1][v2].second > weight)
+						{
+							auto pairPathV = std::make_pair(v1, instance_graph_temp.ADJs[v1][v2].first);
+							auto it = path2Index4Decrease.find(pairPathV);
+							if (it == path2Index4Decrease.end()) {
+								path_decrease.push_back({ v1, instance_graph_temp.ADJs[v1][v2].first });
+								weight_decrease.push_back(weight);
+								path2Index4Decrease[pairPathV] = weight_decrease.size() - 1;
+							}
+							else {
+								weight_decrease[path2Index4Decrease[pairPathV]] = weight;
+							}
+						}
+						if (path_decrease.size() > hop_info.thread_num)
+						{
+							for (int i = 0; i < path_decrease.size(); i++)
+							{
+								int v1 = path_decrease[i].first;
+								int v2 = path_decrease[i].second;
+								int w = weight_decrease[i];
+								instance_graph_temp.add_edge(v1, v2, w);
+							}
+							std::cout << "decrease ruc maintain" << std::endl;
+							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+							experiment::hop::ruc::decrease::HOP_WeightDecreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+							std::cout << "decrease 2021 maintain" << std::endl;
+							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+							experiment::hop::algorithm2021::decrease::HOP_WeightDecrease2021_batch(instance_graph_temp, hop_info_2021, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+							std::vector<std::pair<int, int>>().swap(path_decrease);
+							std::vector<int>().swap(weight_decrease);
+							std::map<std::pair<int, int>, int>().swap(path2Index4Decrease);
+						}
+						if (path_increase.size() > hop_info.thread_num)
+						{
+							for (int i = 0; i < path_increase.size(); i++)
+							{
+								int v1 = path_increase[i].first;
+								int v2 = path_increase[i].second;
+								int w = weight_increase[i];
+								int w_old = weight_old_increase[i];
+								instance_graph_temp.add_edge(v1, v2, w);
+							}
+							std::cout << "increase ruc maintain" << std::endl;
+							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+							experiment::hop::ruc::increase::HOP_WeightIncreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+							std::cout << "increase 2021 maintain" << std::endl;
+							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+							experiment::hop::algorithm2021::increase::HOP_WeightIncrease2021_batch(instance_graph_temp, hop_info_2021, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+							std::vector<std::pair<int, int>>().swap(path_increase);
+							std::vector<int>().swap(weight_increase);
+							std::vector<int>().swap(weight_old_increase);
+							std::map<std::pair<int, int>, int>().swap(path2Index4Increase);
+						}
+					}
+					if (path_decrease.size() > 0)
+					{
+						for (int i = 0; i < path_decrease.size(); i++)
+						{
+							int v1 = path_decrease[i].first;
+							int v2 = path_decrease[i].second;
+							int w = weight_decrease[i];
+							instance_graph_temp.add_edge(v1, v2, w);
+						}
+						std::cout << "decrease ruc maintain" << std::endl;
+						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+						experiment::hop::ruc::decrease::HOP_WeightDecreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+						std::cout << "decrease 2021 maintain" << std::endl;
+						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+						experiment::hop::algorithm2021::decrease::HOP_WeightDecrease2021_batch(instance_graph_temp, hop_info_2021, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+						std::vector<std::pair<int, int>>().swap(path_decrease);
+						std::vector<int>().swap(weight_decrease);
+						std::map<std::pair<int, int>, int>().swap(path2Index4Decrease);
+					}
+					if (path_increase.size() > 0)
+					{
+						for (int i = 0; i < path_increase.size(); i++)
+						{
+							int v1 = path_increase[i].first;
+							int v2 = path_increase[i].second;
+							int w = weight_increase[i];
+							int w_old = weight_old_increase[i];
+							instance_graph_temp.add_edge(v1, v2, w);
+						}
+						std::cout << "increase ruc maintain" << std::endl;
+						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+						experiment::hop::ruc::increase::HOP_WeightIncreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+						std::cout << "increase 2021 maintain" << std::endl;
+						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+						experiment::hop::algorithm2021::increase::HOP_WeightIncrease2021_batch(instance_graph_temp, hop_info_2021, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+						std::vector<std::pair<int, int>>().swap(path_increase);
+						std::vector<int>().swap(weight_increase);
+						std::vector<int>().swap(weight_old_increase);
+						std::map<std::pair<int, int>, int>().swap(path2Index4Increase);
+					}
+					graph_list.push_back(instance_graph_temp);
+					graph_time.add_graph_time(instance_graph_temp, i);
+					if (i == config.iterations / 2 || i == config.iterations) {
+						timer_ruc.endSubtask();
+						timer_2021.endSubtask();
+					}
+				}
+				std::ofstream FILE_HOP_LABEL(hopLabelPath.string(), std::ios::out | std::ifstream::binary);
+				experiment::saveBinary(FILE_HOP_LABEL, graph_list);
+				experiment::saveBinary(FILE_HOP_LABEL, graph_time);
+				experiment::saveBinary(FILE_HOP_LABEL, hop_info);
+				std::ofstream outFile;
+				outFile.precision(6);
+				outFile.setf(std::ios::fixed);
+				outFile.setf(std::ios::showpoint);
+				outFile.open(resultPath.string());
+				outFile << "========================ruc maintain======================";
+				timer_ruc.writeStatsToFile(outFile);
+				hop_info.record_all_details_stream(outFile);
+				outFile << "========================2021 maintain=====================";
+				timer_2021.writeStatsToFile(outFile);
+				hop_info_2021.record_all_details_stream(outFile);
+				outFile.close();
+			}
+			else if (config.hop_limit == 0) {
+				experiment::nonhop::two_hop_case_info hop_info;
+				std::string graph_res_filename = "binary_nonhop_constrained_" + std::to_string(config.hop_limit) + "_graph";
+				std::string dataSource = config.data_source.string() + "//" + graph_res_filename;
+
+				std::string hop_label_res_filename = "binary_nonhop_constrained_" + std::to_string(config.hop_limit) + "_2_hop_label_info";
+				std::string experiment_MAINTAIN_LABEL_res_filename = "MAINTAIN_LABEL_nonhop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result.txt";
+				std::filesystem::path hopLabelPath = saveDir.string() + "//" + hop_label_res_filename;
+				std::filesystem::path resultPath = saveDir.string() + "//" + experiment_MAINTAIN_LABEL_res_filename;
+
+				std::ifstream FILE_GRAPH(dataSource, std::ios::in | std::ifstream::binary);
+				experiment::loadBinary(FILE_GRAPH, init_graph);
+				experiment::loadBinary(FILE_GRAPH, graph_time);
+				experiment::loadBinary(FILE_GRAPH, hop_info);
+				hop_info.thread_num = config.threads;
+				experiment::nonhop::two_hop_case_info hop_info_2021;
+				hop_info_2021 = hop_info;
+				graph_list.push_back(init_graph);
+				timer_ruc.endSubtask();
+				timer_2021.endSubtask();
+				experiment::iteration_info<int> change_info(
+					graph_time.v_num, config.iterations, config.change_count, config.max_value, config.min_value, init_graph
+				);
+				change_info.build_random_change();
+
+				std::vector<std::pair<int, int>> path_decrease;
+				std::map<std::pair<int, int>, int> path2Index4Decrease;
+				std::vector<int> weight_decrease;
+
+				std::vector<std::pair<int, int>> path_increase;
+				std::vector<int> weight_increase;
+				std::vector<int> weight_old_increase;
+				std::map<std::pair<int, int>, int> path2Index4Increase;
+
+				ThreadPool pool_dynamic(hop_info.thread_num);
+				std::vector<std::future<int>> results_dynamic;
+				timer_ruc.startSubtask("step-2 maintain 2 hop label 0 - " + std::to_string(config.iterations / 2));
+				timer_2021.startSubtask("step-2 maintain 2 hop label 0 - " + std::to_string(config.iterations / 2));
+				for (int i = 1; i <= config.iterations; i++)
+				{
+					if (i == config.iterations / 2 + 1) {
+						timer_ruc.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
+						timer_2021.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
+					}
+					std::cout << "iteration " << i << std::endl;
+					std::queue<experiment::change_edge_info> q = change_info.q_list[i];
+					experiment::graph<int>& instance_graph_temp = graph_list[i - 1];
+					while (!q.empty())
+					{
+						experiment::change_edge_info info = q.front();
+						q.pop();
+						// 1. 读取数据
+						int v1 = info.v1;
+						int v2 = info.v2;
+						int weight = info.weight;
+						if (instance_graph_temp.ADJs[v1][v2].second < weight)
+						{
+							auto pairPathV = std::make_pair(v1, instance_graph_temp.ADJs[v1][v2].first);
+							auto it = path2Index4Increase.find(pairPathV);
+							// increase
+							if (it == path2Index4Increase.end()) {
+								int old_weight = instance_graph_temp.ADJs[v1][v2].second;
+								path_increase.push_back(pairPathV);
+								weight_old_increase.push_back(old_weight);
+								weight_increase.push_back(weight);
+								path2Index4Increase[pairPathV] = weight_increase.size() - 1;
+							}
+							else {
+								weight_increase[path2Index4Increase[pairPathV]] = weight;
+							}
+						}
+						else if (instance_graph_temp.ADJs[v1][v2].second > weight)
+						{
+							auto pairPathV = std::make_pair(v1, instance_graph_temp.ADJs[v1][v2].first);
+							auto it = path2Index4Decrease.find(pairPathV);
+							if (it == path2Index4Decrease.end()) {
+								path_decrease.push_back({ v1, instance_graph_temp.ADJs[v1][v2].first });
+								weight_decrease.push_back(weight);
+								path2Index4Decrease[pairPathV] = weight_decrease.size() - 1;
+							}
+							else {
+								weight_decrease[path2Index4Decrease[pairPathV]] = weight;
+							}
+						}
+						if (path_decrease.size() > hop_info.thread_num)
+						{
+							for (int i = 0; i < path_decrease.size(); i++)
+							{
+								int v1 = path_decrease[i].first;
+								int v2 = path_decrease[i].second;
+								int w = weight_decrease[i];
+								instance_graph_temp.add_edge(v1, v2, w);
+							}
+							std::cout << "decrease ruc maintain" << std::endl;
+							experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+							experiment::nonhop::ruc::decrease::decrease_maintain(instance_graph_temp, hop_info, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+							std::cout << "decrease 2021 maintain" << std::endl;
+							experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+							experiment::nonhop::algorithm2021::decrease::decrease_maintain(instance_graph_temp, hop_info_2021, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+							std::vector<std::pair<int, int>>().swap(path_decrease);
+							std::vector<int>().swap(weight_decrease);
+							std::map<std::pair<int, int>, int>().swap(path2Index4Decrease);
+						}
+						if (path_increase.size() > hop_info.thread_num)
+						{
+							for (int i = 0; i < path_increase.size(); i++)
+							{
+								int v1 = path_increase[i].first;
+								int v2 = path_increase[i].second;
+								int w = weight_increase[i];
+								int w_old = weight_old_increase[i];
+								instance_graph_temp.add_edge(v1, v2, w);
+							}
+							std::cout << "increase ruc maintain" << std::endl;
+							experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+							experiment::nonhop::ruc::increase::nonHOP_WeightIncreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+							std::cout << "increase 2021 maintain" << std::endl;
+							experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+							experiment::nonhop::algorithm2021::increase::increase_maintain(instance_graph_temp, hop_info_2021, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+							std::vector<std::pair<int, int>>().swap(path_increase);
+							std::vector<int>().swap(weight_increase);
+							std::vector<int>().swap(weight_old_increase);
+							std::map<std::pair<int, int>, int>().swap(path2Index4Increase);
+						}
+					}
+					if (path_decrease.size() > 0)
+					{
+						for (int i = 0; i < path_decrease.size(); i++)
+						{
+							int v1 = path_decrease[i].first;
+							int v2 = path_decrease[i].second;
+							int w = weight_decrease[i];
+							instance_graph_temp.add_edge(v1, v2, w);
+						}
+						std::cout << "decrease ruc maintain" << std::endl;
+						experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+						experiment::nonhop::ruc::decrease::decrease_maintain(instance_graph_temp, hop_info, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+						std::cout << "decrease 2021 maintain" << std::endl;
+						experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+						experiment::nonhop::algorithm2021::decrease::decrease_maintain(instance_graph_temp, hop_info_2021, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+						std::vector<std::pair<int, int>>().swap(path_decrease);
+						std::vector<int>().swap(weight_decrease);
+						std::map<std::pair<int, int>, int>().swap(path2Index4Decrease);
+					}
+					if (path_increase.size() > 0)
+					{
+						for (int i = 0; i < path_increase.size(); i++)
+						{
+							int v1 = path_increase[i].first;
+							int v2 = path_increase[i].second;
+							int w = weight_increase[i];
+							int w_old = weight_old_increase[i];
+							instance_graph_temp.add_edge(v1, v2, w);
+						}
+						std::cout << "increase ruc maintain" << std::endl;
+						experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+						experiment::nonhop::ruc::increase::nonHOP_WeightIncreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+						std::cout << "increase 2021 maintain" << std::endl;
+						experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+						experiment::nonhop::algorithm2021::increase::increase_maintain(instance_graph_temp, hop_info_2021, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+						std::vector<std::pair<int, int>>().swap(path_increase);
+						std::vector<int>().swap(weight_increase);
+						std::vector<int>().swap(weight_old_increase);
+					}
+					graph_list.push_back(instance_graph_temp);
+					graph_time.add_graph_time(instance_graph_temp, i);
+					if (i == config.iterations / 2 || i == config.iterations) {
+						timer_ruc.endSubtask();
+						timer_2021.endSubtask();
+					}
+				}
+				std::ofstream FILE_HOP_LABEL(hopLabelPath.string(), std::ios::out | std::ifstream::binary);
+				experiment::saveBinary(FILE_HOP_LABEL, graph_list);
+				experiment::saveBinary(FILE_HOP_LABEL, graph_time);
+				experiment::saveBinary(FILE_HOP_LABEL, hop_info);
+				std::ofstream outFile;
+				outFile.precision(6);
+				outFile.setf(std::ios::fixed);
+				outFile.setf(std::ios::showpoint);
+				outFile.open(resultPath.string());
+				outFile << "========================ruc maintain======================";
+				timer_ruc.writeStatsToFile(outFile);
+				hop_info.record_all_details_stream(outFile);
+				outFile << "========================2021 maintain=====================";
+				timer_2021.writeStatsToFile(outFile);
+				hop_info_2021.record_all_details_stream(outFile);
+				outFile.close();
+			}
+		}
+	}
+	catch (const std::exception& ex) {
+		std::cerr << "Error: " << ex.what() << "\n";
+		return EXIT_FAILURE;
+	}
+
+	return EXIT_SUCCESS;
+}

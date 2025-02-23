@@ -1,23 +1,19 @@
+#pragma once
 #include "Historical/graph_with_time_span/graph.h"
 #include <filesystem>
 #include "Historical/experiment/experiment_config.h"
-#include <boost/random/uniform_int_distribution.hpp>
-#include <boost/random/mersenne_twister.hpp>
 #include "Historical/graph_with_time_span/two_hop_label.h"
 #include <boost/heap/fibonacci_heap.hpp>
 #include <shared_mutex>
 #include <CPU/tool_functions/ThreadPool.h>
 
 namespace experiment {
-	boost::random::mt19937 boost_random_time_seed{ static_cast<std::uint32_t>(std::time(0)) };
-	int max_N_ID_for_mtx_595 = 1e7;
-	std::vector<std::shared_mutex> mtx_595(max_N_ID_for_mtx_595);
 	template <typename weight_type>
 	void read_graph(graph<weight_type>& graph, ExperimentConfig& config) {
 		std::string readPath = config.data_source.string();
 		std::string line_content;
 		boost::random::uniform_int_distribution<> random_v;
-		boost::random::uniform_int_distribution<> random_weight = boost::random::uniform_int_distribution<>(0, 200);
+		boost::random::uniform_int_distribution<> random_weight = boost::random::uniform_int_distribution<>(0, 100);
 		int v_num = 0;
 		// ¶ÁÈ¡ÎÄ¼þ
 		std::ifstream myfile(readPath);
@@ -47,6 +43,8 @@ namespace experiment {
 		}
 	};
 	namespace nonhop {
+		int max_N_ID_for_mtx_595 = 1e7;
+		std::vector<std::shared_mutex> mtx_595(max_N_ID_for_mtx_595);
 		std::vector<std::vector<two_hop_label>> L_temp_595;
 		PPR_TYPE::PPR_type PPR_595;
 		std::vector<std::vector<int>> P_dij_595;
@@ -359,8 +357,8 @@ namespace experiment {
 	}
 
 	namespace hop {
-		std::queue<int> Qid_599;
 		int max_N_ID_for_mtx_599 = 1e7;
+		std::queue<int> Qid_599;
 		std::vector<std::shared_mutex> mtx_599(max_N_ID_for_mtx_599);
 
 		int global_upper_k = 0;
@@ -833,5 +831,7 @@ namespace experiment {
 			//---------------------------------------------------------------------------------------------------------------------------------------
 			hop_constrained_clear_global_values<weight_type>();
 		}
+
 	}
 }
+
