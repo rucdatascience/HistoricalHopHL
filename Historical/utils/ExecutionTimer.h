@@ -6,7 +6,7 @@
 #include <chrono>
 #include <iomanip>
 #include <sstream>
-#include <vector>
+#include <memory>
 
 namespace experiment {
 
@@ -14,12 +14,15 @@ namespace experiment {
 		std::string name;
 		std::chrono::steady_clock::time_point startTime;
 		std::chrono::steady_clock::time_point endTime;
-		std::map<std::string, Subtask> subtasks;
+		std::map<std::string, std::shared_ptr<Subtask>> subtasks;
+		std::weak_ptr<Subtask> parent;
+
 		Subtask() : startTime(std::chrono::steady_clock::now()) {
 			name = "task";
 		}
-		Subtask(const std::string& taskName)
-			: name(taskName), startTime(std::chrono::steady_clock::now()) {
+
+		Subtask(const std::string& taskName, std::weak_ptr<Subtask> parentTask = std::weak_ptr<Subtask>())
+			: name(taskName), startTime(std::chrono::steady_clock::now()), parent(parentTask) {
 		}
 
 		void end() {
@@ -33,7 +36,7 @@ namespace experiment {
 		double getTotalDuration() const {
 			double totalDuration = getDuration();
 			for (const auto& subtask : subtasks) {
-				totalDuration += subtask.second.getTotalDuration();
+				totalDuration += subtask.second->getTotalDuration();
 			}
 			return totalDuration;
 		}
@@ -44,36 +47,37 @@ namespace experiment {
 		void startTask(const std::string& taskName) {
 			// Start a new main task, do not start timer
 			currentMainTaskName = taskName;
-			currentSubtask.clear();
+			currentSubtask = nullptr; // Reset current subtask
 			allTasks.clear();
 		}
 
 		void startSubtask(const std::string& subtaskName) {
-			if (currentSubtask.empty()) {
-				// If no current subtask is running, start a new subtask under the current task
-				currentSubtask = subtaskName;
-				if (allTasks.find(subtaskName) == allTasks.end()) {
-					allTasks[subtaskName] = Subtask(subtaskName);
-				}
-				else {
-					std::cerr << "Error: a subtask with the same name already exists for " << subtaskName << std::endl;
-				}
+			if (currentSubtask) {
+				// Adding a subtask to the current task
+				auto& currentTask = *currentSubtask;
+				currentTask.subtasks[subtaskName] = std::make_shared<Subtask>(subtaskName, currentSubtask);
+				currentSubtask = currentTask.subtasks[subtaskName]; // Set the new subtask as the current one
 			}
 			else {
-				// Adding a subtask to the current task
-				auto& currentTask = allTasks[currentSubtask];
-				currentTask.subtasks[subtaskName] = Subtask(subtaskName);
-				currentSubtask = subtaskName; // Set the new subtask as the current one
+				// If no current subtask is running, start a new subtask under the current task
+				allTasks[subtaskName] = std::make_shared<Subtask>(subtaskName);
+				currentSubtask = allTasks[subtaskName]; // Set it as the current task
 			}
 		}
 
 		void endSubtask() {
-			if (!currentSubtask.empty()) {
+			if (currentSubtask) {
 				// End the current subtask
-				if (allTasks.find(currentSubtask) != allTasks.end()) {
-					allTasks[currentSubtask].end();
+				currentSubtask->end();
+
+				// Move to parent task (if any)
+				auto parentTask = currentSubtask->parent.lock();
+				if (parentTask) {
+					currentSubtask = parentTask;
 				}
-				currentSubtask.clear();
+				else {
+					currentSubtask = nullptr;
+				}
 			}
 			else {
 				std::cerr << "Error: No subtask is currently running.\n";
@@ -83,7 +87,7 @@ namespace experiment {
 		double getTaskDuration() {
 			double totalDuration = 0;
 			for (const auto& task : allTasks) {
-				totalDuration += task.second.getTotalDuration();
+				totalDuration += task.second->getTotalDuration();
 			}
 			return totalDuration;
 		}
@@ -102,31 +106,30 @@ namespace experiment {
 			outFile.precision(6);
 			outFile.setf(std::ios::fixed);
 			outFile.setf(std::ios::showpoint);
-			outFile << currentMainTaskName << ": Task Timing Statistics:" << std::endl;
-			writeStatsToFileRecursively(outFile, allTasks, 0);
-
-			outFile.close();
+			outFile << "Task Timing Statistics:" << std::endl;
+			writeStatsToFileRecursively(outFile, currentMainTaskName, allTasks, 0);
 		}
 
-		void writeStatsToFileRecursively(std::ofstream& outFile, const std::map<std::string, Subtask>& tasks, int level) {
+		void writeStatsToFileRecursively(std::ofstream& outFile, const std::string& taskName, const std::map<std::string, std::shared_ptr<Subtask>>& tasks, int level) {
 			for (const auto& task : tasks) {
-				outFile << std::string(level * 4, ' ') << "-> " << task.first << ", Time: " << task.second.getDuration() << " seconds" << std::endl;
-				writeStatsToFileRecursively(outFile, task.second.subtasks, level + 1);
+				outFile << std::string(level * 4, ' ') << "-> " << task.first << ", Time: " << task.second->getDuration() << " seconds" << std::endl;
+				writeStatsToFileRecursively(outFile, task.first, task.second->subtasks, level + 1);
 			}
 		}
 
 	private:
-		void printTaskStats(const std::string& taskName, const std::map<std::string, Subtask>& tasks, int level) {
+		void printTaskStats(const std::string& taskName, const std::map<std::string, std::shared_ptr<Subtask>>& tasks, int level) {
 			for (const auto& task : tasks) {
+
 				std::cout << std::string(level * 4, ' ') << "-> " << task.first << ": "
-					<< std::fixed << std::setprecision(3) << task.second.getDuration() << "s" << std::endl;
-				printTaskStats(task.first, task.second.subtasks, level + 1);
+					<< std::fixed << std::setprecision(3) << task.second->getDuration() << "s" << std::endl;
+				printTaskStats(task.first, task.second->subtasks, level + 1);
 			}
 		}
 
 	private:
 		std::string currentMainTaskName;
-		std::string currentSubtask;
-		std::map<std::string, Subtask> allTasks;
+		std::shared_ptr<Subtask> currentSubtask;
+		std::map<std::string, std::shared_ptr<Subtask>> allTasks;
 	};
 }

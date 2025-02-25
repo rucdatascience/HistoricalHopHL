@@ -12,9 +12,10 @@
 #include <boost/heap/fibonacci_heap.hpp>
 #include <iostream>
 namespace experiment {
-	boost::random::mt19937 boost_random_time_seed{ static_cast<std::uint32_t>(std::time(0)) };
+	enum Mode { GENERATE_LABEL, MAINTAIN_LABEL, QUERY_RESULT };
+
 	struct ExperimentConfig {
-		enum Mode { GENERATE_LABEL, MAINTAIN_LABEL } mode;
+		enum Mode mode;
 		int threads = 0;
 		std::filesystem::path data_source;
 		std::filesystem::path save_path;
@@ -48,8 +49,15 @@ namespace experiment {
 		maintain_label.add_argument("-max", "--max_value").required().scan<'i', int>();
 		maintain_label.add_argument("-min", "--min_value").required().scan<'i', int>();
 
+		//query-result
+		argparse::ArgumentParser query_label("query-result");
+		query_label.add_argument("-f", "--data_source").required();
+		query_label.add_argument("-c", "--search_count").required().scan<'i', int>();
+		query_label.add_argument("-k", "--hop_limit").required().scan<'i', int>();
+
 		program.add_subparser(generate_label);
 		program.add_subparser(maintain_label);
+		program.add_subparser(query_label);
 
 		try {
 			program.parse_args(argc, argv);
@@ -62,7 +70,7 @@ namespace experiment {
 
 		ExperimentConfig config;
 		if (program.is_subcommand_used("generate-label")) {
-			config.mode = ExperimentConfig::GENERATE_LABEL;
+			config.mode = GENERATE_LABEL;
 			config.threads = generate_label.get<int>("-t");
 			config.data_source = generate_label.get<std::string>("-f");
 			config.save_path = generate_label.get<std::string>("-p");
@@ -72,7 +80,7 @@ namespace experiment {
 			}
 		}
 		else if (program.is_subcommand_used("maintain-label")) {
-			config.mode = ExperimentConfig::MAINTAIN_LABEL;
+			config.mode = MAINTAIN_LABEL;
 			config.threads = maintain_label.get<int>("-t");
 			config.data_source = maintain_label.get<std::string>("-f");
 			config.save_path = maintain_label.get<std::string>("-p");
@@ -85,6 +93,12 @@ namespace experiment {
 			if (config.max_value <= 0 || config.min_value <= 0) {
 				throw std::invalid_argument("Error: max_value and min_value must be greater than 0.");
 			}
+		}
+		else if (program.is_subcommand_used("query-result")) {
+			config.mode = QUERY_RESULT;
+			config.data_source = query_label.get<std::string>("-f");
+			config.change_count = query_label.get<int>("-c");
+			config.hop_limit = query_label.get<int>("-k");
 		}
 		else {
 			std::cerr << "Error: Unknown subcommand.\n";

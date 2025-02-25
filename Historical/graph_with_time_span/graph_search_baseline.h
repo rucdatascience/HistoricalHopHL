@@ -20,10 +20,10 @@ namespace experiment {
 			}
 		};
 		template <typename weight_type>
-		double search_shortest_path_in_period_time_naive(graph_with_time_span<weight_type>& graph, int u, int v, int startTimem, int endTime) {
+		double search_shortest_path_in_period_time_naive(graph_with_time_span<weight_type>& graph, int u, int v, int startTime, int endTime) {
 			double res = std::numeric_limits<double>::max();
 			int N = graph.v_num;
-			boost::heap::fibonacci_heap<pair<int, weight_type>, boost::heap::compare<compare_pair<weight_type>>> queue;
+			boost::heap::fibonacci_heap<std::pair<int, weight_type>, boost::heap::compare<compare_pair<weight_type>>> queue;
 			for (int queryTime = startTime; queryTime <= endTime; queryTime++)
 			{
 				std::vector<weight_type> dist(N, std::numeric_limits<weight_type>::max());
@@ -37,7 +37,7 @@ namespace experiment {
 					queue.pop();
 					if (vertexBase == v)
 					{
-						res = min(res, currentDist);
+						res = std::min(res, currentDist);
 					}
 					for (const auto& vertices : graph.ADJs[vertexBase])
 					{
@@ -57,7 +57,6 @@ namespace experiment {
 						}
 					}
 				}
-				cout << "naive" << res << endl;
 			}
 			return res;
 		}
@@ -80,7 +79,7 @@ namespace experiment {
 
 				if (vertexBase == v)
 				{
-					res = min(res, currentDist);
+					res = std::min(res, currentDist);
 				}
 				for (const auto& edge : graph[vertexBase])
 				{
@@ -98,18 +97,14 @@ namespace experiment {
 			return res;
 		}
 		template <typename weight_type>
-		int dijkstra_iterator(std::vector<graph<weight_type>> list, int u, int v)
+		int dijkstra_iterator(std::vector<graph<weight_type>>& list, int u, int v, int ts, int te)
 		{
 			int res = INT_MAX;
-			auto start_time = std::chrono::high_resolution_clock::now();
-			for (graph_v_of_v<int> graph : list)
-			{
-				res = min(res, dijkstra(graph, u, v));
-				cout << "dijkstra" << res << endl;
+			for (int i = 0; i < list.size(); i++) {
+				if (i >= ts && i <= te) {
+					res = std::min(res, dijkstra(list[i], u, v));
+				}
 			}
-			auto endTime = std::chrono::high_resolution_clock::now();
-			double runtime_n_iterate_dijkstra = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - start_time).count() / 1e9;
-			std::cout << "dijkstra query time" << runtime_n_iterate_dijkstra << endl;
 			return res;
 		};
 	}
@@ -181,7 +176,7 @@ namespace experiment {
 			return res;
 		};
 		template <typename weight_type>
-		weight_type dijkstra(graph<weight_type>& graph, int u, int v, int k)
+		int dijkstra(graph<weight_type>& graph, int u, int v, int k)
 		{
 			std::vector<weight_type> dist(graph.size(), std::numeric_limits<weight_type>::max());
 			std::vector<int> hop_list(graph.size(), std::numeric_limits<int>::max());
@@ -201,7 +196,7 @@ namespace experiment {
 
 				if (vertexBase == v)
 				{
-					res = min(res, currentDist);
+					res = std::min(res, currentDist);
 				}
 				if (hop >= k)
 				{
@@ -228,18 +223,14 @@ namespace experiment {
 		};
 
 		template <typename weight_type>
-		int dijkstra_iterator(std::vector<graph<weight_type>> list, int u, int v, int k)
+		int dijkstra_iterator(std::vector<graph<weight_type>>& list, int u, int v, int ts, int te, int k)
 		{
 			int res = INT_MAX;
-			auto start_time = std::chrono::high_resolution_clock::now();
-			for (graph<int> graph : list)
-			{
-				res = min(res, dijkstra(graph, u, v, k));
-				// cout << "dijkstra" << res << endl;
+			for (int i = 0; i < list.size(); i++) {
+				if (i >= ts && i <= te) {
+					res = std::min(res, dijkstra(list[i], u, v, k));
+				}
 			}
-			auto endTime = std::chrono::high_resolution_clock::now();
-			double runtime_n_iterate_dijkstra = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - start_time).count() / 1e9;
-			std::cout << "dijkstra query time" << runtime_n_iterate_dijkstra << endl;
 			return res;
 		};
 	}

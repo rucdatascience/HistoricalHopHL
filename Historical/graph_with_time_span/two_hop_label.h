@@ -287,6 +287,52 @@ namespace experiment {
 			return { res1, res2 };
 		}
 
+		std::pair<two_hop_label, two_hop_label> graph_weighted_two_hop_extract_2hop_label_by_backup_label_not_real_time(std::vector<two_hop_label>& L_s, std::vector<two_hop_label>& L_t, int time)
+		{
+
+
+			/*return std::numeric_limits<double>::max() is not connected*/
+
+			int distance = std::numeric_limits<int>::max(); // if disconnected, return this large value
+			int common_hub;
+			two_hop_label res1 = two_hop_label{ -1 };
+			two_hop_label res2 = two_hop_label{ -1 };
+			auto vector1_check_pointer = L_s.begin();
+			auto vector2_check_pointer = L_t.begin();
+			auto pointer_L_s_end = L_s.end(), pointer_L_t_end = L_t.end();
+			while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end && vector1_check_pointer->t_e == std::numeric_limits<int>::max() && vector2_check_pointer->t_e == std::numeric_limits<int>::max())
+			{
+				if (vector1_check_pointer->vertex == vector2_check_pointer->vertex)
+				{
+					if (vector1_check_pointer->t_s == time) {
+						vector1_check_pointer++;
+					}
+					else if (vector2_check_pointer->t_s == time) {
+						vector2_check_pointer++;
+					}
+					int dis = vector1_check_pointer->distance + vector2_check_pointer->distance;
+					if (distance > dis)
+					{
+						distance = dis;
+						common_hub = vector1_check_pointer->vertex;
+						res1 = *vector1_check_pointer;
+						res2 = *vector2_check_pointer;
+					}
+					vector1_check_pointer++;
+				}
+				else if (vector1_check_pointer->vertex > vector2_check_pointer->vertex)
+				{
+					vector2_check_pointer++;
+				}
+				else
+				{
+					vector1_check_pointer++;
+				}
+			}
+
+			return { res1, res2 };
+		}
+
 		int search_sorted_two_hop_label_weight_in_current(std::vector<two_hop_label>& input_vector, int key)
 		{
 			int left = 0, right = input_vector.size() - 1;

@@ -712,7 +712,7 @@ namespace experiment {
 					if (CL_next->size() > 100000) {
 						is_debug = true;
 					}
-					for (auto it : CL_curr)
+					for (const affected_label& it : CL_curr)
 					{
 						results_dynamic.emplace_back(pool_dynamic.enqueue([time, it, L, PPR, CL_next, &instance_graph, is_debug]
 							{
@@ -748,7 +748,7 @@ namespace experiment {
 										}
 										else {
 											mtx_595[vnei].lock();
-											two_hop_label search_result = search_sorted_two_hop_label_in_current((*L)[vnei], u);
+											two_hop_label search_result = search_sorted_two_hop_label_entity_not_realTime((*L)[vnei], u, time);
 											mtx_595[vnei].unlock();
 											if (search_result.distance < 1e7 && search_result.distance > dnew) {
 												mtx_595[vnei].lock();
@@ -866,6 +866,7 @@ namespace experiment {
 
 					while (CL_curr.size())
 					{
+						std::cout << "2021 decrease cl_curr size is " << CL_curr.size() << std::endl;
 						ProDecreasep_batch(instance_graph, &mm.L, &mm.PPR, CL_curr, &CL_next, pool_dynamic, results_dynamic, time);
 						CL_curr = CL_next;
 						std::vector<affected_label>().swap(CL_next);
@@ -877,9 +878,13 @@ namespace experiment {
 					std::vector<affected_label>& al1_curr, std::vector<affected_label>* al1_next,
 					std::map<std::pair<int, int>, weightTYPE >& w_old_map,
 					ThreadPool& pool_dynamic, std::vector<std::future<int>>& results_dynamic, int time) {
-
+					bool is_debug = false;
+					if (al1_curr.size() >= 100000)
+					{
+						is_debug = true;
+					}
 					for (auto it : al1_curr) {
-						results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, al1_next, &instance_graph, &w_old_map, time] {
+						results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, al1_next, &instance_graph, &w_old_map, time, is_debug] {
 							for (auto nei : instance_graph[it.first]) {
 								mtx_595[nei.first].lock();
 								two_hop_label search_weight = search_sorted_two_hop_label_entity_not_realTime((*L)[nei.first], it.second, time);
@@ -902,6 +907,9 @@ namespace experiment {
 									mtx_595_1.lock();
 									/*std::cout << i << " and its t_s is " << search_weight.t_s << std::endl;
 									std::cout << nei.first << " to " << it.second << " weight is it.dis " << it.dis << " + w_old " << w_old << "=" << it.dis + w_old << " and search_weight is " << search_weight.distance << std::endl;*/
+									if (is_debug) {
+										std::cout << nei.first << " to " << it.second << " weight is it.dis " << it.dis << " + w_old " << w_old << "=" << it.dis + w_old << " and search_weight is " << search_weight.distance << std::endl;
+									}
 									al1_next->push_back(affected_label(nei.first, it.second, search_weight.distance));
 									mtx_595_1.unlock();
 								}

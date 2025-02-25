@@ -7,26 +7,31 @@
 #include "Historical/experiment/experiment_config.h"
 #include "Historical/graph_with_time_span/two_hop_label.h"
 #include <Historical/utils/ExecutionTimer.h>
+#include "Historical/graph_with_time_span/graph_search_baseline.h"
+boost::random::mt19937 boost_random_time_seed{ static_cast<std::uint32_t>(std::time(0)) };
 experiment::ExecutionTimer timer;
 int main(int argc, char* argv[]) {
 	try {
 		experiment::ExperimentConfig config = experiment::parse_arguments(argc, argv);
 
-		std::cout << "Mode: " << (config.mode == experiment::ExperimentConfig::GENERATE_LABEL ? "Generate Label" : "Maintain Label") << "\n"
+		std::cout << "Mode: " << (config.mode == experiment::GENERATE_LABEL ? "Generate Label" : (config.mode == experiment::MAINTAIN_LABEL ? "Maintain Label" : "QueryResult")) << "\n"
 			<< "Threads: " << config.threads << "\n"
 			<< "Data Source: " << config.data_source << "\n"
 			<< "Save Path: " << config.save_path << "\n"
 			<< "Hop Limit (k): " << config.hop_limit << "\n";
 
-		if (config.mode == experiment::ExperimentConfig::MAINTAIN_LABEL) {
+		if (config.mode == experiment::MAINTAIN_LABEL) {
 			std::cout << "Iterations: " << config.iterations << "\n"
 				<< "Change Count: " << config.change_count << "\n"
 				<< "Max Value: " << config.max_value << "\n"
 				<< "Min Value: " << config.min_value << "\n";
 		}
-		if (config.mode == experiment::ExperimentConfig::GENERATE_LABEL) {
+		if (config.mode == experiment::GENERATE_LABEL) {
 			experiment::graph<int> instance_graph;
+			timer.startTask("generate graph and 2hop label " + std::to_string(config.hop_limit));
+			timer.startSubtask("generate graph " + std::to_string(config.hop_limit));
 			experiment::read_graph(instance_graph, config);
+			timer.endSubtask();
 			experiment::graph_with_time_span<int> graph_time;
 			graph_time.add_graph_time(instance_graph, 0);
 			std::filesystem::path saveDir = std::filesystem::path(config.save_path);
@@ -40,7 +45,7 @@ int main(int argc, char* argv[]) {
 				experiment::hop::two_hop_case_info hop_info;
 				hop_info.thread_num = config.threads;
 				hop_info.upper_k = config.hop_limit;
-				timer.startTask("generate graph and 2hop label " + std::to_string(config.hop_limit) + " hop constrained");
+				timer.startSubtask("generate 2hop label " + std::to_string(config.hop_limit) + " hop constrained");
 				experiment::hop::pll(instance_graph, hop_info);
 				timer.endSubtask();
 				//hop_info.print_L();
@@ -55,6 +60,7 @@ int main(int argc, char* argv[]) {
 				outFile.setf(std::ios::showpoint);
 				outFile.open(resultPath.string());
 				timer.writeStatsToFile(outFile);
+				outFile.close();
 			}
 			else {
 				std::string graph_res_filename = "binary_nonhop_constrained_" + std::to_string(config.hop_limit) + "_graph";
@@ -63,7 +69,7 @@ int main(int argc, char* argv[]) {
 				std::filesystem::path resultPath = saveDir.string() + "//" + experiment_res_filename;
 				experiment::nonhop::two_hop_case_info hop_info;
 				hop_info.thread_num = config.threads;
-				timer.startTask("generate graph and 2hop label " + std::to_string(config.hop_limit) + " nonhop constrained");
+				timer.startSubtask("generate graph and 2hop label " + std::to_string(config.hop_limit) + " nonhop constrained");
 				experiment::nonhop::pll(instance_graph, hop_info);
 				timer.endSubtask();
 				//hop_info.print_L();
@@ -79,9 +85,10 @@ int main(int argc, char* argv[]) {
 				outFile.setf(std::ios::showpoint);
 				outFile.open(resultPath.string());
 				timer.writeStatsToFile(outFile);
+				outFile.close();
 			}
 		}
-		else if (config.mode == experiment::ExperimentConfig::MAINTAIN_LABEL) {
+		else if (config.mode == experiment::MAINTAIN_LABEL) {
 			experiment::ExecutionTimer timer_ruc;
 			experiment::ExecutionTimer timer_2021;
 			std::vector<experiment::graph<int>> graph_list;
@@ -270,6 +277,8 @@ int main(int argc, char* argv[]) {
 				experiment::saveBinary(FILE_HOP_LABEL, graph_list);
 				experiment::saveBinary(FILE_HOP_LABEL, graph_time);
 				experiment::saveBinary(FILE_HOP_LABEL, hop_info);
+				experiment::saveBinary(FILE_HOP_LABEL, hop_info_2021);
+				FILE_HOP_LABEL.close();
 				std::ofstream outFile;
 				outFile.precision(6);
 				outFile.setf(std::ios::fixed);
@@ -458,6 +467,7 @@ int main(int argc, char* argv[]) {
 				experiment::saveBinary(FILE_HOP_LABEL, graph_list);
 				experiment::saveBinary(FILE_HOP_LABEL, graph_time);
 				experiment::saveBinary(FILE_HOP_LABEL, hop_info);
+				experiment::saveBinary(FILE_HOP_LABEL, hop_info_2021);
 				std::ofstream outFile;
 				outFile.precision(6);
 				outFile.setf(std::ios::fixed);
@@ -469,14 +479,122 @@ int main(int argc, char* argv[]) {
 				outFile << "========================2021 maintain=====================";
 				timer_2021.writeStatsToFile(outFile);
 				hop_info_2021.record_all_details_stream(outFile);
+				FILE_HOP_LABEL.close();
+				outFile.close();
+			}
+		}
+		else if (config.mode == experiment::QUERY_RESULT) {
+			// random src and dest
+			timer.startTask("query shorest path distance");
+			std::vector<experiment::graph<int>> graph_list;
+			experiment::graph_with_time_span<int> graph_time;
+			if (config.hop_limit != 0) {
+				std::string experiment_QUERY_RESULT_res_filename = "QUERY_RESULT_nonhop_constrained_" + std::to_string(config.hop_limit) + "_result.txt";
+				std::string data_from_filename = "binary_hop_constrained_" + std::to_string(config.hop_limit) + "_2_hop_label_info";
+				std::string dataSource = config.data_source.string() + "//" + data_from_filename;
+				std::string savePath = config.data_source.string() + "//" + experiment_QUERY_RESULT_res_filename;
+				std::ifstream FILE_GRAPH(dataSource, std::ios::in | std::ifstream::binary);
+
+				experiment::hop::two_hop_case_info hop_info;
+				experiment::hop::two_hop_case_info hop_info_2021;
+				experiment::loadBinary(FILE_GRAPH, graph_list);
+				experiment::loadBinary(FILE_GRAPH, graph_time);
+				experiment::loadBinary(FILE_GRAPH, hop_info);
+				experiment::loadBinary(FILE_GRAPH, hop_info);
+				int v_num = graph_time.v_num;
+				int time = graph_time.time_max;
+				int hop = config.hop_limit;
+				boost::random::uniform_int_distribution<> _random_v = boost::random::uniform_int_distribution<>(0, v_num);
+				boost::random::uniform_int_distribution<> _random_time = boost::random::uniform_int_distribution<>(0, time);
+				boost::random::uniform_int_distribution<> _random_hop = boost::random::uniform_int_distribution<>(0, hop);
+				std::ofstream outFile;
+				outFile.precision(6);
+				outFile.setf(std::ios::fixed);
+				outFile.setf(std::ios::showpoint);
+				outFile.open(savePath);
+				for (int i = 0; i < config.change_count; i++) {
+					int index_i = _random_v(boost_random_time_seed);
+					int index_j = _random_v(boost_random_time_seed);
+					int t_1 = _random_time(boost_random_time_seed);
+					int t_2 = _random_time(boost_random_time_seed);
+					int hop = _random_hop(boost_random_time_seed);
+					if (t_1 > t_2) {
+						std::swap(t_1, t_2);
+					}
+					timer.startSubtask("====iteration " + std::to_string(i) + " query result info====");
+					timer.startSubtask("baseline 1: traverse each time graph");
+					int resb1 = experiment::hop::dijkstra_iterator(graph_list, index_i, index_j, t_1, t_2, hop);
+					timer.endSubtask();
+					timer.startSubtask("baseline 2: traverse graph with time span");
+					int resb2 = experiment::hop::search_shortest_path_in_period_time_naive(graph_time, index_i, index_j, t_1, t_2, hop);
+					timer.endSubtask();
+					timer.startSubtask("search result by ruc maintain algorithm");
+					int ruc_res = hop_info.query(index_i, index_j, t_1, t_2, hop);
+					timer.endSubtask();
+					timer.startSubtask("search result by 2021 maintain algorithm");
+					int res_2021 = hop_info_2021.query(index_i, index_j, t_1, t_2, hop);
+					timer.endSubtask();
+					outFile << resb1 << ":" << resb2 << ":" << ruc_res << ":" << res_2021 << std::endl;
+					timer.endSubtask();
+				}
+				timer.writeStatsToFile(outFile);
+				outFile.close();
+			}
+			else {
+				std::string experiment_QUERY_RESULT_res_filename = "QUERY_RESULT_nonhop_constrained_" + std::to_string(config.hop_limit) + "_result.txt";
+				std::string data_from_filename = "binary_nonhop_constrained_" + std::to_string(config.hop_limit) + "_2_hop_label_info";
+				std::string dataSource = config.data_source.string() + "//" + data_from_filename;
+				std::string savePath = config.data_source.string() + "//" + experiment_QUERY_RESULT_res_filename;
+				std::cout << "save path is " << savePath << std::endl;
+				std::ifstream FILE_GRAPH(dataSource, std::ios::in | std::ifstream::binary);
+				experiment::nonhop::two_hop_case_info hop_info;
+				experiment::nonhop::two_hop_case_info hop_info_2021;
+				experiment::loadBinary(FILE_GRAPH, graph_list);
+				experiment::loadBinary(FILE_GRAPH, graph_time);
+				experiment::loadBinary(FILE_GRAPH, hop_info);
+				experiment::loadBinary(FILE_GRAPH, hop_info_2021);
+				int v_num = graph_time.v_num;
+				int time = graph_time.time_max;
+				boost::random::uniform_int_distribution<> _random_v = boost::random::uniform_int_distribution<>(0, v_num);
+				boost::random::uniform_int_distribution<> _random_time = boost::random::uniform_int_distribution<>(0, time);
+				std::ofstream outFile;
+				outFile.precision(6);
+				outFile.setf(std::ios::fixed);
+				outFile.setf(std::ios::showpoint);
+				outFile.open(savePath);
+				for (int i = 0; i < config.change_count; i++) {
+					int index_i = _random_v(boost_random_time_seed);
+					int index_j = _random_v(boost_random_time_seed);
+					int t_1 = _random_time(boost_random_time_seed);
+					int t_2 = _random_time(boost_random_time_seed);
+					if (t_1 > t_2) {
+						std::swap(t_1, t_2);
+					}
+					timer.startSubtask("====iteration " + std::to_string(i) + " query result info====");
+					timer.startSubtask("baseline 1: traverse each time graph");
+					int resb1 = experiment::nonhop::dijkstra_iterator(graph_list, index_i, index_j, t_1, t_2);
+					timer.endSubtask();
+					timer.startSubtask("baseline 2: traverse graph with time span");
+					int resb2 = experiment::nonhop::search_shortest_path_in_period_time_naive(graph_time, index_i, index_j, t_1, t_2);
+					timer.endSubtask();
+					timer.startSubtask("search result by ruc maintain algorithm");
+					int ruc_res = hop_info.query(index_i, index_j, t_1, t_2);
+					timer.endSubtask();
+					timer.startSubtask("search result by 2021 maintain algorithm");
+					int res_2021 = hop_info_2021.query(index_i, index_j, t_1, t_2);
+					timer.endSubtask();
+					outFile << resb1 << ":" << resb2 << ":" << ruc_res << ":" << res_2021 << std::endl;
+					timer.endSubtask();
+				}
+				timer.writeStatsToFile(outFile);
 				outFile.close();
 			}
 		}
 	}
 	catch (const std::exception& ex) {
 		std::cerr << "Error: " << ex.what() << "\n";
-		return EXIT_FAILURE;
+		exit(EXIT_FAILURE);
 	}
 
-	return EXIT_SUCCESS;
+	exit(EXIT_SUCCESS);
 }
