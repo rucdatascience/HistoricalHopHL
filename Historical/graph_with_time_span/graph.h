@@ -4,9 +4,11 @@
 #include <string>
 #include <cstring>
 #include <fstream>
+#include "Historical/experiment/experiment_config.h"
 #include <CPU/tool_functions/sorted_vector_binary_operations.h>
 #include <CPU/text_mining/binary_save_read_vector_of_vectors.h>
 #include "Historical/utils/BinaryPersistence.h"
+
 namespace experiment {
 	template <typename weight_type> // weight_type may be int, long long int, float, double...
 	class graph

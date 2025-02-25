@@ -7,15 +7,17 @@
 #include <shared_mutex>
 #include <CPU/tool_functions/ThreadPool.h>
 
-namespace experiment {
+namespace experiment
+{
 	template <typename weight_type>
-	void read_graph(graph<weight_type>& graph, ExperimentConfig& config) {
+	void read_graph(graph<weight_type> &graph, ExperimentConfig &config)
+	{
 		std::string readPath = config.data_source.string();
 		std::string line_content;
 		boost::random::uniform_int_distribution<> random_v;
 		boost::random::uniform_int_distribution<> random_weight = boost::random::uniform_int_distribution<>(0, 100);
 		int v_num = 0;
-		// ¶ÁÈ¡ÎÄ¼þ
+		// ï¿½ï¿½È¡ï¿½Ä¼ï¿½
 		std::ifstream myfile(readPath);
 		if (myfile.is_open())
 		{
@@ -42,7 +44,49 @@ namespace experiment {
 			}
 		}
 	};
-	namespace nonhop {
+
+	template <typename weight_type>
+	class iteration_info
+	{
+	private:
+		const int _v_num;
+		const int _iteration;
+		const int _change_num;
+		const int _upper;
+		const int _lower;
+		boost::random::uniform_int_distribution<> _random_v;
+		boost::random::uniform_int_distribution<> _random_weight;
+		graph<weight_type> instance_graph;
+
+	public:
+		std::vector<std::queue<change_edge_info>> q_list;
+		iteration_info(int v_num, int iteration, int change_num, int upper, int lower, graph<weight_type> graph) : _v_num(v_num), _iteration(iteration), _change_num(change_num), _upper(upper), _lower(lower), instance_graph(graph)
+		{
+			this->_random_v = boost::random::uniform_int_distribution<>(0, this->_v_num);
+			this->_random_weight = boost::random::uniform_int_distribution<>(this->_lower, this->_upper);
+			q_list = std::vector<std::queue<change_edge_info>>(this->_iteration + 1, std::queue<change_edge_info>());
+		}
+
+		void build_random_change()
+		{
+			std::map<std::pair<int, int>, int> pair2dis;
+			for (int i = 1; i <= this->_iteration; i++)
+			{
+				for (int j = 0; j < this->_change_num; j++)
+				{
+					int index_i = this->_random_v(boost_random_time_seed);
+					boost::random::uniform_int_distribution<> dis_inner(0, instance_graph[index_i].size() - 1);
+					int index_j = dis_inner(boost_random_time_seed);
+					int i_j_weight = this->_random_weight(boost_random_time_seed);
+					change_edge_info info = {index_i, index_j, i_j_weight, i};
+					std::pair index = std::make_pair(index_j, index_j);
+					q_list[i].push(info);
+				}
+			}
+		}
+	};
+	namespace nonhop
+	{
 		int max_N_ID_for_mtx_595 = 1e7;
 		std::vector<std::shared_mutex> mtx_595(max_N_ID_for_mtx_595);
 		std::vector<std::vector<two_hop_label>> L_temp_595;
@@ -53,7 +97,7 @@ namespace experiment {
 		std::vector<std::vector<PLL_handle_t_for_sp>> Q_handles_595;
 		std::queue<int> Qid_595;
 
-		void PLL_dij_function(int v_k, graph<int>& input_graph)
+		void PLL_dij_function(int v_k, graph<int> &input_graph)
 		{
 			mtx_595[max_N_ID_for_mtx_595 - 1].lock();
 			int used_id = Qid_595.front();
@@ -61,8 +105,8 @@ namespace experiment {
 			mtx_595[max_N_ID_for_mtx_595 - 1].unlock();
 
 			std::vector<int> P_changed_vertices, T_changed_vertices;
-			std::vector<int>& T_dij = T_dij_595[used_id], P_dij = P_dij_595[used_id];
-			std::vector<PLL_handle_t_for_sp>& Q_handles = Q_handles_595[used_id];
+			std::vector<int> &T_dij = T_dij_595[used_id], P_dij = P_dij_595[used_id];
+			std::vector<PLL_handle_t_for_sp> &Q_handles = Q_handles_595[used_id];
 
 			boost::heap::fibonacci_heap<two_hop_label> Q;
 			two_hop_label node(0);
@@ -74,7 +118,7 @@ namespace experiment {
 
 			mtx_595[v_k].lock_shared();
 			for (auto xx : L_temp_595[v_k])
-			{ // ÒòÎªv-kµÄ±êÇ©ÔÚ´Ó×Ô¼º³ö·¢µÄ¹ý³ÌÖÐ²»»á·¢Éú¸Ä±ä£¬²¢ÇÒÔÚÇóqueryµÄ¹ý³ÌÖÐÃ¿´Î¶¼»áÓÃµ½£¬ËùÒÔ¿ÉÒÔÌáÇ°È¡³öÀ´·ÅÔÚTÊý×é£¬½ÚÊ¡ºóÃæ²éÕÒµÄÊ±¼ä
+			{ // ï¿½ï¿½Îªv-kï¿½Ä±ï¿½Ç©ï¿½Ú´ï¿½ï¿½Ô¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½ï¿½ï¿½ï¿½Ð²ï¿½ï¿½á·¢ï¿½ï¿½ï¿½Ä±ä£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½queryï¿½Ä¹ï¿½ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½Î¶ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¿ï¿½ï¿½ï¿½ï¿½ï¿½Ç°È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Tï¿½ï¿½ï¿½é£¬ï¿½ï¿½Ê¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òµï¿½Ê±ï¿½ï¿½
 				int L_v_k_i_vertex = xx.vertex;
 				T_dij[L_v_k_i_vertex] = xx.distance; // allocate T values for L_temp_595[v_k]
 				T_changed_vertices.push_back(L_v_k_i_vertex);
@@ -103,7 +147,7 @@ namespace experiment {
 						query_v_k_u = dis;
 						common_hub_for_query_v_k_u = xx.vertex;
 					}
-				} // ÇóqueryµÄÖµ
+				} // ï¿½ï¿½queryï¿½ï¿½Öµ
 				mtx_595[u].unlock_shared();
 
 				if (P_u < query_v_k_u)
@@ -112,17 +156,17 @@ namespace experiment {
 					node.distance = P_u;
 
 					mtx_595[u].lock();
-					L_temp_595[u].push_back(node); // ²¢ÐÐÊ±L_temp_595[u]ÀïÃæµÄ±êÇ©²»Ò»¶¨ÊÇ°´ÕÕvertex IDÅÅºÃÐòµÄ£¬µ«ÊÇÒòÎªÊ²Ã´queryÊ±ÓÃÁËT_dij_595µÄtrick£¬Ã»±ØÒªÈÃL_temp_595[u]ÀïÃæµÄ±êÇ©ÅÅºÃÐò
+					L_temp_595[u].push_back(node); // ï¿½ï¿½ï¿½ï¿½Ê±L_temp_595[u]ï¿½ï¿½ï¿½ï¿½Ä±ï¿½Ç©ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½vertex IDï¿½Åºï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªÊ²Ã´queryÊ±ï¿½ï¿½ï¿½ï¿½T_dij_595ï¿½ï¿½trickï¿½ï¿½Ã»ï¿½ï¿½Òªï¿½ï¿½L_temp_595[u]ï¿½ï¿½ï¿½ï¿½Ä±ï¿½Ç©ï¿½Åºï¿½ï¿½ï¿½
 					mtx_595[u].unlock();
 					new_label_num++;
 
-					/*ÏÂÃæÊÇdij¸üÐÂÁÚ½ÓµãµÄ¹ý³Ì£¬Í¬Ê±¸üÐÂÓÅÏÈ¶ÓÁÐºÍ¾àÀë*/
+					/*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½dijï¿½ï¿½ï¿½ï¿½ï¿½Ú½Óµï¿½Ä¹ï¿½ï¿½Ì£ï¿½Í¬Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¶ï¿½ï¿½ÐºÍ¾ï¿½ï¿½ï¿½*/
 					for (auto xx : input_graph.ADJs[u])
 					{
 						int adj_v = xx.first, ec = xx.second;
 						mtx_595[adj_v].lock();
 						if (P_dij[adj_v] == std::numeric_limits<int>::max())
-						{ // ÉÐÎ´µ½´ïµÄµã
+						{ // ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½Äµï¿½
 							node.vertex = adj_v;
 							node.distance = P_u + ec;
 
@@ -140,7 +184,7 @@ namespace experiment {
 						mtx_595[adj_v].unlock();
 					}
 				}
-				//else if (PLL_dynamic_generate_PPR)
+				// else if (PLL_dynamic_generate_PPR)
 				else
 				{
 					if (common_hub_for_query_v_k_u != v_k)
@@ -188,24 +232,24 @@ namespace experiment {
 				results.emplace_back(
 					pool.enqueue([&output_L, v_k] { // pass const type value j to thread; [] can be empty
 						sort(L_temp_595[v_k].begin(), L_temp_595[v_k].end(), compare_two_hop_label_small_to_large);
-						std::vector<two_hop_label>(L_temp_595[v_k]).swap(L_temp_595[v_k]); // swapÊÍ·ÅvectorÖÐ¶àÓà¿Õ¼ä
+						std::vector<two_hop_label>(L_temp_595[v_k]).swap(L_temp_595[v_k]); // swapï¿½Í·ï¿½vectorï¿½Ð¶ï¿½ï¿½ï¿½Õ¼ï¿½
 						output_L[v_k] = L_temp_595[v_k];
 						std::vector<two_hop_label>().swap(L_temp_595[v_k]); // clear new labels for RAM efficiency
 
 						return 1; // return to results; the return type must be the same with results
-						}));
+					}));
 			}
-			for (auto&& result : results)
+			for (auto &&result : results)
 				result.get(); // all threads finish here
 			results.clear();
 
 			return output_L;
 		}
 
-		void clean_L(two_hop_case_info& case_info, int thread_num)
+		void clean_L(two_hop_case_info &case_info, int thread_num)
 		{
 
-			auto& L = case_info.L;
+			auto &L = case_info.L;
 			int N = L.size();
 
 			ThreadPool pool(thread_num);
@@ -226,7 +270,7 @@ namespace experiment {
 						std::vector<two_hop_label> Lv = L[v];
 						mtx_595[v].unlock_shared();
 
-						auto& T = T_dij_595[used_id];
+						auto &T = T_dij_595[used_id];
 
 						for (auto Lvi : Lv)
 						{
@@ -273,10 +317,10 @@ namespace experiment {
 						mtx_595[max_N_ID_for_mtx_595 - 1].unlock();
 
 						return 1; // return to results; the return type must be the same with results
-						}));
+					}));
 			}
 
-			for (auto&& result : results)
+			for (auto &&result : results)
 				result.get(); // all threads finish here
 			results.clear();
 		}
@@ -292,7 +336,8 @@ namespace experiment {
 		}
 
 		template <typename weight_type>
-		void pll(graph<weight_type>& input_graph, nonhop::two_hop_case_info& case_info) {
+		void pll(graph<weight_type> &input_graph, nonhop::two_hop_case_info &case_info)
+		{
 			//----------------------------------- step 1: initialization ------------------------------------------------------------------
 			timer.startSubtask("step 1: initialization");
 			int num_of_threads = case_info.thread_num;
@@ -330,9 +375,9 @@ namespace experiment {
 						pool.enqueue([v_k, &input_graph, last_check_vID] { // pass const type value j to thread; [] can be empty
 							PLL_dij_function(v_k, input_graph);
 							return 1; // return to results; the return type must be the same with results
-							}));
+						}));
 				}
-				for (auto&& result : results)
+				for (auto &&result : results)
 					result.get(); // all threads finish here
 				results.clear();
 			}
@@ -356,7 +401,8 @@ namespace experiment {
 
 	}
 
-	namespace hop {
+	namespace hop
+	{
 		int max_N_ID_for_mtx_599 = 1e7;
 		std::queue<int> Qid_599;
 		std::vector<std::shared_mutex> mtx_599(max_N_ID_for_mtx_599);
@@ -388,11 +434,11 @@ namespace experiment {
 			/* store the Temp L and dist_hop in current thread*/
 			std::vector<int> Temp_L_vk_changes, dist_hop_changes;
 			/* Temp_L_vk stores the dest_vertex_id and distance and hop */
-			auto& Temp_L_vk = Temp_L_vk_599[used_id];
-			auto& dist_hop = dist_hop_599[used_id]; // record the minimum distance (and the corresponding hop) of a searched vertex in Q
+			auto &Temp_L_vk = Temp_L_vk_599[used_id];
+			auto &dist_hop = dist_hop_599[used_id]; // record the minimum distance (and the corresponding hop) of a searched vertex in Q
 			std::vector<std::pair<int, int>> Q_handle_priorities_changes;
 			/* get the label list in current thread*/
-			auto& Q_handle_priorities = Q_handle_priorities_599[used_id];
+			auto &Q_handle_priorities = Q_handle_priorities_599[used_id];
 
 			long long int new_label_num = 0;
 
@@ -404,25 +450,25 @@ namespace experiment {
 			node.hub_vertex = v_k;
 			node.hop = 0;
 			node.distance = 0;
-			Q_handle_priorities[v_k][0] = { Q.push({node}), node.distance };
-			Q_handle_priorities_changes.push_back({ v_k, 0 });
+			Q_handle_priorities[v_k][0] = {Q.push({node}), node.distance};
+			Q_handle_priorities_changes.push_back({v_k, 0});
 
 			/* Temp_L_vk_599 stores the label (dist and hop) of vertex v_k */
 			mtx_599[v_k].lock();
 			L_temp_599[v_k].push_back(node);
 			new_label_num++;
 			/* root is vk-> vk->obj info -> vector<obj> -> index-> vertexId obj-><distance,hop> */
-			for (auto& xx : L_temp_599[v_k])
+			for (auto &xx : L_temp_599[v_k])
 			{
 				int L_vk_vertex = xx.hub_vertex;
-				Temp_L_vk[L_vk_vertex].push_back({ xx.distance, xx.hop });
+				Temp_L_vk[L_vk_vertex].push_back({xx.distance, xx.hop});
 				Temp_L_vk_changes.push_back(L_vk_vertex);
 			}
 			mtx_599[v_k].unlock();
 
 			/*  dist_hop_599 stores the shortest distance from vk to any other vertices with its hop_cst,
 				note that the hop_cst is determined by the shortest distance */
-			dist_hop[v_k] = { 0, 0 };
+			dist_hop[v_k] = {0, 0};
 			dist_hop_changes.push_back(v_k);
 
 			while (Q.size() > 0)
@@ -442,10 +488,10 @@ namespace experiment {
 				int query_v_k_u_opt = std::numeric_limits<int>::max();
 
 				mtx_599[u].lock();
-				for (auto& xx : L_temp_599[u])
+				for (auto &xx : L_temp_599[u])
 				{
 					int common_v = xx.hub_vertex;
-					for (auto& yy : Temp_L_vk[common_v])
+					for (auto &yy : Temp_L_vk[common_v])
 					{
 						long long int dis_opt = (long long int)xx.distance + yy.first;
 						if (query_v_k_u_opt > dis_opt)
@@ -505,7 +551,7 @@ namespace experiment {
 
 					/* update adj */
 					/* Traverse neighboring nodes */
-					for (auto& xx : ideal_graph_599<weight_type>[u])
+					for (auto &xx : ideal_graph_599<weight_type>[u])
 					{
 						/* adh_v is the neighborhood and the ec is the distance from u to ajd_v*/
 						int adj_v = xx.first, ec = xx.second;
@@ -515,7 +561,7 @@ namespace experiment {
 						node.distance = P_u + ec;
 						node.hop = u_hop + 1;
 
-						auto& yy = Q_handle_priorities[adj_v][node.hop];
+						auto &yy = Q_handle_priorities[adj_v][node.hop];
 
 						/*directly using the following codes without dist_hop is OK, but is slower; dist_hop is a pruning technique without increasing the time complexity*/
 						// if (yy.second != std::numeric_limits<int>::max()) {
@@ -536,8 +582,8 @@ namespace experiment {
 						/* the vertex has not been visited*/
 						if (dist_hop[adj_v].first == std::numeric_limits<int>::max())
 						{ // adj_v has not been reached
-							yy = { Q.push({node}), node.distance };
-							Q_handle_priorities_changes.push_back({ adj_v, node.hop });
+							yy = {Q.push({node}), node.distance};
+							Q_handle_priorities_changes.push_back({adj_v, node.hop});
 							dist_hop[adj_v].first = node.distance;
 							dist_hop[adj_v].second = node.hop;
 							dist_hop_changes.push_back(adj_v);
@@ -553,8 +599,8 @@ namespace experiment {
 								}
 								else
 								{
-									yy = { Q.push(node), node.distance };
-									Q_handle_priorities_changes.push_back({ adj_v, node.hop });
+									yy = {Q.push(node), node.distance};
+									Q_handle_priorities_changes.push_back({adj_v, node.hop});
 								}
 								dist_hop[adj_v].first = node.distance;
 								dist_hop[adj_v].second = node.hop;
@@ -568,8 +614,8 @@ namespace experiment {
 								}
 								else
 								{
-									yy = { Q.push(node), node.distance };
-									Q_handle_priorities_changes.push_back({ adj_v, node.hop });
+									yy = {Q.push(node), node.distance};
+									Q_handle_priorities_changes.push_back({adj_v, node.hop});
 								}
 							}
 						}
@@ -591,18 +637,18 @@ namespace experiment {
 				}
 			}
 
-			for (auto& xx : Temp_L_vk_changes)
+			for (auto &xx : Temp_L_vk_changes)
 			{
 				std::vector<std::pair<int, int>>().swap(Temp_L_vk[xx]);
 			}
-			for (auto& xx : dist_hop_changes)
+			for (auto &xx : dist_hop_changes)
 			{
-				dist_hop[xx] = { std::numeric_limits<int>::max(), 0 };
+				dist_hop[xx] = {std::numeric_limits<int>::max(), 0};
 			}
 			hop_constrained_node_handle handle_x;
-			for (auto& xx : Q_handle_priorities_changes)
+			for (auto &xx : Q_handle_priorities_changes)
 			{
-				Q_handle_priorities[xx.first][xx.second] = { handle_x, std::numeric_limits<int>::max() };
+				Q_handle_priorities[xx.first][xx.second] = {handle_x, std::numeric_limits<int>::max()};
 			}
 
 			mtx_599[v_k].lock();
@@ -628,27 +674,26 @@ namespace experiment {
 			for (int v_k = 0; v_k < N; v_k++)
 			{
 				results.emplace_back(
-					pool.enqueue([&output_L, v_k]
-						{ // pass const type value j to thread; [] can be empty
-							sort(L_temp_599[v_k].begin(), L_temp_599[v_k].end(), compare_hop_constrained_two_hop_label);
-							std::vector<two_hop_label>(L_temp_599[v_k]).swap(L_temp_599[v_k]); // Ê¹ÓÃvectorµÄswapÓÅ»¯ÄÚ´æÕ¼ÓÃ£¬ÊÍ·Å¶àÓàµÄ¿Õ¼ä
-							output_L[v_k] = L_temp_599[v_k];
-							std::vector<two_hop_label>().swap(L_temp_599[v_k]); // clear new labels for RAM efficiency
+					pool.enqueue([&output_L, v_k] { // pass const type value j to thread; [] can be empty
+						sort(L_temp_599[v_k].begin(), L_temp_599[v_k].end(), compare_hop_constrained_two_hop_label);
+						std::vector<two_hop_label>(L_temp_599[v_k]).swap(L_temp_599[v_k]); // Ê¹ï¿½ï¿½vectorï¿½ï¿½swapï¿½Å»ï¿½ï¿½Ú´ï¿½Õ¼ï¿½Ã£ï¿½ï¿½Í·Å¶ï¿½ï¿½ï¿½Ä¿Õ¼ï¿½
+						output_L[v_k] = L_temp_599[v_k];
+						std::vector<two_hop_label>().swap(L_temp_599[v_k]); // clear new labels for RAM efficiency
 
-							return 1; // return to results; the return type must be the same with results
-						}));
+						return 1; // return to results; the return type must be the same with results
+					}));
 			}
-			for (auto&& result : results)
+			for (auto &&result : results)
 				result.get(); // all threads finish here
 
 			return output_L;
 		}
 
 		/*canonical_repair*/
-		void hop_constrained_clean_L(two_hop_case_info& case_info, int thread_num)
+		void hop_constrained_clean_L(two_hop_case_info &case_info, int thread_num)
 		{
 
-			auto& L = case_info.L;
+			auto &L = case_info.L;
 			int N = L.size();
 
 			ThreadPool pool(thread_num);
@@ -660,7 +705,7 @@ namespace experiment {
 			// list.push_back(0);
 			// list.push_back(1);
 			// list.push_back(2);
-			// list.push_back(3); 
+			// list.push_back(3);
 			// for (int v = 0; v < N; v++)
 			// for (int index = 0; index < N; index++)
 			for (int v = 0; v < N; v++)
@@ -676,19 +721,19 @@ namespace experiment {
 
 						/**
 						 * get the L result of the current vertex
-						*/
+						 */
 						mtx_599[v].lock_shared();
 						std::vector<two_hop_label> Lv = L[v];
 						mtx_599[v].unlock_shared();
 
 						/**
 						 * the temp_L in this thread
-						*/
-						auto& T = Temp_L_vk_599[used_id];
+						 */
+						auto &T = Temp_L_vk_599[used_id];
 
 						/**
 						 * Traverse the L-list of the current vertex
-						*/
+						 */
 						for (auto Lvi : Lv)
 						{
 							int u = Lvi.hub_vertex;
@@ -696,18 +741,18 @@ namespace experiment {
 
 							/**
 							 * Traverse the L on the opposite vertex of the current label.
-							*/
+							 */
 							mtx_599[u].lock_shared();
 							auto Lu = L[u];
 							mtx_599[u].unlock_shared();
 
 							/**
 							 * traverse downward from the perfectly correct first vertex
-							*/
+							 */
 							int min_dis = std::numeric_limits<int>::max();
-							for (auto& label1 : Lu)
+							for (auto &label1 : Lu)
 							{
-								for (auto& label2 : T[label1.hub_vertex])
+								for (auto &label2 : T[label1.hub_vertex])
 								{
 									if (label1.hop + label2.second <= u_hop)
 									{
@@ -723,11 +768,11 @@ namespace experiment {
 							if (min_dis > Lvi.distance)
 							{
 								Lv_final.push_back(Lvi);
-								T[u].push_back({ Lvi.distance, Lvi.hop });
+								T[u].push_back({Lvi.distance, Lvi.hop});
 							}
 						}
 
-						for (const auto& label : Lv_final)
+						for (const auto &label : Lv_final)
 						{
 							std::vector<std::pair<int, int>>().swap(T[label.hub_vertex]);
 						}
@@ -742,10 +787,10 @@ namespace experiment {
 						mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
 
 						return 1; // return to results; the return type must be the same with results
-						}));
+					}));
 			}
 
-			for (auto&& result : results)
+			for (auto &&result : results)
 				result.get(); // all threads finish here
 			results.clear();
 		}
@@ -764,7 +809,8 @@ namespace experiment {
 		}
 
 		template <typename weight_type>
-		void pll(graph<weight_type>& graph, hop::two_hop_case_info& case_info) {
+		void pll(graph<weight_type> &graph, hop::two_hop_case_info &case_info)
+		{
 			//----------------------------------- step 1: initialization -----------------------------------
 			timer.startSubtask("step 1: initialization");
 			int N = graph.size();
@@ -794,11 +840,11 @@ namespace experiment {
 			for (int i = 0; i < num_of_threads; i++)
 			{
 				Temp_L_vk_599[i].resize(N);
-				dist_hop_599[i].resize(N, { std::numeric_limits<int>::max(), 0 });
+				dist_hop_599[i].resize(N, {std::numeric_limits<int>::max(), 0});
 				Q_handle_priorities_599[i].resize(N);
 				for (int j = 0; j < N; j++)
 				{
-					Q_handle_priorities_599[i][j].resize(global_upper_k + 1, { handle_x, std::numeric_limits<int>::max() });
+					Q_handle_priorities_599[i][j].resize(global_upper_k + 1, {handle_x, std::numeric_limits<int>::max()});
 				}
 				Vh_599[i].resize(global_upper_k + 2);
 				Qid_599.push(i);
@@ -810,12 +856,12 @@ namespace experiment {
 			{
 				results.emplace_back(
 					pool.enqueue([v_k]
-						{
+								 {
 							HSDL_thread_function<weight_type>(v_k);
 							return 1; }));
 			}
 
-			for (auto&& result : results)
+			for (auto &&result : results)
 				result.get();
 			timer.endSubtask();
 			//----------------------------------------------- step 3: sortL ---------------------------------------------------------------
@@ -834,4 +880,3 @@ namespace experiment {
 
 	}
 }
-

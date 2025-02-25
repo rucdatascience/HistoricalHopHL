@@ -14,20 +14,20 @@ namespace experiment {
 		template <typename T>
 		void saveBinary(std::ofstream& out, const PPR_type& vec) {
 			size_t size = vec.size();
-			saveBinary(out, size);
+			experiment::saveBinary(out, size);
 			for (const auto& item : vec) {
-				saveBinary(out, item);
+				experiment::saveBinary(out, item);
 			}
 		}
 
 		template <typename T>
 		void loadBinary(std::ifstream& in, PPR_type& vec) {
 			size_t size;
-			loadBinary(in, size);
+			experiment::loadBinary(in, size);
 			std::vector<T>().swap(vec);
 			vec.resize(size);
 			for (auto& item : vec) {
-				loadBinary(in, item);
+				experiment::loadBinary(in, item);
 			}
 		}
 
@@ -362,7 +362,7 @@ namespace experiment {
 				}
 			}
 
-			return std::numeric_limits<long long int>::max();
+			return std::numeric_limits<int>::max();
 		};
 		std::pair<int, int> search_sorted_two_hop_label_weight_and_hub_in_current(std::vector<two_hop_label>& input_vector, int key)
 		{

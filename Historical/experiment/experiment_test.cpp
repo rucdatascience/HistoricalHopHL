@@ -1,15 +1,14 @@
 #include <iostream>
 #include <string>
 #include <filesystem>
+#include <Historical/utils/ExecutionTimer.h>
+experiment::ExecutionTimer timer;
 #include "Historical/utils/BinaryPersistence.h"
+#include "Historical/graph_with_time_span/two_hop_label.h"
 #include "Historical/experiment/experiment_operation.h"
 #include "Historical/experiment/experiment_maintain_operation.h"
 #include "Historical/experiment/experiment_config.h"
-#include "Historical/graph_with_time_span/two_hop_label.h"
-#include <Historical/utils/ExecutionTimer.h>
 #include "Historical/graph_with_time_span/graph_search_baseline.h"
-boost::random::mt19937 boost_random_time_seed{ static_cast<std::uint32_t>(std::time(0)) };
-experiment::ExecutionTimer timer;
 int main(int argc, char* argv[]) {
 	try {
 		experiment::ExperimentConfig config = experiment::parse_arguments(argc, argv);
@@ -152,7 +151,7 @@ int main(int argc, char* argv[]) {
 					{
 						experiment::change_edge_info info = q.front();
 						q.pop();
-						// 1. ¶ÁÈ¡Êý¾Ý
+						// 1. ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½
 						int v1 = info.v1;
 						int v2 = info.v2;
 						int weight = info.weight;
@@ -343,7 +342,7 @@ int main(int argc, char* argv[]) {
 					{
 						experiment::change_edge_info info = q.front();
 						q.pop();
-						// 1. ¶ÁÈ¡Êý¾Ý
+						// 1. ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½
 						int v1 = info.v1;
 						int v2 = info.v2;
 						int weight = info.weight;
