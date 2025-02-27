@@ -1,59 +1,77 @@
 #pragma once
-// 通用二进制序列化模板
-#include <iostream>
+
 #include <fstream>
-#include <type_traits>
 #include <vector>
 namespace experiment
 {
-	template <typename T>
-	// typename std::enable_if<std::is_trivially_copyable<T>::value, void>::type
-	void saveBinary(std::ofstream &out, const T &data)
-	{
-		out.write(reinterpret_cast<const char *>(&data), sizeof(T));
-	}
 
-	template <typename T>
-	// typename std::enable_if<std::is_trivially_copyable<T>::value, void>::type
-	void loadBinary(std::ifstream &in, T &data)
+	template <typename T, typename Enable = void>
+	class BinarySerializer
 	{
-		in.read(reinterpret_cast<char *>(&data), sizeof(T));
+	public:
+		static void saveBinary(std::ofstream &out, const T &data)
+		{
+			out.write(reinterpret_cast<const char *>(&data), sizeof(T));
+		}
+
+		static void loadBinary(std::ifstream &in, T &data)
+		{
+			in.read(reinterpret_cast<char *>(&data), sizeof(T));
+		}
 	};
-	template <typename K, typename V>
-	void saveBinary(std::ofstream &out, const std::pair<K, V> &pair)
-	{
-		saveBinary(out, pair.first);
-		saveBinary(out, pair.second);
-	}
 
 	template <typename K, typename V>
-	void loadBinary(std::ifstream &in, std::pair<K, V> &pair)
+	class BinarySerializer<std::pair<K, V>>
 	{
-		loadBinary(in, pair.first);
-		loadBinary(in, pair.second);
+	public:
+		static void saveBinary(std::ofstream &out, const std::pair<K, V> &pair)
+		{
+			BinarySerializer<K>::saveBinary(out, pair.first);
+			BinarySerializer<V>::saveBinary(out, pair.second);
+		}
+
+		static void loadBinary(std::ifstream &in, std::pair<K, V> &pair)
+		{
+			BinarySerializer<K>::loadBinary(in, pair.first);
+			BinarySerializer<V>::loadBinary(in, pair.second);
+		}
+	};
+
+	template <typename T>
+	class BinarySerializer<std::vector<T>>
+	{
+	public:
+		static void saveBinary(std::ofstream &out, const std::vector<T> &vec)
+		{
+			size_t size = vec.size();
+			BinarySerializer<size_t>::saveBinary(out, size);
+			for (const auto &item : vec)
+			{
+				BinarySerializer<T>::saveBinary(out, item);
+			}
+		}
+
+		static void loadBinary(std::ifstream &in, std::vector<T> &vec)
+		{
+			size_t size;
+			BinarySerializer<size_t>::loadBinary(in, size);
+			vec.resize(size);
+			for (auto &item : vec)
+			{
+				BinarySerializer<T>::loadBinary(in, item);
+			}
+		}
+	};
+
+	template <typename T>
+	inline void saveBinary(std::ofstream &out, const T &data)
+	{
+		BinarySerializer<T>::saveBinary(out, data);
 	}
 
 	template <typename T>
-	void saveBinary(std::ofstream &out, const std::vector<T> &vec)
+	inline void loadBinary(std::ifstream &in, T &data)
 	{
-		size_t size = vec.size();
-		saveBinary(out, size);
-		for (const auto &item : vec)
-		{
-			saveBinary(out, item);
-		}
-	}
-
-	template <typename T>
-	void loadBinary(std::ifstream &in, std::vector<T> &vec)
-	{
-		size_t size;
-		loadBinary(in, size);
-		std::vector<T>().swap(vec);
-		vec.resize(size);
-		for (auto &item : vec)
-		{
-			loadBinary(in, item);
-		}
+		BinarySerializer<T>::loadBinary(in, data);
 	}
 }

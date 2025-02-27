@@ -17,7 +17,6 @@ namespace experiment
 		boost::random::uniform_int_distribution<> random_v;
 		boost::random::uniform_int_distribution<> random_weight = boost::random::uniform_int_distribution<>(0, 100);
 		int v_num = 0;
-		// ��ȡ�ļ�
 		std::ifstream myfile(readPath);
 		if (myfile.is_open())
 		{

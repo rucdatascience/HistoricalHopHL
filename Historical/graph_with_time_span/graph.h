@@ -9,7 +9,8 @@
 #include <CPU/text_mining/binary_save_read_vector_of_vectors.h>
 #include "Historical/utils/BinaryPersistence.h"
 
-namespace experiment {
+namespace experiment
+{
 	template <typename weight_type> // weight_type may be int, long long int, float, double...
 	class graph
 	{
@@ -37,23 +38,24 @@ namespace experiment {
 			ADJs.resize(n); // initialize n vertices
 		}
 
-		std::vector<std::pair<int, weight_type>>& operator[](int i)
+		std::vector<std::pair<int, weight_type>> &operator[](int i)
 		{
 			return ADJs[i];
 		}
 
 		/*class member functions*/
-		void add_edge(int e1, int e2, weight_type ec) {
+		void add_edge(int e1, int e2, weight_type ec)
+		{
 			/*we assume that the size of g is larger than e1 or e2;
 			 this function can update edge weight; there will be no redundent edge*/
 
-			 /*
-			 Add the edges (e1,e2) and (e2,e1) with the weight ec
-			 When the edge exists, it will update its weight.
-			 Time complexity:
-				 O(log n) When edge already exists in graph
-				 O(n) When edge doesn't exist in graph
-			 */
+			/*
+			Add the edges (e1,e2) and (e2,e1) with the weight ec
+			When the edge exists, it will update its weight.
+			Time complexity:
+				O(log n) When edge already exists in graph
+				O(n) When edge doesn't exist in graph
+			*/
 			sorted_vector_binary_operations_insert(ADJs[e1], e2, ec);
 			sorted_vector_binary_operations_insert(ADJs[e2], e1, ec);
 		}
@@ -115,7 +117,7 @@ namespace experiment {
 			*/
 
 			int num = 0;
-			for (auto it : ADJs)
+			for (const auto& it : ADJs)
 			{
 				num = num + it.size();
 			}
@@ -153,7 +155,7 @@ namespace experiment {
 		int search_adjv_by_weight(int e1, weight_type ec) const
 		{
 
-			for (auto& xx : ADJs[e1])
+			for (auto &xx : ADJs[e1])
 			{
 				if (xx.second == ec)
 				{
@@ -225,26 +227,34 @@ namespace experiment {
 			else
 			{
 				std::cout << "Unable to open file " << save_name << std::endl
-					<< "Please check the file location or file name." << std::endl; // throw an error message
+						  << "Please check the file location or file name." << std::endl; // throw an error message
 				getchar();																  // keep the console window
 				exit(1);																  // end the program
 			}
 		}
-		void serialize(std::ofstream& out) const {
+		void serialize(std::ofstream &out) const
+		{
 			saveBinary(out, this->ADJs);
 		}
 
-		void deserialize(std::ifstream& in) {
+		void deserialize(std::ifstream &in)
+		{
 			loadBinary(in, this->ADJs);
 		}
 	};
 
-	template <typename weight_type> // weight_type may be int, long long int, float, double...
-	void saveBinary(std::ofstream& out, const graph<weight_type>& data) {
-		data.serialize(out);
-	}
-	template <typename weight_type> // weight_type may be int, long long int, float, double...
-	void loadBinary(std::ifstream& in, graph<weight_type>& data) {
-		data.deserialize(in);
-	}
+	template <typename weight_type>
+	class BinarySerializer<graph<weight_type>>
+	{
+	public:
+		static void saveBinary(std::ofstream &out, const graph<weight_type> &vec)
+		{
+			vec.serialize(out);
+		}
+
+		static void loadBinary(std::ifstream &in, graph<weight_type> &vec)
+		{
+			vec.deserialize(in);
+		}
+	};
 }

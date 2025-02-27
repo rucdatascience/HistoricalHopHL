@@ -844,7 +844,7 @@ namespace experiment {
 										if (search_result.first < 1e7 && search_result.first > dis)
 										{
 											mtx_595[v2].lock();
-											// ²»ÄÜÖ±½ÓÌæ»» Ê¹ÓÃ·½·¨
+											// ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½æ»» Ê¹ï¿½Ã·ï¿½ï¿½ï¿½
 											insert_sorted_two_hop_label(L[v2], search_result.second, dis, time);
 											mtx_595[v2].unlock();
 											// L[v2][search_result.second].distance = dis;

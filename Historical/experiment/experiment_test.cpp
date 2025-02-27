@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 				experiment::hop::pll(instance_graph, hop_info);
 				timer.endSubtask();
 				//hop_info.print_L();
-				std::ofstream FILE_GRAPH(graphPath.string(), std::ios::out | std::ifstream::binary);
+				std::ofstream FILE_GRAPH(graphPath.string(), std::ios::out | std::ofstream::binary);
 				experiment::saveBinary(FILE_GRAPH, instance_graph);
 				experiment::saveBinary(FILE_GRAPH, graph_time);
 				experiment::saveBinary(FILE_GRAPH, hop_info);
@@ -72,8 +72,7 @@ int main(int argc, char* argv[]) {
 				experiment::nonhop::pll(instance_graph, hop_info);
 				timer.endSubtask();
 				//hop_info.print_L();
-				//experiment::experiment_1_generate_pll_nonhop_result<int> res(graph_list, graph_time, hop_info);
-				std::ofstream FILE_GRAPH(graphPath.string(), std::ios::out | std::ifstream::binary);
+				std::ofstream FILE_GRAPH(graphPath.string(), std::ios::out | std::ofstream::binary);
 				experiment::saveBinary(FILE_GRAPH, instance_graph);
 				experiment::saveBinary(FILE_GRAPH, graph_time);
 				experiment::saveBinary(FILE_GRAPH, hop_info);
@@ -272,7 +271,7 @@ int main(int argc, char* argv[]) {
 						timer_2021.endSubtask();
 					}
 				}
-				std::ofstream FILE_HOP_LABEL(hopLabelPath.string(), std::ios::out | std::ifstream::binary);
+				std::ofstream FILE_HOP_LABEL(hopLabelPath.string(), std::ios::out | std::ofstream::binary);
 				experiment::saveBinary(FILE_HOP_LABEL, graph_list);
 				experiment::saveBinary(FILE_HOP_LABEL, graph_time);
 				experiment::saveBinary(FILE_HOP_LABEL, hop_info);
@@ -337,7 +336,7 @@ int main(int argc, char* argv[]) {
 					}
 					std::cout << "iteration " << i << std::endl;
 					std::queue<experiment::change_edge_info> q = change_info.q_list[i];
-					experiment::graph<int>& instance_graph_temp = graph_list[i - 1];
+					experiment::graph<int> instance_graph_temp = graph_list[i - 1];
 					while (!q.empty())
 					{
 						experiment::change_edge_info info = q.front();
@@ -462,7 +461,7 @@ int main(int argc, char* argv[]) {
 						timer_2021.endSubtask();
 					}
 				}
-				std::ofstream FILE_HOP_LABEL(hopLabelPath.string(), std::ios::out | std::ifstream::binary);
+				std::ofstream FILE_HOP_LABEL(hopLabelPath.string(), std::ios::out | std::ofstream::binary);
 				experiment::saveBinary(FILE_HOP_LABEL, graph_list);
 				experiment::saveBinary(FILE_HOP_LABEL, graph_time);
 				experiment::saveBinary(FILE_HOP_LABEL, hop_info);
@@ -594,6 +593,6 @@ int main(int argc, char* argv[]) {
 		std::cerr << "Error: " << ex.what() << "\n";
 		exit(EXIT_FAILURE);
 	}
-
+	std::cout << "finished" << std::endl;
 	exit(EXIT_SUCCESS);
 }

@@ -8,30 +8,13 @@
 #include "Historical/utils/vector_operations.h"
 using WEIGHT_TYPE = long;
 #define weightTYPE int
-namespace experiment {
-	namespace PPR_TYPE {
+namespace experiment
+{
+	namespace PPR_TYPE
+	{
 		using PPR_type = std::vector<std::vector<std::pair<int, std::vector<int>>>>;
-		template <typename T>
-		void saveBinary(std::ofstream& out, const PPR_type& vec) {
-			size_t size = vec.size();
-			experiment::saveBinary(out, size);
-			for (const auto& item : vec) {
-				experiment::saveBinary(out, item);
-			}
-		}
 
-		template <typename T>
-		void loadBinary(std::ifstream& in, PPR_type& vec) {
-			size_t size;
-			experiment::loadBinary(in, size);
-			std::vector<T>().swap(vec);
-			vec.resize(size);
-			for (auto& item : vec) {
-				experiment::loadBinary(in, item);
-			}
-		}
-
-		int PPR_binary_operations_insert(std::vector<int>& input_vector, int key)
+		int PPR_binary_operations_insert(std::vector<int> &input_vector, int key)
 		{
 
 			int left = 0, right = input_vector.size() - 1;
@@ -61,7 +44,7 @@ namespace experiment {
 			return left;
 		}
 
-		void PPR_insert(PPR_type& PPR, int v1, int v2, int v3)
+		void PPR_insert(PPR_type &PPR, int v1, int v2, int v3)
 		{
 
 			/*add v3 into PPR(v1, v2)*/
@@ -69,7 +52,7 @@ namespace experiment {
 			int pos = graph_hash_of_mixed_weighted_binary_operations_search_position(PPR[v1], v2);
 			if (pos == -1)
 			{
-				std::vector<int> x = { v3 };
+				std::vector<int> x = {v3};
 				graph_hash_of_mixed_weighted_binary_operations_insert(PPR[v1], v2, x);
 			}
 			else
@@ -78,7 +61,7 @@ namespace experiment {
 			}
 		}
 
-		std::vector<int> PPR_retrieve(PPR_type& PPR, int v1, int v2)
+		std::vector<int> PPR_retrieve(PPR_type &PPR, int v1, int v2)
 		{
 
 			/*retrieve PPR(v1, v2)*/
@@ -95,7 +78,7 @@ namespace experiment {
 			}
 		}
 
-		void PPR_replace(PPR_type& PPR, int v1, int v2, std::vector<int>& loads)
+		void PPR_replace(PPR_type &PPR, int v1, int v2, std::vector<int> &loads)
 		{
 
 			/*replace PPR(v1, v2) = loads*/
@@ -111,7 +94,7 @@ namespace experiment {
 			}
 		}
 
-		void PPR_erase(PPR_type& PPR, int v1, int v2, int v3)
+		void PPR_erase(PPR_type &PPR, int v1, int v2, int v3)
 		{
 			int pos = graph_hash_of_mixed_weighted_binary_operations_search_position(PPR[v1], v2);
 			for (auto it = PPR[v1][pos].second.begin(); it != PPR[v1][pos].second.end(); it++)
@@ -126,14 +109,16 @@ namespace experiment {
 
 	}
 
-	namespace nonhop {
+	namespace nonhop
+	{
 		class two_hop_label
 		{
 		public:
 			int vertex;
 			WEIGHT_TYPE distance;
 			int t_s, t_e;
-			two_hop_label() {
+			two_hop_label()
+			{
 				t_s = 0;
 				t_e = INT_MAX;
 				vertex = std::numeric_limits<int>::max();
@@ -146,25 +131,27 @@ namespace experiment {
 				vertex = std::numeric_limits<int>::max();
 				distance = std::numeric_limits<WEIGHT_TYPE>::max();
 			}
-			void serialize(std::ofstream& out) const {
+			void serialize(std::ofstream &out) const
+			{
 				experiment::saveBinary(out, vertex);
 				experiment::saveBinary(out, distance);
 				experiment::saveBinary(out, t_s);
 				experiment::saveBinary(out, t_e);
 			}
 
-			void deserialize(std::ifstream& in) {
+			void deserialize(std::ifstream &in)
+			{
 				experiment::loadBinary(in, vertex);
 				experiment::loadBinary(in, distance);
 				experiment::loadBinary(in, t_s);
 				experiment::loadBinary(in, t_e);
 			}
 		};
-		bool operator<(two_hop_label const& x, two_hop_label const& y)
+		bool operator<(two_hop_label const &x, two_hop_label const &y)
 		{
 			return x.distance > y.distance; // < is the max-heap; > is the min heap
 		}
-		bool compare_two_hop_label_small_to_large(two_hop_label& i, two_hop_label& j)
+		bool compare_two_hop_label_small_to_large(two_hop_label &i, two_hop_label &j)
 		{
 			if (i.t_e != j.t_e)
 				return i.t_e > j.t_e;	// t_e降序
@@ -172,13 +159,13 @@ namespace experiment {
 		};
 
 		// method of 2hop label
-		std::pair<int, int> graph_weighted_two_hop_extract_distance_and_hub_in_current(std::vector<std::vector<two_hop_label>>& L, int source, int terminal)
+		std::pair<int, int> graph_weighted_two_hop_extract_distance_and_hub_in_current(std::vector<std::vector<two_hop_label>> &L, int source, int terminal)
 		{
 			/*return std::numeric_limits<double>::max() is not connected*/
 
 			if (source == terminal)
 			{
-				return { 0, source };
+				return {0, source};
 			}
 
 			long long int distance = std::numeric_limits<long long int>::max(); // if disconnected, return this large value
@@ -209,10 +196,10 @@ namespace experiment {
 				}
 			}
 
-			return { distance, common_hub };
+			return {distance, common_hub};
 		}
 
-		std::pair<int, int> graph_weighted_two_hop_extract_distance_and_hub_by_backup_label(std::vector<two_hop_label>& L_s, std::vector<two_hop_label>& L_t)
+		std::pair<int, int> graph_weighted_two_hop_extract_distance_and_hub_by_backup_label(std::vector<two_hop_label> &L_s, std::vector<two_hop_label> &L_t)
 		{
 
 			/*return std::numeric_limits<double>::max() is not connected*/
@@ -244,19 +231,18 @@ namespace experiment {
 				}
 			}
 
-			return { distance, common_hub };
+			return {distance, common_hub};
 		}
 
-		std::pair<two_hop_label, two_hop_label> graph_weighted_two_hop_extract_2hop_label_by_backup_label(std::vector<two_hop_label>& L_s, std::vector<two_hop_label>& L_t)
+		std::pair<two_hop_label, two_hop_label> graph_weighted_two_hop_extract_2hop_label_by_backup_label(std::vector<two_hop_label> &L_s, std::vector<two_hop_label> &L_t)
 		{
-
 
 			/*return std::numeric_limits<double>::max() is not connected*/
 
 			int distance = std::numeric_limits<int>::max(); // if disconnected, return this large value
 			int common_hub;
-			two_hop_label res1 = two_hop_label{ -1 };
-			two_hop_label res2 = two_hop_label{ -1 };
+			two_hop_label res1 = two_hop_label{-1};
+			two_hop_label res2 = two_hop_label{-1};
 			auto vector1_check_pointer = L_s.begin();
 			auto vector2_check_pointer = L_t.begin();
 			auto pointer_L_s_end = L_s.end(), pointer_L_t_end = L_t.end();
@@ -284,19 +270,18 @@ namespace experiment {
 				}
 			}
 
-			return { res1, res2 };
+			return {res1, res2};
 		}
 
-		std::pair<two_hop_label, two_hop_label> graph_weighted_two_hop_extract_2hop_label_by_backup_label_not_real_time(std::vector<two_hop_label>& L_s, std::vector<two_hop_label>& L_t, int time)
+		std::pair<two_hop_label, two_hop_label> graph_weighted_two_hop_extract_2hop_label_by_backup_label_not_real_time(std::vector<two_hop_label> &L_s, std::vector<two_hop_label> &L_t, int time)
 		{
-
 
 			/*return std::numeric_limits<double>::max() is not connected*/
 
 			int distance = std::numeric_limits<int>::max(); // if disconnected, return this large value
 			int common_hub;
-			two_hop_label res1 = two_hop_label{ -1 };
-			two_hop_label res2 = two_hop_label{ -1 };
+			two_hop_label res1 = two_hop_label{-1};
+			two_hop_label res2 = two_hop_label{-1};
 			auto vector1_check_pointer = L_s.begin();
 			auto vector2_check_pointer = L_t.begin();
 			auto pointer_L_s_end = L_s.end(), pointer_L_t_end = L_t.end();
@@ -304,10 +289,12 @@ namespace experiment {
 			{
 				if (vector1_check_pointer->vertex == vector2_check_pointer->vertex)
 				{
-					if (vector1_check_pointer->t_s == time) {
+					if (vector1_check_pointer->t_s == time)
+					{
 						vector1_check_pointer++;
 					}
-					else if (vector2_check_pointer->t_s == time) {
+					else if (vector2_check_pointer->t_s == time)
+					{
 						vector2_check_pointer++;
 					}
 					int dis = vector1_check_pointer->distance + vector2_check_pointer->distance;
@@ -330,10 +317,10 @@ namespace experiment {
 				}
 			}
 
-			return { res1, res2 };
+			return {res1, res2};
 		}
 
-		int search_sorted_two_hop_label_weight_in_current(std::vector<two_hop_label>& input_vector, int key)
+		int search_sorted_two_hop_label_weight_in_current(std::vector<two_hop_label> &input_vector, int key)
 		{
 			int left = 0, right = input_vector.size() - 1;
 
@@ -364,7 +351,7 @@ namespace experiment {
 
 			return std::numeric_limits<int>::max();
 		};
-		std::pair<int, int> search_sorted_two_hop_label_weight_and_hub_in_current(std::vector<two_hop_label>& input_vector, int key)
+		std::pair<int, int> search_sorted_two_hop_label_weight_and_hub_in_current(std::vector<two_hop_label> &input_vector, int key)
 		{
 			int left = 0, right = input_vector.size() - 1;
 
@@ -376,7 +363,7 @@ namespace experiment {
 				{
 					if (input_vector[mid].vertex == key)
 					{
-						return { input_vector[mid].distance, mid };
+						return {input_vector[mid].distance, mid};
 					}
 					else if (input_vector[mid].vertex < key)
 					{
@@ -393,10 +380,10 @@ namespace experiment {
 				}
 			}
 
-			return { std::numeric_limits<int>::max(), -1 };
+			return {std::numeric_limits<int>::max(), -1};
 		}
 
-		two_hop_label search_sorted_two_hop_label_in_current(std::vector<two_hop_label>& input_vector, int key)
+		two_hop_label search_sorted_two_hop_label_in_current(std::vector<two_hop_label> &input_vector, int key)
 		{
 			int left = 0, right = input_vector.size() - 1;
 
@@ -430,7 +417,7 @@ namespace experiment {
 			return res;
 		}
 
-		two_hop_label search_sorted_two_hop_label_entity_not_realTime(std::vector<two_hop_label>& input_vector, int key, int time)
+		two_hop_label search_sorted_two_hop_label_entity_not_realTime(std::vector<two_hop_label> &input_vector, int key, int time)
 		{
 			int left = 0, right = input_vector.size() - 1;
 
@@ -444,7 +431,8 @@ namespace experiment {
 					{
 						return input_vector[mid];
 					}
-					else if (input_vector[mid].vertex == key && input_vector[mid].t_s == time) {
+					else if (input_vector[mid].vertex == key && input_vector[mid].t_s == time)
+					{
 						break;
 					}
 					else if (input_vector[mid].vertex < key)
@@ -467,7 +455,7 @@ namespace experiment {
 			return res;
 		}
 
-		void insert_sorted_two_hop_label(std::vector<two_hop_label>& input_vector, int key, int value, int time)
+		void insert_sorted_two_hop_label(std::vector<two_hop_label> &input_vector, int key, int value, int time)
 		{
 			int left = 0, right = input_vector.size() - 1;
 
@@ -541,8 +529,8 @@ namespace experiment {
 			input_vector.insert(input_vector.begin() + left, new_label);
 		}
 
-
-		class two_hop_case_info {
+		class two_hop_case_info
+		{
 		public:
 			int thread_num = 1;
 
@@ -550,18 +538,19 @@ namespace experiment {
 			std::vector<std::vector<two_hop_label>> L;
 			PPR_TYPE::PPR_type PPR;
 
-			void serialize(std::ofstream& out) const {
+			void serialize(std::ofstream &out) const
+			{
 				experiment::saveBinary(out, thread_num);
 				experiment::saveBinary(out, L);
 				experiment::saveBinary(out, PPR);
 			}
 
-			void deserialize(std::ifstream& in) {
+			void deserialize(std::ifstream &in)
+			{
 				experiment::loadBinary(in, thread_num);
 				experiment::loadBinary(in, L);
 				experiment::loadBinary(in, PPR);
 			}
-
 
 			/*clear labels*/
 			void clear_labels()
@@ -641,7 +630,7 @@ namespace experiment {
 				outputFile.close();
 			}
 
-			void record_all_details_stream(std::ofstream& outputFile)
+			void record_all_details_stream(std::ofstream &outputFile)
 			{
 				outputFile << "PLL info:" << std::endl;
 				outputFile << "thread_num=" << thread_num << std::endl;
@@ -682,7 +671,8 @@ namespace experiment {
 			}
 		};
 	};
-	namespace hop {
+	namespace hop
+	{
 		class two_hop_label
 		{
 		public:
@@ -697,12 +687,14 @@ namespace experiment {
 			//     distance = _dis;
 			// }
 			two_hop_label()
-				: t_s(0), t_e(std::numeric_limits<int>::max()) {
+				: t_s(0), t_e(std::numeric_limits<int>::max())
+			{
 				hub_vertex = 0;
 				hop = 0;
 				distance = std::numeric_limits<WEIGHT_TYPE>::max();
 			}
-			void serialize(std::ofstream& out) const {
+			void serialize(std::ofstream &out) const
+			{
 				experiment::saveBinary(out, hub_vertex);
 				experiment::saveBinary(out, hop);
 				experiment::saveBinary(out, distance);
@@ -710,7 +702,8 @@ namespace experiment {
 				experiment::saveBinary(out, t_e);
 			}
 
-			void deserialize(std::ifstream& in) {
+			void deserialize(std::ifstream &in)
+			{
 				experiment::loadBinary(in, hub_vertex);
 				experiment::loadBinary(in, hop);
 				experiment::loadBinary(in, distance);
@@ -719,7 +712,7 @@ namespace experiment {
 			}
 		};
 
-		bool compare_hop_constrained_two_hop_label(two_hop_label& i, two_hop_label& j)
+		bool compare_hop_constrained_two_hop_label(two_hop_label &i, two_hop_label &j)
 		{
 			if (i.t_e != j.t_e)
 			{
@@ -743,7 +736,7 @@ namespace experiment {
 			}
 		}
 
-		bool operator<(two_hop_label const& x, two_hop_label const& y)
+		bool operator<(two_hop_label const &x, two_hop_label const &y)
 		{
 			if (x.distance != y.distance)
 			{
@@ -755,22 +748,22 @@ namespace experiment {
 			}
 		}
 
-		std::pair<weightTYPE, int> hop_constrained_extract_distance_and_hub(std::vector<std::vector<two_hop_label>>& L, int source, int terminal, int hop_cst)
+		std::pair<weightTYPE, int> hop_constrained_extract_distance_and_hub(std::vector<std::vector<two_hop_label>> &L, int source, int terminal, int hop_cst)
 		{
 
 			/*return std::numeric_limits<int>::max() is not connected*/
 
 			if (hop_cst < 0)
 			{
-				return { std::numeric_limits<int>::max(), -1 };
+				return {std::numeric_limits<int>::max(), -1};
 			}
 			if (source == terminal)
 			{
-				return { 0, -1 };
+				return {0, -1};
 			}
 			else if (hop_cst == 0)
 			{
-				return { std::numeric_limits<int>::max(), -1 };
+				return {std::numeric_limits<int>::max(), -1};
 			}
 
 			int distance = std::numeric_limits<int>::max();
@@ -829,24 +822,24 @@ namespace experiment {
 				}
 			}
 
-			return { distance, common_hub };
+			return {distance, common_hub};
 		}
 
-		std::pair<weightTYPE, int> hop_constrained_extract_distance_and_hop(std::vector<std::vector<two_hop_label>>& L, int source, int terminal, int hop_cst)
+		std::pair<weightTYPE, int> hop_constrained_extract_distance_and_hop(std::vector<std::vector<two_hop_label>> &L, int source, int terminal, int hop_cst)
 		{
 			/*return std::numeric_limits<int>::max() is not connected*/
 
 			if (hop_cst < 0)
 			{
-				return { std::numeric_limits<int>::max(), -1 };
+				return {std::numeric_limits<int>::max(), -1};
 			}
 			if (source == terminal)
 			{
-				return { 0, -1 };
+				return {0, -1};
 			}
 			else if (hop_cst == 0)
 			{
-				return { std::numeric_limits<int>::max(), -1 };
+				return {std::numeric_limits<int>::max(), -1};
 			}
 
 			int distance = std::numeric_limits<int>::max();
@@ -905,20 +898,20 @@ namespace experiment {
 				}
 			}
 
-			return { distance, hop };
+			return {distance, hop};
 		}
 
-		std::pair<weightTYPE, int> graph_weighted_two_hop_extract_distance_and_hop_by_backup_label(std::vector<two_hop_label>& L_s, std::vector<two_hop_label>& L_t, int hop_cst)
+		std::pair<weightTYPE, int> graph_weighted_two_hop_extract_distance_and_hop_by_backup_label(std::vector<two_hop_label> &L_s, std::vector<two_hop_label> &L_t, int hop_cst)
 		{
 			/*return std::numeric_limits<int>::max() is not connected*/
 
 			if (hop_cst < 0)
 			{
-				return { std::numeric_limits<int>::max(), -1 };
+				return {std::numeric_limits<int>::max(), -1};
 			}
 			else if (hop_cst == 0)
 			{
-				return { std::numeric_limits<int>::max(), -1 };
+				return {std::numeric_limits<int>::max(), -1};
 			}
 
 			int distance = std::numeric_limits<int>::max();
@@ -977,20 +970,20 @@ namespace experiment {
 				}
 			}
 
-			return { distance, hop };
+			return {distance, hop};
 		}
 
-		std::pair<weightTYPE, int> graph_weighted_two_hop_extract_distance_and_hub_by_backup_label(std::vector<two_hop_label>& L_s, std::vector<two_hop_label>& L_t, int hop_cst)
+		std::pair<weightTYPE, int> graph_weighted_two_hop_extract_distance_and_hub_by_backup_label(std::vector<two_hop_label> &L_s, std::vector<two_hop_label> &L_t, int hop_cst)
 		{
 			/*return std::numeric_limits<int>::max() is not connected*/
 
 			if (hop_cst < 0)
 			{
-				return { std::numeric_limits<int>::max(), -1 };
+				return {std::numeric_limits<int>::max(), -1};
 			}
 			else if (hop_cst == 0)
 			{
-				return { std::numeric_limits<int>::max(), -1 };
+				return {std::numeric_limits<int>::max(), -1};
 			}
 
 			int distance = std::numeric_limits<int>::max();
@@ -1049,10 +1042,10 @@ namespace experiment {
 				}
 			}
 
-			return { distance, hub };
+			return {distance, hub};
 		}
 
-		weightTYPE search_sorted_hop_constrained_weight_two_hop_label(std::vector<two_hop_label>& input_vector, int key, int hop)
+		weightTYPE search_sorted_hop_constrained_weight_two_hop_label(std::vector<two_hop_label> &input_vector, int key, int hop)
 		{
 			int left = 0, right = input_vector.size() - 1;
 
@@ -1095,7 +1088,7 @@ namespace experiment {
 			return std::numeric_limits<int>::max();
 		}
 
-		std::pair<weightTYPE, int> get_shortest_distance_hop_two_hop_label2(std::vector<two_hop_label>& input_vector, int key)
+		std::pair<weightTYPE, int> get_shortest_distance_hop_two_hop_label2(std::vector<two_hop_label> &input_vector, int key)
 		{
 			int idx = 0, right = input_vector.size() - 1;
 			weightTYPE mindis = std::numeric_limits<int>::max();
@@ -1123,10 +1116,10 @@ namespace experiment {
 				idx++;
 			}
 
-			return { mindis, hop_val };
+			return {mindis, hop_val};
 		}
 
-		weightTYPE search_sorted_hop_constrained_weight_two_hop_label_not_real_time(std::vector<two_hop_label>& input_vector, int key, int hop, int time)
+		weightTYPE search_sorted_hop_constrained_weight_two_hop_label_not_real_time(std::vector<two_hop_label> &input_vector, int key, int hop, int time)
 		{
 			int left = 0, right = input_vector.size() - 1;
 
@@ -1142,7 +1135,8 @@ namespace experiment {
 						{
 							return input_vector[mid].distance;
 						}
-						else if (input_vector[mid].hop == hop && input_vector[mid].t_s == time) {
+						else if (input_vector[mid].hop == hop && input_vector[mid].t_s == time)
+						{
 							break;
 						}
 						else if (input_vector[mid].hop < hop)
@@ -1172,7 +1166,7 @@ namespace experiment {
 			return std::numeric_limits<int>::max();
 		}
 
-		void insert_sorted_hop_constrained_two_hop_label(std::vector<two_hop_label>& input_vector, int key, int hop, weightTYPE new_distance, int t)
+		void insert_sorted_hop_constrained_two_hop_label(std::vector<two_hop_label> &input_vector, int key, int hop, weightTYPE new_distance, int t)
 		{
 			int left = 0, right = input_vector.size() - 1;
 
@@ -1191,7 +1185,6 @@ namespace experiment {
 
 							input_vector[mid].distance = new_distance;
 							input_vector[mid].t_s = t;
-
 
 							int insert_left = mid + 1, insert_right = input_vector.size() - 1;
 
@@ -1259,7 +1252,7 @@ namespace experiment {
 			input_vector.insert(input_vector.begin() + left, new_label);
 		}
 
-		std::pair<weightTYPE, int> search_sorted_hop_constrained_weight_and_index_two_hop_label(std::vector<two_hop_label>& input_vector, int key, int hop)
+		std::pair<weightTYPE, int> search_sorted_hop_constrained_weight_and_index_two_hop_label(std::vector<two_hop_label> &input_vector, int key, int hop)
 		{
 			int left = 0, right = input_vector.size() - 1;
 
@@ -1273,7 +1266,7 @@ namespace experiment {
 					{
 						if (input_vector[mid].hop == hop)
 						{
-							return { input_vector[mid].distance, mid };
+							return {input_vector[mid].distance, mid};
 						}
 						else if (input_vector[mid].hop < hop)
 						{
@@ -1299,10 +1292,11 @@ namespace experiment {
 				}
 			}
 
-			return { std::numeric_limits<int>::max(), -1 };
+			return {std::numeric_limits<int>::max(), -1};
 		}
 
-		class two_hop_case_info {
+		class two_hop_case_info
+		{
 		public:
 			/*hop bounded*/
 			int thread_num = 1;
@@ -1312,14 +1306,16 @@ namespace experiment {
 			std::vector<std::vector<two_hop_label>> L;
 			PPR_TYPE::PPR_type PPR;
 
-			void serialize(std::ofstream& out) const {
+			void serialize(std::ofstream &out) const
+			{
 				experiment::saveBinary(out, thread_num);
 				experiment::saveBinary(out, upper_k);
 				experiment::saveBinary(out, L);
 				experiment::saveBinary(out, PPR);
 			}
 
-			void deserialize(std::ifstream& in) {
+			void deserialize(std::ifstream &in)
+			{
 				experiment::loadBinary(in, thread_num);
 				experiment::loadBinary(in, upper_k);
 				experiment::loadBinary(in, L);
@@ -1329,7 +1325,7 @@ namespace experiment {
 			long long int compute_label_bit_size()
 			{
 				long long int size = 0;
-				for (auto& xx : L)
+				for (auto &xx : L)
 				{
 					size = size + xx.size() * sizeof(two_hop_label);
 				}
@@ -1347,10 +1343,10 @@ namespace experiment {
 			{
 				int index = 0;
 				std::cout << "print_L: (hub_vertex, hop, distance)" << std::endl;
-				for (auto& xx : L)
+				for (auto &xx : L)
 				{
 					std::cout << "vertex " << index++ << ": ";
-					for (auto& yy : xx)
+					for (auto &yy : xx)
 					{
 						std::cout << "(" << yy.hub_vertex << "," << yy.hop << "," << yy.distance << "," << yy.t_s << "," << yy.t_e << ")";
 					}
@@ -1402,7 +1398,7 @@ namespace experiment {
 				outputFile.close();
 			}
 
-			void record_all_details_stream(std::ofstream& outputFile)
+			void record_all_details_stream(std::ofstream &outputFile)
 			{
 				outputFile << "hop_constrained_case_info:" << std::endl;
 				outputFile << "thread_num=" << thread_num << std::endl;
@@ -1455,36 +1451,63 @@ namespace experiment {
 			}
 		};
 	}
-	void saveBinary(std::ofstream& out, const nonhop::two_hop_label& data) {
-		data.serialize(out);
-	}
 
-	void loadBinary(std::ifstream& in, nonhop::two_hop_label& data) {
-		data.deserialize(in);
-	}
+	template <>
+	class BinarySerializer<nonhop::two_hop_label>
+	{
+	public:
+		static void saveBinary(std::ofstream &out, const nonhop::two_hop_label &label)
+		{
+			label.serialize(out);
+		}
 
-	void saveBinary(std::ofstream& out, const hop::two_hop_label& data) {
-		data.serialize(out);
-	}
+		static void loadBinary(std::ifstream &in, nonhop::two_hop_label &label)
+		{
+			label.deserialize(in);
+		}
+	};
+	template <>
+	class BinarySerializer<hop::two_hop_label>
+	{
+	public:
+		static void saveBinary(std::ofstream &out, const hop::two_hop_label &label)
+		{
+			label.serialize(out);
+		}
 
-	void loadBinary(std::ifstream& in, hop::two_hop_label& data) {
-		data.deserialize(in);
-	}
+		static void loadBinary(std::ifstream &in, hop::two_hop_label &label)
+		{
+			label.deserialize(in);
+		}
+	};
 
-	void saveBinary(std::ofstream& out, const hop::two_hop_case_info& data) {
-		data.serialize(out);
-	}
+	template <>
+	class BinarySerializer<hop::two_hop_case_info>
+	{
+	public:
+		static void saveBinary(std::ofstream &out, const hop::two_hop_case_info &info)
+		{
+			info.serialize(out);
+		}
 
-	void loadBinary(std::ifstream& in, hop::two_hop_case_info& data) {
-		data.deserialize(in);
-	}
+		static void loadBinary(std::ifstream &in, hop::two_hop_case_info &info)
+		{
+			info.deserialize(in);
+		}
+	};
 
-	void saveBinary(std::ofstream& out, const nonhop::two_hop_case_info& data) {
-		data.serialize(out);
-	}
+	template <>
+	class BinarySerializer<nonhop::two_hop_case_info>
+	{
+	public:
+		static void saveBinary(std::ofstream &out, const nonhop::two_hop_case_info &vec)
+		{
+			vec.serialize(out);
+		}
 
-	void loadBinary(std::ifstream& in, nonhop::two_hop_case_info& data) {
-		data.deserialize(in);
-	}
-
+		static void loadBinary(std::ifstream &in, nonhop::two_hop_case_info &vec)
+		{
+			vec.deserialize(in);
+		}
+	};
 }
