@@ -71,15 +71,22 @@ namespace experiment
 			std::map<std::pair<int, int>, int> pair2dis;
 			for (int i = 1; i <= this->_iteration; i++)
 			{
-				for (int j = 0; j < this->_change_num; j++)
-				{
+				int j = 0;
+				while(j<this->_change_num){
 					int index_i = this->_random_v(boost_random_time_seed);
+					if(instance_graph[index_i].size() == 0){
+						continue;
+					}
 					boost::random::uniform_int_distribution<> dis_inner(0, instance_graph[index_i].size() - 1);
 					int index_j = dis_inner(boost_random_time_seed);
 					int i_j_weight = this->_random_weight(boost_random_time_seed);
 					change_edge_info info = {index_i, index_j, i_j_weight, i};
 					std::pair index = std::make_pair(index_j, index_j);
 					q_list[i].push(info);
+					++j;
+				}
+				for (int j = 0; j < this->_change_num; j++)
+				{
 				}
 			}
 		}
