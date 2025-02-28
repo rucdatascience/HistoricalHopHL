@@ -179,13 +179,9 @@ namespace experiment
 		void add_graph_time(experiment::graph<weight_type>& graph, int time)
 		{
 			int N = graph.size();
-			int E = graph.edge_number();
 			if (N > this->v_num) {
 				this->resize(N);
 				this->v_num = N;
-			}
-			if (E > this->e_num) {
-				this->e_num = E;
 			}
 			this->time_max = time > this->time_max ? time : this->time_max;
 			for (int i = 0; i < N; i++)

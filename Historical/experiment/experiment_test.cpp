@@ -498,7 +498,7 @@ int main(int argc, char* argv[]) {
 				experiment::loadBinary(FILE_GRAPH, graph_list);
 				experiment::loadBinary(FILE_GRAPH, graph_time);
 				experiment::loadBinary(FILE_GRAPH, hop_info);
-				experiment::loadBinary(FILE_GRAPH, hop_info);
+				experiment::loadBinary(FILE_GRAPH, hop_info_2021);
 				int v_num = graph_time.v_num;
 				int time = graph_time.time_max;
 				int hop = config.hop_limit;
