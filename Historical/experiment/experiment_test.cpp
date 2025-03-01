@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
 					}
 					std::cout << "iteration " << i << std::endl;
 					std::queue<experiment::change_edge_info> q = change_info.q_list[i];
-					experiment::graph<int> &instance_graph_temp = graph_list[i - 1];
+					experiment::graph<int> instance_graph_temp = graph_list[i - 1];
 					while (!q.empty())
 					{
 						experiment::change_edge_info info = q.front();
@@ -206,10 +206,14 @@ int main(int argc, char *argv[])
 							}
 							std::cout << "decrease ruc maintain" << std::endl;
 							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+							timer_ruc.startSubtask("iteration " + std::to_string(i) + " algorithm ruc decrease maintain");
 							experiment::hop::ruc::decrease::HOP_WeightDecreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+							timer_ruc.endSubtask();
 							std::cout << "decrease 2021 maintain" << std::endl;
 							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+							timer_2021.startSubtask("iteration " + std::to_string(i) + " algorithm 2021 decrease maintain");
 							experiment::hop::algorithm2021::decrease::HOP_WeightDecrease2021_batch(instance_graph_temp, hop_info_2021, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+							timer_2021.endSubtask();
 							std::vector<std::pair<int, int>>().swap(path_decrease);
 							std::vector<int>().swap(weight_decrease);
 							std::map<std::pair<int, int>, int>().swap(path2Index4Decrease);
@@ -226,10 +230,14 @@ int main(int argc, char *argv[])
 							}
 							std::cout << "increase ruc maintain" << std::endl;
 							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+							timer_ruc.startSubtask("iteration " + std::to_string(i) + " algorithm ruc increase maintain");
 							experiment::hop::ruc::increase::HOP_WeightIncreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+							timer_ruc.endSubtask();
 							std::cout << "increase 2021 maintain" << std::endl;
 							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+							timer_2021.startSubtask("iteration " + std::to_string(i) + " algorithm 2021 increase maintain");
 							experiment::hop::algorithm2021::increase::HOP_WeightIncrease2021_batch(instance_graph_temp, hop_info_2021, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+							timer_2021.endSubtask();
 							std::vector<std::pair<int, int>>().swap(path_increase);
 							std::vector<int>().swap(weight_increase);
 							std::vector<int>().swap(weight_old_increase);
@@ -247,10 +255,14 @@ int main(int argc, char *argv[])
 						}
 						std::cout << "decrease ruc maintain" << std::endl;
 						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+						timer_ruc.startSubtask("iteration " + std::to_string(i) + " algorithm ruc decrease maintain");
 						experiment::hop::ruc::decrease::HOP_WeightDecreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+						timer_ruc.endSubtask();
 						std::cout << "decrease 2021 maintain" << std::endl;
 						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+						timer_2021.startSubtask("iteration " + std::to_string(i) + " algorithm 2021 decrease maintain");
 						experiment::hop::algorithm2021::decrease::HOP_WeightDecrease2021_batch(instance_graph_temp, hop_info_2021, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+						timer_2021.endSubtask();
 						std::vector<std::pair<int, int>>().swap(path_decrease);
 						std::vector<int>().swap(weight_decrease);
 						std::map<std::pair<int, int>, int>().swap(path2Index4Decrease);
@@ -267,10 +279,14 @@ int main(int argc, char *argv[])
 						}
 						std::cout << "increase ruc maintain" << std::endl;
 						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+						timer_ruc.startSubtask("iteration " + std::to_string(i) + " algorithm ruc increase maintain");
 						experiment::hop::ruc::increase::HOP_WeightIncreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+						timer_ruc.endSubtask();
 						std::cout << "increase 2021 maintain" << std::endl;
 						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+						timer_2021.startSubtask("iteration " + std::to_string(i) + " algorithm 2021 increase maintain");
 						experiment::hop::algorithm2021::increase::HOP_WeightIncrease2021_batch(instance_graph_temp, hop_info_2021, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+						timer_2021.endSubtask();
 						std::vector<std::pair<int, int>>().swap(path_increase);
 						std::vector<int>().swap(weight_increase);
 						std::vector<int>().swap(weight_old_increase);
