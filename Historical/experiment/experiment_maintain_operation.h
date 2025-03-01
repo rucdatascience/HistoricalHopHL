@@ -748,11 +748,11 @@ namespace experiment {
 										}
 										else {
 											mtx_595[vnei].lock();
-											two_hop_label search_result = search_sorted_two_hop_label_entity_not_realTime((*L)[vnei], u, time);
+											two_hop_label search_result = search_sorted_two_hop_label_in_current((*L)[vnei], u);
 											mtx_595[vnei].unlock();
 											if (search_result.distance < 1e7 && search_result.distance > dnew) {
 												mtx_595[vnei].lock();
-												//std::cout << "decrease label has better answer : old label is " << vnei << " to " << search_result.vertex << " old value is " << search_result.distance << " to " << dnew << " t_s is " << search_result.t_s << std::endl;
+												// std::cout << "decrease label has better answer : old label is " << vnei << " to " << search_result.vertex << " old value is " << search_result.distance << " to " << dnew << " t_s is " << search_result.t_s << std::endl;
 												insert_sorted_two_hop_label((*L)[vnei], search_result.vertex, dnew, time);
 												// (*L)[vnei][search_result.second].distance = dnew;
 												mtx_595[vnei].unlock();
@@ -887,7 +887,7 @@ namespace experiment {
 						results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, al1_next, &instance_graph, &w_old_map, time, is_debug] {
 							for (auto nei : instance_graph[it.first]) {
 								mtx_595[nei.first].lock();
-								two_hop_label search_weight = search_sorted_two_hop_label_entity_not_realTime((*L)[nei.first], it.second, time);
+								two_hop_label search_weight = search_sorted_two_hop_label_in_current((*L)[nei.first], it.second);
 								mtx_595[nei.first].unlock();
 								weightTYPE w_old;
 								int i = 0;
@@ -903,13 +903,13 @@ namespace experiment {
 									i = 3;
 									w_old = nei.second;
 								}
-								if (it.dis + w_old == search_weight.distance) {
+								if (it.dis + w_old == search_weight.distance && search_weight.t_s!=time) {
 									mtx_595_1.lock();
 									/*std::cout << i << " and its t_s is " << search_weight.t_s << std::endl;
 									std::cout << nei.first << " to " << it.second << " weight is it.dis " << it.dis << " + w_old " << w_old << "=" << it.dis + w_old << " and search_weight is " << search_weight.distance << std::endl;*/
-									if (is_debug) {
-										std::cout << nei.first << " to " << it.second << " weight is it.dis " << it.dis << " + w_old " << w_old << "=" << it.dis + w_old << " and search_weight is " << search_weight.distance << std::endl;
-									}
+									// if (is_debug) {
+									// 	std::cout << nei.first << " to " << it.second << " weight is it.dis " << it.dis << " + w_old " << w_old << "=" << it.dis + w_old << " and search_weight is " << search_weight.distance << " and time is " <<search_weight.t_s<<std::endl;
+									// }
 									al1_next->push_back(affected_label(nei.first, it.second, search_weight.distance));
 									mtx_595_1.unlock();
 								}
@@ -946,7 +946,7 @@ namespace experiment {
 									long long d1 = MAX_VALUE;
 									for (auto nei : instance_graph[t]) {
 										mtx_595[nei.first].lock();
-										d1 = std::min(d1, search_sorted_two_hop_label_entity_not_realTime((*L)[nei.first], v, time).distance + (long long)nei.second);
+										d1 = std::min(d1, search_sorted_two_hop_label_in_current((*L)[nei.first], v).distance + (long long)nei.second);
 										mtx_595[nei.first].unlock();
 									}
 									mtx_595[t].lock();
@@ -977,7 +977,7 @@ namespace experiment {
 									long long d1 = MAX_VALUE;
 									for (auto nei : instance_graph[v]) {
 										mtx_595[nei.first].lock();
-										d1 = std::min(d1, search_sorted_two_hop_label_entity_not_realTime((*L)[nei.first], t, time).distance + (long long)nei.second);
+										d1 = std::min(d1, search_sorted_two_hop_label_in_current((*L)[nei.first], t).distance + (long long)nei.second);
 										mtx_595[nei.first].unlock();
 									}
 									mtx_595[t].lock();
@@ -1032,7 +1032,7 @@ namespace experiment {
 								for (auto nei : instance_graph[it->first]) {
 									if (nei.first > it->second) {
 										mtx_595[it->first].lock();
-										long long search_result = search_sorted_two_hop_label_entity_not_realTime((*L)[it->first], it->second, time).distance + (long long)nei.second;
+										long long search_result = search_sorted_two_hop_label_in_current((*L)[it->first], it->second).distance + (long long)nei.second;
 										mtx_595[it->first].unlock();
 										mtx_595[nei.first].lock();
 										auto query_result = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[nei.first], Lxx);
@@ -2202,7 +2202,7 @@ namespace experiment {
 						results_dynamic.emplace_back(pool_dynamic.enqueue([t, it, L, al1_next, &instance_graph, &w_old_map]
 							{
 								for (auto nei : instance_graph[it.first]) {
-									weightTYPE search_weight = search_sorted_hop_constrained_weight_two_hop_label_not_real_time((*L)[nei.first], it.second, it.hop + 1, t);
+									two_hop_label search_weight = search_sorted_hop_constrained_label_two_hop_label((*L)[nei.first], it.second, it.hop + 1);
 									weightTYPE w_old = nei.second;
 									if (w_old_map.count(std::pair<int, int>(it.first, nei.first)) > 0) {
 										w_old = w_old_map[std::pair<int, int>(it.first, nei.first)];
@@ -2214,7 +2214,7 @@ namespace experiment {
 										w_old = nei.second;
 									}
 
-									if (it.dis + w_old <= search_weight && search_weight < MAX_VALUE) {
+									if (it.dis + w_old <= search_weight.distance && search_weight.distance < MAX_VALUE && search_weight.t_s != t) {
 										mtx_599_1.lock();
 										al1_next->push_back(hop_constrained_affected_label(nei.first, it.second, it.hop + 1, it.dis + w_old));
 										mtx_599_1.unlock();

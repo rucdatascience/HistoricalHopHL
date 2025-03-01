@@ -9,23 +9,27 @@ experiment::ExecutionTimer timer;
 #include "Historical/experiment/experiment_maintain_operation.h"
 #include "Historical/experiment/experiment_config.h"
 #include "Historical/graph_with_time_span/graph_search_baseline.h"
-int main(int argc, char* argv[]) {
-	try {
+int main(int argc, char *argv[])
+{
+	try
+	{
 		experiment::ExperimentConfig config = experiment::parse_arguments(argc, argv);
 
 		std::cout << "Mode: " << (config.mode == experiment::GENERATE_LABEL ? "Generate Label" : (config.mode == experiment::MAINTAIN_LABEL ? "Maintain Label" : "QueryResult")) << "\n"
-			<< "Threads: " << config.threads << "\n"
-			<< "Data Source: " << config.data_source << "\n"
-			<< "Save Path: " << config.save_path << "\n"
-			<< "Hop Limit (k): " << config.hop_limit << "\n";
+				  << "Threads: " << config.threads << "\n"
+				  << "Data Source: " << config.data_source << "\n"
+				  << "Save Path: " << config.save_path << "\n"
+				  << "Hop Limit (k): " << config.hop_limit << "\n";
 
-		if (config.mode == experiment::MAINTAIN_LABEL) {
+		if (config.mode == experiment::MAINTAIN_LABEL)
+		{
 			std::cout << "Iterations: " << config.iterations << "\n"
-				<< "Change Count: " << config.change_count << "\n"
-				<< "Max Value: " << config.max_value << "\n"
-				<< "Min Value: " << config.min_value << "\n";
+					  << "Change Count: " << config.change_count << "\n"
+					  << "Max Value: " << config.max_value << "\n"
+					  << "Min Value: " << config.min_value << "\n";
 		}
-		if (config.mode == experiment::GENERATE_LABEL) {
+		if (config.mode == experiment::GENERATE_LABEL)
+		{
 			experiment::graph<int> instance_graph;
 			timer.startTask("generate graph and 2hop label " + std::to_string(config.hop_limit));
 			timer.startSubtask("generate graph " + std::to_string(config.hop_limit));
@@ -35,8 +39,9 @@ int main(int argc, char* argv[]) {
 			graph_time.add_graph_time(instance_graph, 0);
 			std::filesystem::path saveDir = std::filesystem::path(config.save_path);
 			std::filesystem::create_directory(saveDir);
-			if (config.hop_limit != 0) {
-				//k-constrained pll
+			if (config.hop_limit != 0)
+			{
+				// k-constrained pll
 				std::string graph_res_filename = "binary_hop_constrained_" + std::to_string(config.hop_limit) + "_graph";
 				std::string experiment_res_filename = "GENERATE_LABEL__hop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result.txt";
 				std::filesystem::path graphPath = saveDir.string() + "//" + graph_res_filename;
@@ -47,7 +52,7 @@ int main(int argc, char* argv[]) {
 				timer.startSubtask("generate 2hop label " + std::to_string(config.hop_limit) + " hop constrained");
 				experiment::hop::pll(instance_graph, hop_info);
 				timer.endSubtask();
-				//hop_info.print_L();
+				// hop_info.print_L();
 				std::ofstream FILE_GRAPH(graphPath.string(), std::ios::out | std::ofstream::binary);
 				experiment::saveBinary(FILE_GRAPH, instance_graph);
 				experiment::saveBinary(FILE_GRAPH, graph_time);
@@ -61,7 +66,8 @@ int main(int argc, char* argv[]) {
 				timer.writeStatsToFile(outFile);
 				outFile.close();
 			}
-			else {
+			else
+			{
 				std::string graph_res_filename = "binary_nonhop_constrained_" + std::to_string(config.hop_limit) + "_graph";
 				std::string experiment_res_filename = "GENERATE_LABEL_nonhop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result.txt";
 				std::filesystem::path graphPath = saveDir.string() + "//" + graph_res_filename;
@@ -71,7 +77,7 @@ int main(int argc, char* argv[]) {
 				timer.startSubtask("generate graph and 2hop label " + std::to_string(config.hop_limit) + " nonhop constrained");
 				experiment::nonhop::pll(instance_graph, hop_info);
 				timer.endSubtask();
-				//hop_info.print_L();
+				// hop_info.print_L();
 				std::ofstream FILE_GRAPH(graphPath.string(), std::ios::out | std::ofstream::binary);
 				experiment::saveBinary(FILE_GRAPH, instance_graph);
 				experiment::saveBinary(FILE_GRAPH, graph_time);
@@ -86,7 +92,8 @@ int main(int argc, char* argv[]) {
 				outFile.close();
 			}
 		}
-		else if (config.mode == experiment::MAINTAIN_LABEL) {
+		else if (config.mode == experiment::MAINTAIN_LABEL)
+		{
 			experiment::ExecutionTimer timer_ruc;
 			experiment::ExecutionTimer timer_2021;
 			std::vector<experiment::graph<int>> graph_list;
@@ -98,7 +105,8 @@ int main(int argc, char* argv[]) {
 			timer_2021.startTask("maintain graph and 2hop label " + std::to_string(config.hop_limit) + (config.hop_limit == 0 ? "nonhop_constrained" : "hop constrained"));
 			timer_ruc.startSubtask("step-1 read graph and original 2hop label");
 			timer_2021.startSubtask("step-1 read graph and original 2hop label");
-			if (config.hop_limit != 0) {
+			if (config.hop_limit != 0)
+			{
 				experiment::hop::two_hop_case_info hop_info;
 				std::string graph_res_filename = "binary_hop_constrained_" + std::to_string(config.hop_limit) + "_graph";
 				std::string dataSource = config.data_source.string() + "//" + graph_res_filename;
@@ -121,8 +129,7 @@ int main(int argc, char* argv[]) {
 				timer_2021.endSubtask();
 
 				experiment::iteration_info<int> change_info(
-					graph_time.v_num, config.iterations, config.change_count, config.max_value, config.min_value, init_graph
-				);
+					graph_time.v_num, config.iterations, config.change_count, config.max_value, config.min_value, init_graph);
 				change_info.build_random_change();
 				std::vector<std::pair<int, int>> path_decrease;
 				std::map<std::pair<int, int>, int> path2Index4Decrease;
@@ -139,13 +146,14 @@ int main(int argc, char* argv[]) {
 				timer_2021.startSubtask("step-2 maintain 2 hop label 0 - " + std::to_string(config.iterations / 2));
 				for (int i = 1; i <= config.iterations; i++)
 				{
-					if (i == config.iterations / 2 + 1) {
+					if (i == config.iterations / 2 + 1)
+					{
 						timer_ruc.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 						timer_2021.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 					}
 					std::cout << "iteration " << i << std::endl;
 					std::queue<experiment::change_edge_info> q = change_info.q_list[i];
-					experiment::graph<int>& instance_graph_temp = graph_list[i - 1];
+					experiment::graph<int> &instance_graph_temp = graph_list[i - 1];
 					while (!q.empty())
 					{
 						experiment::change_edge_info info = q.front();
@@ -159,14 +167,16 @@ int main(int argc, char* argv[]) {
 							auto pairPathV = std::make_pair(v1, instance_graph_temp.ADJs[v1][v2].first);
 							auto it = path2Index4Increase.find(pairPathV);
 							// increase
-							if (it == path2Index4Increase.end()) {
+							if (it == path2Index4Increase.end())
+							{
 								int old_weight = instance_graph_temp.ADJs[v1][v2].second;
 								path_increase.push_back(pairPathV);
 								weight_old_increase.push_back(old_weight);
 								weight_increase.push_back(weight);
 								path2Index4Increase[pairPathV] = weight_increase.size() - 1;
 							}
-							else {
+							else
+							{
 								weight_increase[path2Index4Increase[pairPathV]] = weight;
 							}
 						}
@@ -174,12 +184,14 @@ int main(int argc, char* argv[]) {
 						{
 							auto pairPathV = std::make_pair(v1, instance_graph_temp.ADJs[v1][v2].first);
 							auto it = path2Index4Decrease.find(pairPathV);
-							if (it == path2Index4Decrease.end()) {
-								path_decrease.push_back({ v1, instance_graph_temp.ADJs[v1][v2].first });
+							if (it == path2Index4Decrease.end())
+							{
+								path_decrease.push_back({v1, instance_graph_temp.ADJs[v1][v2].first});
 								weight_decrease.push_back(weight);
 								path2Index4Decrease[pairPathV] = weight_decrease.size() - 1;
 							}
-							else {
+							else
+							{
 								weight_decrease[path2Index4Decrease[pairPathV]] = weight;
 							}
 						}
@@ -266,7 +278,8 @@ int main(int argc, char* argv[]) {
 					}
 					graph_list.push_back(instance_graph_temp);
 					graph_time.add_graph_time(instance_graph_temp, i);
-					if (i == config.iterations / 2 || i == config.iterations) {
+					if (i == config.iterations / 2 || i == config.iterations)
+					{
 						timer_ruc.endSubtask();
 						timer_2021.endSubtask();
 					}
@@ -290,7 +303,8 @@ int main(int argc, char* argv[]) {
 				hop_info_2021.record_all_details_stream(outFile);
 				outFile.close();
 			}
-			else if (config.hop_limit == 0) {
+			else if (config.hop_limit == 0)
+			{
 				experiment::nonhop::two_hop_case_info hop_info;
 				std::string graph_res_filename = "binary_nonhop_constrained_" + std::to_string(config.hop_limit) + "_graph";
 				std::string dataSource = config.data_source.string() + "//" + graph_res_filename;
@@ -307,12 +321,12 @@ int main(int argc, char* argv[]) {
 				hop_info.thread_num = config.threads;
 				experiment::nonhop::two_hop_case_info hop_info_2021;
 				hop_info_2021 = hop_info;
+				std::cout << "L size is " << hop_info.compute_L_size() << std::endl;
 				graph_list.push_back(init_graph);
 				timer_ruc.endSubtask();
 				timer_2021.endSubtask();
 				experiment::iteration_info<int> change_info(
-					graph_time.v_num, config.iterations, config.change_count, config.max_value, config.min_value, init_graph
-				);
+					graph_time.v_num, config.iterations, config.change_count, config.max_value, config.min_value, init_graph);
 				change_info.build_random_change();
 
 				std::vector<std::pair<int, int>> path_decrease;
@@ -330,7 +344,8 @@ int main(int argc, char* argv[]) {
 				timer_2021.startSubtask("step-2 maintain 2 hop label 0 - " + std::to_string(config.iterations / 2));
 				for (int i = 1; i <= config.iterations; i++)
 				{
-					if (i == config.iterations / 2 + 1) {
+					if (i == config.iterations / 2 + 1)
+					{
 						timer_ruc.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 						timer_2021.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 					}
@@ -347,30 +362,34 @@ int main(int argc, char* argv[]) {
 						int weight = info.weight;
 						if (instance_graph_temp.ADJs[v1][v2].second < weight)
 						{
-							auto pairPathV = std::make_pair(v1, instance_graph_temp.ADJs[v1][v2].first);
+							auto pairPathV = std::make_pair(v1, v2);
 							auto it = path2Index4Increase.find(pairPathV);
 							// increase
-							if (it == path2Index4Increase.end()) {
+							if (it == path2Index4Increase.end())
+							{
 								int old_weight = instance_graph_temp.ADJs[v1][v2].second;
 								path_increase.push_back(pairPathV);
 								weight_old_increase.push_back(old_weight);
 								weight_increase.push_back(weight);
 								path2Index4Increase[pairPathV] = weight_increase.size() - 1;
 							}
-							else {
+							else
+							{
 								weight_increase[path2Index4Increase[pairPathV]] = weight;
 							}
 						}
 						else if (instance_graph_temp.ADJs[v1][v2].second > weight)
 						{
-							auto pairPathV = std::make_pair(v1, instance_graph_temp.ADJs[v1][v2].first);
+							auto pairPathV = std::make_pair(v1, v2);
 							auto it = path2Index4Decrease.find(pairPathV);
-							if (it == path2Index4Decrease.end()) {
-								path_decrease.push_back({ v1, instance_graph_temp.ADJs[v1][v2].first });
+							if (it == path2Index4Decrease.end())
+							{
+								path_decrease.push_back(pairPathV);
 								weight_decrease.push_back(weight);
 								path2Index4Decrease[pairPathV] = weight_decrease.size() - 1;
 							}
-							else {
+							else
+							{
 								weight_decrease[path2Index4Decrease[pairPathV]] = weight;
 							}
 						}
@@ -381,14 +400,19 @@ int main(int argc, char* argv[]) {
 								int v1 = path_decrease[i].first;
 								int v2 = path_decrease[i].second;
 								int w = weight_decrease[i];
-								instance_graph_temp.add_edge(v1, v2, w);
+								std::cout << "decrease old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
+								instance_graph_temp[v1][v2].second = w;
 							}
 							std::cout << "decrease ruc maintain" << std::endl;
 							experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+							timer_ruc.startSubtask("iteration " + std::to_string(i) + " algorithm ruc decrease maintain");
 							experiment::nonhop::ruc::decrease::decrease_maintain(instance_graph_temp, hop_info, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+							timer_ruc.endSubtask();
 							std::cout << "decrease 2021 maintain" << std::endl;
 							experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+							timer_2021.startSubtask("iteration " + std::to_string(i) + " algorithm 2021 decrease maintain");
 							experiment::nonhop::algorithm2021::decrease::decrease_maintain(instance_graph_temp, hop_info_2021, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+							timer_2021.endSubtask();
 							std::vector<std::pair<int, int>>().swap(path_decrease);
 							std::vector<int>().swap(weight_decrease);
 							std::map<std::pair<int, int>, int>().swap(path2Index4Decrease);
@@ -401,14 +425,19 @@ int main(int argc, char* argv[]) {
 								int v2 = path_increase[i].second;
 								int w = weight_increase[i];
 								int w_old = weight_old_increase[i];
-								instance_graph_temp.add_edge(v1, v2, w);
+								std::cout << "increase old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
+								instance_graph_temp[v1][v2].second = w;
 							}
 							std::cout << "increase ruc maintain" << std::endl;
 							experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+							timer_ruc.startSubtask("iteration " + std::to_string(i) + " algorithm ruc increase maintain");
 							experiment::nonhop::ruc::increase::nonHOP_WeightIncreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+							timer_ruc.endSubtask();
 							std::cout << "increase 2021 maintain" << std::endl;
 							experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+							timer_2021.startSubtask("iteration " + std::to_string(i) + " algorithm 2021 increase maintain");
 							experiment::nonhop::algorithm2021::increase::increase_maintain(instance_graph_temp, hop_info_2021, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+							timer_2021.endSubtask();
 							std::vector<std::pair<int, int>>().swap(path_increase);
 							std::vector<int>().swap(weight_increase);
 							std::vector<int>().swap(weight_old_increase);
@@ -422,14 +451,19 @@ int main(int argc, char* argv[]) {
 							int v1 = path_decrease[i].first;
 							int v2 = path_decrease[i].second;
 							int w = weight_decrease[i];
-							instance_graph_temp.add_edge(v1, v2, w);
+							std::cout << "decrease old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
+							instance_graph_temp[v1][v2].second = w;
 						}
 						std::cout << "decrease ruc maintain" << std::endl;
 						experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+						timer_ruc.startSubtask("iteration " + std::to_string(i) + " algorithm ruc decrease maintain");
 						experiment::nonhop::ruc::decrease::decrease_maintain(instance_graph_temp, hop_info, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+						timer_ruc.endSubtask();
 						std::cout << "decrease 2021 maintain" << std::endl;
 						experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+						timer_2021.startSubtask("iteration " + std::to_string(i) + " algorithm 2021 decrease maintain");
 						experiment::nonhop::algorithm2021::decrease::decrease_maintain(instance_graph_temp, hop_info_2021, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+						timer_2021.endSubtask();
 						std::vector<std::pair<int, int>>().swap(path_decrease);
 						std::vector<int>().swap(weight_decrease);
 						std::map<std::pair<int, int>, int>().swap(path2Index4Decrease);
@@ -442,21 +476,27 @@ int main(int argc, char* argv[]) {
 							int v2 = path_increase[i].second;
 							int w = weight_increase[i];
 							int w_old = weight_old_increase[i];
-							instance_graph_temp.add_edge(v1, v2, w);
+							std::cout << "increase old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
+							instance_graph_temp[v1][v2].second = w;
 						}
 						std::cout << "increase ruc maintain" << std::endl;
 						experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+						timer_ruc.startSubtask("iteration " + std::to_string(i) + " algorithm ruc increase maintain");
 						experiment::nonhop::ruc::increase::nonHOP_WeightIncreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+						timer_ruc.endSubtask();
 						std::cout << "increase 2021 maintain" << std::endl;
 						experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
+						timer_2021.startSubtask("iteration " + std::to_string(i) + " algorithm 2021 increase maintain");
 						experiment::nonhop::algorithm2021::increase::increase_maintain(instance_graph_temp, hop_info_2021, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+						timer_2021.endSubtask();
 						std::vector<std::pair<int, int>>().swap(path_increase);
 						std::vector<int>().swap(weight_increase);
 						std::vector<int>().swap(weight_old_increase);
 					}
 					graph_list.push_back(instance_graph_temp);
 					graph_time.add_graph_time(instance_graph_temp, i);
-					if (i == config.iterations / 2 || i == config.iterations) {
+					if (i == config.iterations / 2 || i == config.iterations)
+					{
 						timer_ruc.endSubtask();
 						timer_2021.endSubtask();
 					}
@@ -481,12 +521,14 @@ int main(int argc, char* argv[]) {
 				outFile.close();
 			}
 		}
-		else if (config.mode == experiment::QUERY_RESULT) {
+		else if (config.mode == experiment::QUERY_RESULT)
+		{
 			// random src and dest
 			timer.startTask("query shorest path distance");
 			std::vector<experiment::graph<int>> graph_list;
 			experiment::graph_with_time_span<int> graph_time;
-			if (config.hop_limit != 0) {
+			if (config.hop_limit != 0)
+			{
 				std::string experiment_QUERY_RESULT_res_filename = "QUERY_RESULT_nonhop_constrained_" + std::to_string(config.hop_limit) + "_result.txt";
 				std::string data_from_filename = "binary_hop_constrained_" + std::to_string(config.hop_limit) + "_2_hop_label_info";
 				std::string dataSource = config.data_source.string() + "//" + data_from_filename;
@@ -510,13 +552,15 @@ int main(int argc, char* argv[]) {
 				outFile.setf(std::ios::fixed);
 				outFile.setf(std::ios::showpoint);
 				outFile.open(savePath);
-				for (int i = 0; i < config.change_count; i++) {
+				for (int i = 0; i < config.change_count; i++)
+				{
 					int index_i = _random_v(boost_random_time_seed);
 					int index_j = _random_v(boost_random_time_seed);
 					int t_1 = _random_time(boost_random_time_seed);
 					int t_2 = _random_time(boost_random_time_seed);
 					int hop = _random_hop(boost_random_time_seed);
-					if (t_1 > t_2) {
+					if (t_1 > t_2)
+					{
 						std::swap(t_1, t_2);
 					}
 					timer.startSubtask("====iteration " + std::to_string(i) + " query result info====");
@@ -538,7 +582,8 @@ int main(int argc, char* argv[]) {
 				timer.writeStatsToFile(outFile);
 				outFile.close();
 			}
-			else {
+			else
+			{
 				std::string experiment_QUERY_RESULT_res_filename = "QUERY_RESULT_nonhop_constrained_" + std::to_string(config.hop_limit) + "_result.txt";
 				std::string data_from_filename = "binary_nonhop_constrained_" + std::to_string(config.hop_limit) + "_2_hop_label_info";
 				std::string dataSource = config.data_source.string() + "//" + data_from_filename;
@@ -560,12 +605,14 @@ int main(int argc, char* argv[]) {
 				outFile.setf(std::ios::fixed);
 				outFile.setf(std::ios::showpoint);
 				outFile.open(savePath);
-				for (int i = 0; i < config.change_count; i++) {
+				for (int i = 0; i < config.change_count; i++)
+				{
 					int index_i = _random_v(boost_random_time_seed);
 					int index_j = _random_v(boost_random_time_seed);
 					int t_1 = _random_time(boost_random_time_seed);
 					int t_2 = _random_time(boost_random_time_seed);
-					if (t_1 > t_2) {
+					if (t_1 > t_2)
+					{
 						std::swap(t_1, t_2);
 					}
 					timer.startSubtask("====iteration " + std::to_string(i) + " query result info====");
@@ -589,7 +636,8 @@ int main(int argc, char* argv[]) {
 			}
 		}
 	}
-	catch (const std::exception& ex) {
+	catch (const std::exception &ex)
+	{
 		std::cerr << "Error: " << ex.what() << "\n";
 		exit(EXIT_FAILURE);
 	}

@@ -552,6 +552,16 @@ namespace experiment
 				experiment::loadBinary(in, PPR);
 			}
 
+			long long int compute_L_size(){
+				long long int res = 0;
+				for(const auto& L_info :L){
+					for(const auto& inner:L_info){
+						++res;
+					}
+				}
+				return res;
+			}
+
 			/*clear labels*/
 			void clear_labels()
 			{
@@ -1086,6 +1096,49 @@ namespace experiment
 			}
 
 			return std::numeric_limits<int>::max();
+		}
+
+		two_hop_label search_sorted_hop_constrained_label_two_hop_label(std::vector<two_hop_label> &input_vector, int key, int hop)
+		{
+			int left = 0, right = input_vector.size() - 1;
+
+			while (left <= right)
+			{
+				int mid = left + ((right - left) / 2);
+
+				if (input_vector[mid].t_e == std::numeric_limits<int>::max())
+				{
+					if (input_vector[mid].hub_vertex == key)
+					{
+						if (input_vector[mid].hop == hop)
+						{
+							return input_vector[mid];
+						}
+						else if (input_vector[mid].hop < hop)
+						{
+							left = mid + 1;
+						}
+						else
+						{
+							right = mid - 1;
+						}
+					}
+					else if (input_vector[mid].hub_vertex < key)
+					{
+						left = mid + 1;
+					}
+					else
+					{
+						right = mid - 1;
+					}
+				}
+				else
+				{
+					right = mid - 1;
+				}
+			}
+			two_hop_label res;
+			return res;
 		}
 
 		std::pair<weightTYPE, int> get_shortest_distance_hop_two_hop_label2(std::vector<two_hop_label> &input_vector, int key)
