@@ -327,18 +327,22 @@ int main(int argc, char *argv[])
 				outFile.setf(std::ios::fixed);
 				outFile.setf(std::ios::showpoint);
 				outFile.open(resultPath.string());
-				outFile << "========================ruc maintain======================";
+				outFile << "========================ruc maintain======================" << std::endl;
 				timer_ruc.writeStatsToFile(outFile);
 				hop_info.record_all_details_stream(outFile);
-				outFile << "========================2021 maintain=====================";
+				outFile << "========================2021 maintain=====================" << std::endl;
 				timer_2021.writeStatsToFile(outFile);
 				hop_info_2021.record_all_details_stream(outFile);
+				outFile << "========================baseline1=========================" << std::endl;
+				timer_baseline1.writeStatsToFile(outFile);
 				long long int graph_list_size = 0;
 				for (const auto &graph_instance : graph_list)
 				{
 					graph_list_size += graph_instance.computeSize();
 				}
 				outFile << "graph list size is " << graph_list_size << std::endl;
+				outFile << "========================baseline2=========================" << std::endl;
+				timer_baseline2.writeStatsToFile(outFile);
 				graph_time.record_all_details_stream(outFile);
 				outFile.close();
 			}
@@ -560,18 +564,22 @@ int main(int argc, char *argv[])
 				outFile.setf(std::ios::fixed);
 				outFile.setf(std::ios::showpoint);
 				outFile.open(resultPath.string());
-				outFile << "========================ruc maintain======================";
+				outFile << "========================ruc maintain======================" << std::endl;
 				timer_ruc.writeStatsToFile(outFile);
 				hop_info.record_all_details_stream(outFile);
-				outFile << "========================2021 maintain=====================";
+				outFile << "========================2021 maintain=====================" << std::endl;
 				timer_2021.writeStatsToFile(outFile);
 				hop_info_2021.record_all_details_stream(outFile);
+				outFile << "========================baseline1=========================" << std::endl;
+				timer_baseline1.writeStatsToFile(outFile);
 				long long int graph_list_size = 0;
 				for (const auto &graph_instance : graph_list)
 				{
 					graph_list_size += graph_instance.computeSize();
 				}
 				outFile << "graph list size is " << graph_list_size << std::endl;
+				outFile << "========================baseline2=========================" << std::endl;
+				timer_baseline2.writeStatsToFile(outFile);
 				graph_time.record_all_details_stream(outFile);
 				FILE_HOP_LABEL.close();
 				outFile.close();
