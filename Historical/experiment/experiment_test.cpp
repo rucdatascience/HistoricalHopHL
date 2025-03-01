@@ -64,6 +64,7 @@ int main(int argc, char *argv[])
 				outFile.setf(std::ios::showpoint);
 				outFile.open(resultPath.string());
 				timer.writeStatsToFile(outFile);
+				hop_info.record_all_details_stream(outFile);
 				outFile.close();
 			}
 			else
@@ -89,6 +90,7 @@ int main(int argc, char *argv[])
 				outFile.setf(std::ios::showpoint);
 				outFile.open(resultPath.string());
 				timer.writeStatsToFile(outFile);
+				hop_info.record_all_details_stream(outFile);
 				outFile.close();
 			}
 		}
@@ -96,6 +98,8 @@ int main(int argc, char *argv[])
 		{
 			experiment::ExecutionTimer timer_ruc;
 			experiment::ExecutionTimer timer_2021;
+			experiment::ExecutionTimer timer_baseline1;
+			experiment::ExecutionTimer timer_baseline2;
 			std::vector<experiment::graph<int>> graph_list;
 			experiment::graph<int> init_graph;
 			experiment::graph_with_time_span<int> graph_time;
@@ -103,6 +107,8 @@ int main(int argc, char *argv[])
 			std::filesystem::create_directory(saveDir);
 			timer_ruc.startTask("maintain graph and 2hop label " + std::to_string(config.hop_limit) + (config.hop_limit == 0 ? "nonhop_constrained" : "hop constrained"));
 			timer_2021.startTask("maintain graph and 2hop label " + std::to_string(config.hop_limit) + (config.hop_limit == 0 ? "nonhop_constrained" : "hop constrained"));
+			timer_baseline1.startTask("maintain graph by saving every graph");
+			timer_baseline2.startTask("maintain graph by saving edge info with time label");
 			timer_ruc.startSubtask("step-1 read graph and original 2hop label");
 			timer_2021.startSubtask("step-1 read graph and original 2hop label");
 			if (config.hop_limit != 0)
@@ -144,12 +150,16 @@ int main(int argc, char *argv[])
 				std::vector<std::future<int>> results_dynamic;
 				timer_ruc.startSubtask("step-2 maintain 2 hop label 0 - " + std::to_string(config.iterations / 2));
 				timer_2021.startSubtask("step-2 maintain 2 hop label 0 - " + std::to_string(config.iterations / 2));
+				timer_baseline1.startSubtask("step-1 save graph from 0 - " + std::to_string(config.iterations / 2));
+				timer_baseline2.startSubtask("step-1 save graph with time span edge from 0 - " + std::to_string(config.iterations / 2));
 				for (int i = 1; i <= config.iterations; i++)
 				{
 					if (i == config.iterations / 2 + 1)
 					{
 						timer_ruc.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 						timer_2021.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
+						timer_baseline1.startSubtask("step-2 save graph from " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
+						timer_baseline2.startSubtask("step-2 save graph with time span edge from " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 					}
 					std::cout << "iteration " << i << std::endl;
 					std::queue<experiment::change_edge_info> q = change_info.q_list[i];
@@ -292,12 +302,18 @@ int main(int argc, char *argv[])
 						std::vector<int>().swap(weight_old_increase);
 						std::map<std::pair<int, int>, int>().swap(path2Index4Increase);
 					}
+					timer_baseline1.startSubtask("save graph " + std::to_string(i));
 					graph_list.push_back(instance_graph_temp);
+					timer_baseline1.endSubtask();
+					timer_baseline2.startSubtask("save graph with time span label " + std::to_string(i));
 					graph_time.add_graph_time(instance_graph_temp, i);
+					timer_baseline2.endSubtask();
 					if (i == config.iterations / 2 || i == config.iterations)
 					{
 						timer_ruc.endSubtask();
 						timer_2021.endSubtask();
+						timer_baseline1.endSubtask();
+						timer_baseline2.endSubtask();
 					}
 				}
 				std::ofstream FILE_HOP_LABEL(hopLabelPath.string(), std::ios::out | std::ofstream::binary);
@@ -317,6 +333,13 @@ int main(int argc, char *argv[])
 				outFile << "========================2021 maintain=====================";
 				timer_2021.writeStatsToFile(outFile);
 				hop_info_2021.record_all_details_stream(outFile);
+				long long int graph_list_size = 0;
+				for (const auto &graph_instance : graph_list)
+				{
+					graph_list_size += graph_instance.computeSize();
+				}
+				outFile << "graph list size is " << graph_list_size << std::endl;
+				graph_time.record_all_details_stream(outFile);
 				outFile.close();
 			}
 			else if (config.hop_limit == 0)
@@ -358,12 +381,16 @@ int main(int argc, char *argv[])
 				std::vector<std::future<int>> results_dynamic;
 				timer_ruc.startSubtask("step-2 maintain 2 hop label 0 - " + std::to_string(config.iterations / 2));
 				timer_2021.startSubtask("step-2 maintain 2 hop label 0 - " + std::to_string(config.iterations / 2));
+				timer_baseline1.startSubtask("step-1 save graph from 0 - " + std::to_string(config.iterations / 2));
+				timer_baseline2.startSubtask("step-1 save graph with time span edge from 0 - " + std::to_string(config.iterations / 2));
 				for (int i = 1; i <= config.iterations; i++)
 				{
 					if (i == config.iterations / 2 + 1)
 					{
 						timer_ruc.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 						timer_2021.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
+						timer_baseline1.startSubtask("step-2 save graph from " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
+						timer_baseline2.startSubtask("step-2 save graph with time span edge from " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 					}
 					std::cout << "iteration " << i << std::endl;
 					std::queue<experiment::change_edge_info> q = change_info.q_list[i];
@@ -509,12 +536,18 @@ int main(int argc, char *argv[])
 						std::vector<int>().swap(weight_increase);
 						std::vector<int>().swap(weight_old_increase);
 					}
+					timer_baseline1.startSubtask("save graph " + std::to_string(i));
 					graph_list.push_back(instance_graph_temp);
+					timer_baseline1.endSubtask();
+					timer_baseline2.startSubtask("save graph with time span label " + std::to_string(i));
 					graph_time.add_graph_time(instance_graph_temp, i);
+					timer_baseline2.endSubtask();
 					if (i == config.iterations / 2 || i == config.iterations)
 					{
 						timer_ruc.endSubtask();
 						timer_2021.endSubtask();
+						timer_baseline1.endSubtask();
+						timer_baseline2.endSubtask();
 					}
 				}
 				std::ofstream FILE_HOP_LABEL(hopLabelPath.string(), std::ios::out | std::ofstream::binary);
@@ -533,6 +566,13 @@ int main(int argc, char *argv[])
 				outFile << "========================2021 maintain=====================";
 				timer_2021.writeStatsToFile(outFile);
 				hop_info_2021.record_all_details_stream(outFile);
+				long long int graph_list_size = 0;
+				for (const auto &graph_instance : graph_list)
+				{
+					graph_list_size += graph_instance.computeSize();
+				}
+				outFile << "graph list size is " << graph_list_size << std::endl;
+				graph_time.record_all_details_stream(outFile);
 				FILE_HOP_LABEL.close();
 				outFile.close();
 			}

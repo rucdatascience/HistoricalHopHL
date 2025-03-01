@@ -19,6 +19,12 @@ namespace experiment
 		{
 			endTimeLabel = std::numeric_limits<int>::max();
 		};
+
+		long long int computeSize() const
+		{
+			return sizeof(weight_type) + 3 * sizeof(int);
+		}
+
 		void serialize(std::ofstream &out) const
 		{
 			saveBinary(out, vertex);
@@ -75,6 +81,23 @@ namespace experiment
 		void resize(int n)
 		{
 			ADJs.resize(n); // initialize n vertices
+		}
+
+		long long int computeSize() const
+		{
+			long long int res = 0;
+			for (const auto &item_first : this->ADJs)
+			{
+				for (const auto &item_second : item_first)
+				{
+					res += sizeof(item_second.first);
+					for (const auto &item : item_second.second)
+					{
+						res += item.computeSize();
+					}
+				}
+			}
+			return res;
 		}
 
 		void txt_save(std::string save_name) const
@@ -176,17 +199,18 @@ namespace experiment
 			loadBinary(in, ADJs);
 		}
 
-		void add_graph_time(experiment::graph<weight_type>& graph, int time)
+		void add_graph_time(experiment::graph<weight_type> &graph, int time)
 		{
 			int N = graph.size();
-			if (N > this->v_num) {
+			if (N > this->v_num)
+			{
 				this->resize(N);
 				this->v_num = N;
 			}
 			this->time_max = time > this->time_max ? time : this->time_max;
 			for (int i = 0; i < N; i++)
 			{
-				std::vector<std::pair<int, int>> list = graph.ADJs[i];
+				std::vector<std::pair<int, weight_type>> list = graph.ADJs[i];
 				for (const auto &edges : list)
 				{
 					if (edges.first < i)
@@ -204,6 +228,11 @@ namespace experiment
 			this->e_num = 0;
 			this->v_num = 0;
 			this->time_max = 0;
+		}
+
+		void record_all_details_stream(std::ofstream &outputFile)
+		{
+			outputFile << "the size of graph with time info label = " << this->computeSize() << std::endl;
 		}
 	};
 	template <typename weight_type> // weight_type may be int, long long int, float, double...

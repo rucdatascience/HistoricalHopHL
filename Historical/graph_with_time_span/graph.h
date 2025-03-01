@@ -43,6 +43,20 @@ namespace experiment
 			return ADJs[i];
 		}
 
+		long long int computeSize() const
+		{
+			long long int res = 0;
+			for (const auto &item_first : this->ADJs)
+			{
+				for (const auto &item_second : item_first)
+				{
+					res += sizeof(int);
+					res += sizeof(weight_type);
+				}
+			}
+			return res;
+		}
+
 		/*class member functions*/
 		void add_edge(int e1, int e2, weight_type ec)
 		{
@@ -117,7 +131,7 @@ namespace experiment
 			*/
 
 			int num = 0;
-			for (const auto& it : ADJs)
+			for (const auto &it : ADJs)
 			{
 				num = num + it.size();
 			}
