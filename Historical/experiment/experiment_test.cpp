@@ -400,7 +400,7 @@ int main(int argc, char *argv[])
 								int v1 = path_decrease[i].first;
 								int v2 = path_decrease[i].second;
 								int w = weight_decrease[i];
-								std::cout << "decrease old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
+								// std::cout << "decrease old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
 								instance_graph_temp[v1][v2].second = w;
 							}
 							std::cout << "decrease ruc maintain" << std::endl;
@@ -425,7 +425,7 @@ int main(int argc, char *argv[])
 								int v2 = path_increase[i].second;
 								int w = weight_increase[i];
 								int w_old = weight_old_increase[i];
-								std::cout << "increase old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
+								// std::cout << "increase old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
 								instance_graph_temp[v1][v2].second = w;
 							}
 							std::cout << "increase ruc maintain" << std::endl;
@@ -451,7 +451,7 @@ int main(int argc, char *argv[])
 							int v1 = path_decrease[i].first;
 							int v2 = path_decrease[i].second;
 							int w = weight_decrease[i];
-							std::cout << "decrease old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
+							// std::cout << "decrease old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
 							instance_graph_temp[v1][v2].second = w;
 						}
 						std::cout << "decrease ruc maintain" << std::endl;
@@ -476,7 +476,7 @@ int main(int argc, char *argv[])
 							int v2 = path_increase[i].second;
 							int w = weight_increase[i];
 							int w_old = weight_old_increase[i];
-							std::cout << "increase old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
+							// std::cout << "increase old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
 							instance_graph_temp[v1][v2].second = w;
 						}
 						std::cout << "increase ruc maintain" << std::endl;

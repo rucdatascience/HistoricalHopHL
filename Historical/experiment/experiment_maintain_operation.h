@@ -866,7 +866,7 @@ namespace experiment {
 
 					while (CL_curr.size())
 					{
-						std::cout << "2021 decrease cl_curr size is " << CL_curr.size() << std::endl;
+						// std::cout << "2021 decrease cl_curr size is " << CL_curr.size() << std::endl;
 						ProDecreasep_batch(instance_graph, &mm.L, &mm.PPR, CL_curr, &CL_next, pool_dynamic, results_dynamic, time);
 						CL_curr = CL_next;
 						std::vector<affected_label>().swap(CL_next);
@@ -1122,7 +1122,7 @@ namespace experiment {
 						PI11(instance_graph, &mm.L, al1_curr, &al1_next, w_old_map, pool_dynamic, results_dynamic, time);
 						PI12(instance_graph, &mm.L, &mm.PPR, al1_curr, &al2_next, pool_dynamic, results_dynamic, time);
 						PI22(instance_graph, &mm.L, &mm.PPR, al2_curr, &al2_next, pool_dynamic, results_dynamic, time);
-						std::cout << "increase 2021 al1_cuur size is " << al1_curr.size() << " al2_curr size is " << al2_curr.size() << " al2_next size is " << al2_next.size() << std::endl;
+						// std::cout << "increase 2021 al1_cuur size is " << al1_curr.size() << " al2_curr size is " << al2_curr.size() << " al2_next size is " << al2_next.size() << std::endl;
 						al1_curr = al1_next;
 						al2_curr = al2_next;
 						std::vector<affected_label>().swap(al1_next);
