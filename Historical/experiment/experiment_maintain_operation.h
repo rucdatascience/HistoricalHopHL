@@ -1421,9 +1421,9 @@ namespace experiment
 								int v = it.first;
 								std::vector<hop_constrained_label_v2> vec_with_hub_v = it.second;
 
-								mtx_ruc_decrease[v].lock_shared();
+								mtx_ruc_decrease[v].lock();
 								auto Lv = (*L)[v]; // to avoid interlocking
-								mtx_ruc_decrease[v].unlock_shared();
+								mtx_ruc_decrease[v].unlock();
 
 								std::vector<int> dist_hop_changes;
 								auto& dist_hop = dist_hop_599_v2[current_tid];
@@ -1721,7 +1721,7 @@ namespace experiment
 											if (query_result.first > di) { // only add new label when it's absolutely necessary
 												mtx_599_1.lock();
 												//cout<<"query_result.first > d1 + 1e-5: "<<t_first<<' '<<v << ' ' << hop_vn+1 << ' ' << d1 << endl;
-												al3->push_back(hop_constrained_affected_label(t, v, hop_i, di));
+												al3->push_back(hop_constrained_affected_label{t, v, hop_i, di});
 												mtx_599_1.unlock();
 
 											}
@@ -1778,7 +1778,7 @@ namespace experiment
 
 											if (query_result.first > di) {
 												mtx_599_1.lock();
-												al3->push_back(hop_constrained_affected_label(v, t, hop_i, di));
+												al3->push_back(hop_constrained_affected_label{v, t, hop_i, di});
 												mtx_599_1.unlock();
 											}
 											else {
@@ -1859,9 +1859,9 @@ namespace experiment
 								int v = it.first;
 								std::vector<hop_constrained_label_v2> vec_with_hub_v = it.second;
 
-								mtx_ruc_increase[v].lock_shared();
+								mtx_ruc_increase[v].lock();
 								auto Lv = (*L)[v]; // to avoid interlocking
-								mtx_ruc_increase[v].unlock_shared();
+								mtx_ruc_increase[v].unlock();
 
 								std::vector<int> dist_hop_changes;
 								auto& dist_hop = dist_hop_599_v2[current_tid];
@@ -2073,7 +2073,7 @@ namespace experiment
 									int search_weight = search_sorted_hop_constrained_weight_two_hop_label(mm.L[v2], it.hub_vertex, it.hop + 1);
 									if (it.hub_vertex <= v2 && search_weight >= (long long int)it.distance + w_old && search_weight < MAX_VALUE && it.t_e == std::numeric_limits<int>::max()) {
 										mtx_599_1.lock();
-										al1.push_back(hop_constrained_affected_label(v2, it.hub_vertex, it.hop + 1, it.distance + w_old));
+										al1.push_back(hop_constrained_affected_label{v2, it.hub_vertex, it.hop + 1, it.distance + w_old});
 										mtx_599_1.unlock();
 									}
 								}
@@ -2081,7 +2081,7 @@ namespace experiment
 									int search_weight = search_sorted_hop_constrained_weight_two_hop_label(mm.L[v1], it.hub_vertex, it.hop + 1);
 									if (it.hub_vertex <= v1 && search_weight >= (long long int)it.distance + w_old && search_weight < MAX_VALUE && it.t_e == std::numeric_limits<int>::max()) {
 										mtx_599_1.lock();
-										al1.push_back(hop_constrained_affected_label(v1, it.hub_vertex, it.hop + 1, it.distance + w_old));
+										al1.push_back(hop_constrained_affected_label{v1, it.hub_vertex, it.hop + 1, it.distance + w_old});
 										mtx_599_1.unlock();
 									}
 								}
@@ -2115,9 +2115,9 @@ namespace experiment
 
 								int v = it.first, u = it.second;
 
-								mtx_2021_decrease[u].lock_shared();
+								mtx_2021_decrease[u].lock();
 								auto Lu = (*L)[u]; // to avoid interlocking
-								mtx_2021_decrease[u].unlock_shared();
+								mtx_2021_decrease[u].unlock();
 
 								if (it.hop + 1 > upper_k)
 									return 1;
@@ -2135,7 +2135,7 @@ namespace experiment
 											insert_sorted_hop_constrained_two_hop_label((*L)[vnei], u, hop_u + 1, dnew, t);
 											mtx_2021_decrease[vnei].unlock();
 											mtx_599_1.lock();
-											CL_next->push_back(hop_constrained_affected_label(vnei, u, hop_u + 1, dnew));
+											CL_next->push_back(hop_constrained_affected_label{vnei, u, hop_u + 1, dnew});
 											mtx_599_1.unlock();
 										}
 										else {
@@ -2148,7 +2148,7 @@ namespace experiment
 												// (*L)[vnei][search_result.second].distance = dnew;
 												mtx_2021_decrease[vnei].unlock();
 												mtx_599_1.lock();
-												CL_next->push_back(hop_constrained_affected_label(vnei, u, hop_u + 1, dnew));
+												CL_next->push_back(hop_constrained_affected_label{vnei, u, hop_u + 1, dnew});
 												mtx_599_1.unlock();
 											}
 											if (query_result.second != u) {
@@ -2287,7 +2287,7 @@ namespace experiment
 
 									if (it.dis + w_old <= search_weight.distance && search_weight.distance < MAX_VALUE && search_weight.t_s != t) {
 										mtx_599_1.lock();
-										al1_next->push_back(hop_constrained_affected_label(nei.first, it.second, it.hop + 1, it.dis + w_old));
+										al1_next->push_back(hop_constrained_affected_label{nei.first, it.second, it.hop + 1, it.dis + w_old});
 										mtx_599_1.unlock();
 									}
 								}
@@ -2320,9 +2320,9 @@ namespace experiment
 								PPR_TYPE::PPR_binary_operations_insert(temp, u);
 								mtx_5992[v].unlock();
 
-								mtx_2021_increase[v].lock_shared();
+								mtx_2021_increase[v].lock();
 								auto Lv = (*L)[v]; // to avoid interlocking
-								mtx_2021_increase[v].unlock_shared();
+								mtx_2021_increase[v].unlock();
 
 								for (auto t : temp) {
 
@@ -2361,7 +2361,7 @@ namespace experiment
 												insert_sorted_hop_constrained_two_hop_label((*L)[t], v, hop_i, di, time);
 												mtx_2021_increase[t].unlock();
 												mtx_599_1.lock();
-												al2_next->push_back(hop_constrained_pair_label(t, v, hop_i));
+												al2_next->push_back(hop_constrained_pair_label{t, v, hop_i});
 												mtx_599_1.unlock();
 											}
 											else {
@@ -2407,11 +2407,11 @@ namespace experiment
 											mtx_2021_increase[t].unlock_shared();
 
 											if (query_result.first > di) {
-												mtx_2021_increase[v].lock_shared();
+												mtx_2021_increase[v].lock();
 												insert_sorted_hop_constrained_two_hop_label((*L)[v], t, hop_i, di, time);
-												mtx_2021_increase[v].unlock_shared();
+												mtx_2021_increase[v].unlock();
 												mtx_599_1.lock();
-												al2_next->push_back(hop_constrained_pair_label(v, t, hop_i));
+												al2_next->push_back(hop_constrained_pair_label{v, t, hop_i});
 												mtx_599_1.unlock();
 											}
 											else {
@@ -2452,9 +2452,9 @@ namespace experiment
 						results_dynamic.emplace_back(pool_dynamic.enqueue([time, it, L, PPR, al2_next, &instance_graph, upper_k]
 																		  {
 
-								mtx_2021_increase[it->second].lock_shared();
+								mtx_2021_increase[it->second].lock();
 								auto Lxx = (*L)[it->second]; // to avoid interlocking
-								mtx_2021_increase[it->second].unlock_shared();
+								mtx_2021_increase[it->second].unlock();
 
 								if (it->hop + 1 > upper_k)
 									return 1;
@@ -2472,7 +2472,7 @@ namespace experiment
 											insert_sorted_hop_constrained_two_hop_label((*L)[nei.first], it->second, it->hop + 1, search_result, time);
 											mtx_2021_increase[nei.first].unlock();
 											mtx_599_1.lock();
-											al2_next->push_back(hop_constrained_pair_label(nei.first, it->second, it->hop + 1));
+											al2_next->push_back(hop_constrained_pair_label{nei.first, it->second, it->hop + 1});
 											mtx_599_1.unlock();
 										}
 										else {
