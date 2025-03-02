@@ -2271,7 +2271,9 @@ namespace experiment
 						results_dynamic.emplace_back(pool_dynamic.enqueue([t, it, L, al1_next, &instance_graph, &w_old_map]
 																		  {
 								for (auto nei : instance_graph[it.first]) {
+									mtx_2021_increase[nei.first].lock_shared();
 									two_hop_label search_weight = search_sorted_hop_constrained_label_two_hop_label((*L)[nei.first], it.second, it.hop + 1);
+									mtx_2021_increase[nei.first].unlock_shared();
 									weightTYPE w_old = nei.second;
 									if (w_old_map.count(std::pair<int, int>(it.first, nei.first)) > 0) {
 										w_old = w_old_map[std::pair<int, int>(it.first, nei.first)];
