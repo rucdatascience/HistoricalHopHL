@@ -6,6 +6,8 @@
 #include <boost/heap/fibonacci_heap.hpp>
 #include <shared_mutex>
 #include <CPU/tool_functions/ThreadPool.h>
+#include "Historical/utils/BinaryPersistence.h"
+#include <fstream>
 
 namespace experiment
 {
@@ -48,11 +50,11 @@ namespace experiment
 	class iteration_info
 	{
 	private:
-		const int _v_num;
-		const int _iteration;
-		const int _change_num;
-		const int _upper;
-		const int _lower;
+		int _v_num;
+		int _iteration;
+		int _change_num;
+		int _upper;
+		int _lower;
 		boost::random::uniform_int_distribution<> _random_v;
 		boost::random::uniform_int_distribution<> _random_weight;
 		graph<weight_type> instance_graph;
@@ -72,9 +74,11 @@ namespace experiment
 			for (int i = 1; i <= this->_iteration; i++)
 			{
 				int j = 0;
-				while(j<this->_change_num){
+				while (j < this->_change_num)
+				{
 					int index_i = this->_random_v(boost_random_time_seed);
-					if(instance_graph[index_i].size() == 0){
+					if (instance_graph[index_i].size() == 0)
+					{
 						continue;
 					}
 					boost::random::uniform_int_distribution<> dis_inner(0, instance_graph[index_i].size() - 1);
@@ -85,12 +89,75 @@ namespace experiment
 					q_list[i].push(info);
 					++j;
 				}
-				for (int j = 0; j < this->_change_num; j++)
+			}
+		}
+
+		void serialize(std::ofstream &out) const
+		{
+			saveBinary(out, _v_num);
+			saveBinary(out, _iteration);
+			saveBinary(out, _change_num);
+			saveBinary(out, _upper);
+			saveBinary(out, _lower);
+			saveBinary(out, instance_graph);
+
+			for (const auto &queue : q_list)
+			{
+				size_t size = queue.size();
+				saveBinary(out, size);
+				std::queue<change_edge_info> temp = queue;
+				while (!temp.empty())
 				{
+					saveBinary(out, temp.front().v1);
+					saveBinary(out, temp.front().v2);
+					saveBinary(out, temp.front().time);
+					saveBinary(out, temp.front().weight);
+					temp.pop();
+				}
+			}
+		}
+		void deserialize(std::ifstream &in)
+		{
+			loadBinary(in, _v_num);
+			loadBinary(in, _iteration);
+			loadBinary(in, _change_num);
+			loadBinary(in, _upper);
+			loadBinary(in, _lower);
+			loadBinary(in, instance_graph);
+
+			q_list.resize(this->_iteration + 1, std::queue<change_edge_info>());
+			for (auto &queue : q_list)
+			{
+				size_t size;
+				loadBinary(in, size);
+				for (size_t i = 0; i < size; i++)
+				{
+					change_edge_info info;
+					loadBinary(in, info.v1);
+					loadBinary(in, info.v2);
+					loadBinary(in, info.time);
+					loadBinary(in, info.weight);
+					queue.push(info);
 				}
 			}
 		}
 	};
+
+	template <typename weight_type>
+	class BinarySerializer<iteration_info<weight_type>>
+	{
+	public:
+		static void saveBinary(std::ofstream &out, const iteration_info<weight_type> &info)
+		{
+			info.serialize(out);
+		}
+
+		static void loadBinary(std::ifstream &in, iteration_info<weight_type> &info)
+		{
+			info.deserialize(in);
+		}
+	};
+
 	namespace nonhop
 	{
 		int max_N_ID_for_mtx_595 = 1e7;

@@ -119,8 +119,10 @@ int main(int argc, char *argv[])
 
 				std::string hop_label_res_filename = "binary_hop_constrained_" + std::to_string(config.hop_limit) + "_2_hop_label_info";
 				std::string experiment_res_filename = "MAINTAIN_LABEL_hop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result.txt";
+				std::string change_info_res_filename = "change_info_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result.txt";
 				std::filesystem::path hopLabelPath = saveDir.string() + "//" + hop_label_res_filename;
 				std::filesystem::path resultPath = saveDir.string() + "//" + experiment_res_filename;
+				std::filesystem::path changePath = saveDir.string() + "//" + change_info_res_filename;
 
 				std::ifstream FILE_GRAPH(dataSource, std::ios::in | std::ifstream::binary);
 				experiment::loadBinary(FILE_GRAPH, init_graph);
@@ -137,6 +139,11 @@ int main(int argc, char *argv[])
 				experiment::iteration_info<int> change_info(
 					graph_time.v_num, config.iterations, config.change_count, config.max_value, config.min_value, init_graph);
 				change_info.build_random_change();
+				std::ofstream CHANGE_PATH_STREAM(changePath.string(), std::ios::out | std::ofstream::binary);
+				experiment::saveBinary(CHANGE_PATH_STREAM,change_info);
+
+				// std::ifstream CHANGE_PATH_STREAM(changePath.string(), std::ios::in | std::ifstream::binary);
+				// experiment::loadBinary(CHANGE_PATH_STREAM, change_info);
 				std::vector<std::pair<int, int>> path_decrease;
 				std::map<std::pair<int, int>, int> path2Index4Decrease;
 				std::vector<int> weight_decrease;
@@ -316,6 +323,7 @@ int main(int argc, char *argv[])
 						timer_baseline2.endSubtask();
 					}
 				}
+				std::cout << "finish maintain label" << std::endl;
 				std::ofstream FILE_HOP_LABEL(hopLabelPath.string(), std::ios::out | std::ofstream::binary);
 				experiment::saveBinary(FILE_HOP_LABEL, graph_list);
 				experiment::saveBinary(FILE_HOP_LABEL, graph_time);
@@ -345,6 +353,7 @@ int main(int argc, char *argv[])
 				timer_baseline2.writeStatsToFile(outFile);
 				graph_time.record_all_details_stream(outFile);
 				outFile.close();
+				std::cout <<"all finished" <<std::endl;
 			}
 			else if (config.hop_limit == 0)
 			{
