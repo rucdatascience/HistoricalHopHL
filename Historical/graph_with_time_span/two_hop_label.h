@@ -552,10 +552,13 @@ namespace experiment
 				experiment::loadBinary(in, PPR);
 			}
 
-			long long int compute_L_size(){
+			long long int compute_L_size()
+			{
 				long long int res = 0;
-				for(const auto& L_info :L){
-					for(const auto& inner:L_info){
+				for (const auto &L_info : L)
+				{
+					for (const auto &inner : L_info)
+					{
 						++res;
 					}
 				}
@@ -780,7 +783,15 @@ namespace experiment
 			int common_hub = -1;
 			auto vector1_check_pointer = L[source].begin();
 			auto vector2_check_pointer = L[terminal].begin();
-			auto pointer_L_s_end = L[source].end(), pointer_L_t_end = L[terminal].end();
+			auto pointer_L_s_end = vector1_check_pointer, pointer_L_t_end = vector2_check_pointer;
+			while (pointer_L_s_end != L[source].end() && pointer_L_s_end->t_e == std::numeric_limits<int>::max())
+			{
+				pointer_L_s_end++;
+			}
+			while (pointer_L_t_end != L[terminal].end() && pointer_L_t_end->t_e == std::numeric_limits<int>::max())
+			{
+				pointer_L_t_end++;
+			}
 
 			while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end)
 			{
@@ -856,7 +867,15 @@ namespace experiment
 			int hop = std::numeric_limits<int>::max();
 			auto vector1_check_pointer = L[source].begin();
 			auto vector2_check_pointer = L[terminal].begin();
-			auto pointer_L_s_end = L[source].end(), pointer_L_t_end = L[terminal].end();
+			auto pointer_L_s_end = vector1_check_pointer, pointer_L_t_end = vector2_check_pointer;
+			while (pointer_L_s_end != L[source].end() && pointer_L_s_end->t_e == std::numeric_limits<int>::max())
+			{
+				pointer_L_s_end++;
+			}
+			while (pointer_L_t_end != L[terminal].end() && pointer_L_t_end->t_e == std::numeric_limits<int>::max())
+			{
+				pointer_L_t_end++;
+			}
 
 			while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end)
 			{
@@ -928,7 +947,15 @@ namespace experiment
 			int hop = std::numeric_limits<int>::max();
 			auto vector1_check_pointer = L_s.begin();
 			auto vector2_check_pointer = L_t.begin();
-			auto pointer_L_s_end = L_s.end(), pointer_L_t_end = L_t.end();
+			auto pointer_L_s_end = vector1_check_pointer, pointer_L_t_end = vector2_check_pointer;
+			while (pointer_L_s_end != L_s.end() && pointer_L_s_end->t_e == std::numeric_limits<int>::max())
+			{
+				pointer_L_s_end++;
+			}
+			while (pointer_L_t_end != L_t.end() && pointer_L_t_end->t_e == std::numeric_limits<int>::max())
+			{
+				pointer_L_t_end++;
+			}
 
 			while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end)
 			{
@@ -1000,8 +1027,15 @@ namespace experiment
 			int hub = -1;
 			auto vector1_check_pointer = L_s.begin();
 			auto vector2_check_pointer = L_t.begin();
-			auto pointer_L_s_end = L_s.end(), pointer_L_t_end = L_t.end();
-
+			auto pointer_L_s_end = vector1_check_pointer, pointer_L_t_end = vector2_check_pointer;
+			while (pointer_L_s_end != L_s.end() && pointer_L_s_end->t_e == std::numeric_limits<int>::max())
+			{
+				pointer_L_s_end++;
+			}
+			while (pointer_L_t_end != L_t.end() && pointer_L_t_end->t_e == std::numeric_limits<int>::max())
+			{
+				pointer_L_t_end++;
+			}
 			while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end)
 			{
 				if (vector1_check_pointer->hub_vertex == vector2_check_pointer->hub_vertex)

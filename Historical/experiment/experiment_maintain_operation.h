@@ -1323,7 +1323,7 @@ namespace experiment
 									{
 										std::swap(v1, v2);
 									}
-									for (auto it : (*L)[v1])
+									for (auto& it : (*L)[v1])
 									{
 										if (it.hub_vertex <= v2 && (long long int)it.distance + w_new < TwoM_value && it.t_e == std::numeric_limits<int>::max())
 										{
@@ -1489,6 +1489,7 @@ namespace experiment
 												// Q_VALUE[xnei][hop_nei] = d_new;
 												mtx_ruc_decrease[xnei].lock_shared();
 												std::pair<int, int> temp_dis = graph_weighted_two_hop_extract_distance_and_hop_by_backup_label((*L)[xnei], Lv, xhv + 1);
+												// std::pair<int, int> temp_dis_hub = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[xnei], Lv, xhv + 1);
 												//std::pair<int, int> temp_dis = hop_constrained_extract_distance_and_hop(*L, xnei, v, xhv + 1);
 												mtx_ruc_decrease[xnei].unlock_shared();
 												// hubs[xnei] = tmp.second;
@@ -1962,7 +1963,7 @@ namespace experiment
 												mtx_ruc_increase[xnei].lock_shared();
 												std::pair<int, int> tmp = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[xnei], Lv, xhv + 1);
 												mtx_ruc_increase[xnei].unlock_shared();
-												//hubs[xnei] = tmp.second;
+												// hubs[xnei] = tmp.second;
 											}
 											if (d_new < dist_hop[xnei].first)
 											{
@@ -2069,7 +2070,7 @@ namespace experiment
 								int v1 = iter.first.first;
 								int v2 = iter.first.second;
 								int w_old = iter.second;
-								for (auto it : mm.L[v1]) {
+								for (const auto& it : mm.L[v1]) {
 									int search_weight = search_sorted_hop_constrained_weight_two_hop_label(mm.L[v2], it.hub_vertex, it.hop + 1);
 									if (it.hub_vertex <= v2 && search_weight >= (long long int)it.distance + w_old && search_weight < MAX_VALUE && it.t_e == std::numeric_limits<int>::max()) {
 										mtx_599_1.lock();
@@ -2077,7 +2078,7 @@ namespace experiment
 										mtx_599_1.unlock();
 									}
 								}
-								for (auto it : mm.L[v2]) {
+								for (const auto& it : mm.L[v2]) {
 									int search_weight = search_sorted_hop_constrained_weight_two_hop_label(mm.L[v1], it.hub_vertex, it.hop + 1);
 									if (it.hub_vertex <= v1 && search_weight >= (long long int)it.distance + w_old && search_weight < MAX_VALUE && it.t_e == std::numeric_limits<int>::max()) {
 										mtx_599_1.lock();
@@ -2545,10 +2546,13 @@ namespace experiment
 					}
 					while (al1_curr.size() || al2_curr.size())
 					{
-						std::cout << "al1 curr size is " << al1_curr.size() << std::endl;
+						std::cout << "al1 curr size is " << al1_curr.size()<<" al2 cur size is " << al2_curr.size()  << std::endl;
 						PI11(instance_graph, &mm.L, al1_curr, &al1_next, w_old_map, pool_dynamic, results_dynamic, time);
+						std::cout <<"al1 next size is " << al1_next.size() << " al2 next size is " << al2_next.size() << std::endl;
 						PI12(instance_graph, &mm.L, &mm.PPR, al1_curr, &al2_next, pool_dynamic, results_dynamic, mm.upper_k, time);
+						std::cout <<"al1 next size is " << al1_next.size() << " al2 next size is " << al2_next.size() << std::endl;
 						PI22(instance_graph, &mm.L, &mm.PPR, al2_curr, &al2_next, pool_dynamic, results_dynamic, mm.upper_k, time);
+						std::cout <<"al1 next size is " << al1_next.size() << " al2 next size is " << al2_next.size() << std::endl;
 
 						al1_curr = al1_next;
 						al2_curr = al2_next;
