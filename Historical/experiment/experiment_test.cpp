@@ -322,6 +322,7 @@ int main(int argc, char *argv[])
 						timer_baseline1.endSubtask();
 						timer_baseline2.endSubtask();
 					}
+					std::cout <<"current L size is " << hop_info.compute_label_bit_size() << std::endl;
 				}
 				std::cout << "finish maintain label" << std::endl;
 				std::ofstream FILE_HOP_LABEL(hopLabelPath.string(), std::ios::out | std::ofstream::binary);

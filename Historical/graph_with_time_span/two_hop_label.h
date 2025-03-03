@@ -8,6 +8,7 @@
 #include "Historical/utils/vector_operations.h"
 using WEIGHT_TYPE = long;
 #define weightTYPE int
+#define MAX_VALUE 1e7
 namespace experiment
 {
 	namespace PPR_TYPE
@@ -1328,15 +1329,17 @@ namespace experiment
 					right = mid - 1;
 				}
 			}
+			if (new_distance != MAX_VALUE)
+			{
+				two_hop_label new_label;
+				new_label.hub_vertex = key;
+				new_label.hop = hop;
+				new_label.distance = new_distance;
+				new_label.t_s = t;
+				new_label.t_e = std::numeric_limits<int>::max();
 
-			two_hop_label new_label;
-			new_label.hub_vertex = key;
-			new_label.hop = hop;
-			new_label.distance = new_distance;
-			new_label.t_s = t;
-			new_label.t_e = std::numeric_limits<int>::max();
-
-			input_vector.insert(input_vector.begin() + left, new_label);
+				input_vector.insert(input_vector.begin() + left, new_label);
+			}
 		}
 
 		std::pair<weightTYPE, int> search_sorted_hop_constrained_weight_and_index_two_hop_label(std::vector<two_hop_label> &input_vector, int key, int hop)
