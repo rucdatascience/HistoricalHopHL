@@ -1488,10 +1488,10 @@ namespace experiment
 												// Q_VALUE[xnei][hop_nei] = d_new;
 												mtx_ruc_decrease[xnei].lock_shared();
 												std::pair<int, int> temp_dis = graph_weighted_two_hop_extract_distance_and_hop_by_backup_label((*L)[xnei], Lv, xhv + 1);
-												std::pair<int, int> temp_dis_hub = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[xnei], Lv, xhv + 1);
+												// std::pair<int, int> temp_dis_hub = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[xnei], Lv, xhv + 1);
 												//std::pair<int, int> temp_dis = hop_constrained_extract_distance_and_hop(*L, xnei, v, xhv + 1);
 												mtx_ruc_decrease[xnei].unlock_shared();
-												hubs[xnei] = temp_dis_hub.second;
+												// hubs[xnei] = temp_dis_hub.second;
 
 												dist_hop[xnei].first = temp_dis.first;
 												dist_hop[xnei].second = temp_dis.second;
@@ -1960,10 +1960,10 @@ namespace experiment
 												dist_hop[xnei].second = hop_nei;
 												dist_hop_changes.push_back(xnei);
 
-												mtx_ruc_increase[xnei].lock_shared();
-												std::pair<int, int> tmp = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[xnei], Lv, xhv + 1);
-												mtx_ruc_increase[xnei].unlock_shared();
-												hubs[xnei] = tmp.second;
+												// mtx_ruc_increase[xnei].lock_shared();
+												// std::pair<int, int> tmp = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[xnei], Lv, xhv + 1);
+												// mtx_ruc_increase[xnei].unlock_shared();
+												// hubs[xnei] = tmp.second;
 											}
 											if (d_new < dist_hop[xnei].first)
 											{
