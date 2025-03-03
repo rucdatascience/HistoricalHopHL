@@ -1178,30 +1178,27 @@ namespace experiment
 
 		std::pair<weightTYPE, int> get_shortest_distance_hop_two_hop_label2(std::vector<two_hop_label> &input_vector, int key)
 		{
-			int idx = 0, right = input_vector.size() - 1;
+			int left = 0, right = input_vector.size() - 1;
 			weightTYPE mindis = std::numeric_limits<int>::max();
 			int hop_val = 0;
 
-			while (idx <= right)
+			while (left <= right)
 			{
-				if (input_vector[idx].t_e != std::numeric_limits<int>::max())
+				int mid = (right - left) / 2 + left;
+				if (input_vector[mid].t_e != std::numeric_limits<int>::max())
 				{
-					break;
-				}
-
-				if (input_vector[idx].hub_vertex > key)
-				{
-					break;
-				}
-				if (input_vector[idx].hub_vertex == key)
-				{
-					if (input_vector[idx].distance < mindis)
-					{
-						mindis = input_vector[idx].distance;
-						hop_val = input_vector[idx].hop;
+					right = mid -1;
+				}else{
+					if(input_vector[mid].hub_vertex < key){
+						left = mid+1;
+					}else if(input_vector[mid].hub_vertex > key){
+						right = mid-1;
+					}else{
+						mindis = input_vector[mid].distance;
+						hop_val = input_vector[mid].hop;
+						left = mid+1;
 					}
 				}
-				idx++;
 			}
 
 			return {mindis, hop_val};

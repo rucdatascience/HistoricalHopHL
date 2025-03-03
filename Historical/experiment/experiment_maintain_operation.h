@@ -409,8 +409,8 @@ namespace experiment
 							int v = it.first, u = it.second;
 							mtx_5952[v].lock();
 							std::vector<int> temp = PPR_TYPE::PPR_retrieve(*PPR, v, u);
-							PPR_TYPE::PPR_binary_operations_insert(temp, u);
 							mtx_5952[v].unlock();
+							PPR_TYPE::PPR_binary_operations_insert(temp, u);
 							for (auto t : temp) {
 								if (v < t) {
 									long long d1 = MAX_VALUE;
@@ -970,8 +970,8 @@ namespace experiment
 							int v = it.first, u = it.second;
 							mtx_5952[v].lock();
 							std::vector<int> temp = PPR_TYPE::PPR_retrieve(*PPR, v, u);
-							PPR_TYPE::PPR_binary_operations_insert(temp, u);
 							mtx_5952[v].unlock();
+							PPR_TYPE::PPR_binary_operations_insert(temp, u);
 
 							mtx_595[v].lock_shared();
 							auto Lv = (*L)[v]; // to avoid interlocking
@@ -1202,9 +1202,9 @@ namespace experiment
 		{
 		public:
 			int first, second, hop;
-			weightTYPE dis;
+			long long int dis;
 			hop_constrained_affected_label() {}
-			hop_constrained_affected_label(int _first, int _second, int _hop, weightTYPE _dis)
+			hop_constrained_affected_label(int _first, int _second, int _hop, long long int _dis)
 			{
 				first = _first;
 				second = _second;
@@ -1648,6 +1648,9 @@ namespace experiment
 												w_old = nei.second;
 											}
 											if (dx + w_old <= search_weight && search_weight < MAX_VALUE) {
+												// mtx_599_2.lock();
+												// std::cout << "x is "<< x <<" v is " << v << " x's nei is " << nei.first <<" dx is " << dx << " w_lod is " << w_old <<" search_weight is " << search_weight << std::endl;
+												// mtx_599_2.unlock();;
 												q.push(hop_constrained_node_for_DIFFUSE(nei.first, h_x + 1, dx + nei.second));
 											}
 
@@ -1676,8 +1679,8 @@ namespace experiment
 								int v = it.first, u = it.second, h_u = it.hop;
 								mtx_5992[v].lock();
 								std::vector<int> temp = PPR_TYPE::PPR_retrieve(*PPR, v, u);
-								PPR_TYPE::PPR_binary_operations_insert(temp, u);
 								mtx_5992[v].unlock();
+								PPR_TYPE::PPR_binary_operations_insert(temp, u);
 
 								// mtx_ruc_increase[v].lock_shared();
 								// auto Lv = (*L)[v]; // to avoid interlocking
@@ -2320,8 +2323,8 @@ namespace experiment
 								int hop_u = it.hop;
 								mtx_5992[v].lock();
 								std::vector<int> temp = PPR_TYPE::PPR_retrieve(*PPR, v, u);
-								PPR_TYPE::PPR_binary_operations_insert(temp, u);
 								mtx_5992[v].unlock();
+								PPR_TYPE::PPR_binary_operations_insert(temp, u);
 
 								mtx_2021_increase[v].lock_shared();
 								auto Lv = (*L)[v]; // to avoid interlocking
