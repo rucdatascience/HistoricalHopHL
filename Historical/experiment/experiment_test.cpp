@@ -3,6 +3,10 @@
 #include <filesystem>
 #include <Historical/utils/ExecutionTimer.h>
 experiment::ExecutionTimer timer;
+experiment::ExecutionTimer timer_ruc;
+experiment::ExecutionTimer timer_2021;
+experiment::ExecutionTimer timer_baseline1;
+experiment::ExecutionTimer timer_baseline2;
 #include "Historical/utils/BinaryPersistence.h"
 #include "Historical/graph_with_time_span/two_hop_label.h"
 #include "Historical/experiment/experiment_operation.h"
@@ -96,10 +100,6 @@ int main(int argc, char *argv[])
 		}
 		else if (config.mode == experiment::MAINTAIN_LABEL)
 		{
-			experiment::ExecutionTimer timer_ruc;
-			experiment::ExecutionTimer timer_2021;
-			experiment::ExecutionTimer timer_baseline1;
-			experiment::ExecutionTimer timer_baseline2;
 			std::vector<experiment::graph<int>> graph_list;
 			experiment::graph<int> init_graph;
 			experiment::graph_with_time_span<int> graph_time;
@@ -322,7 +322,7 @@ int main(int argc, char *argv[])
 						timer_baseline1.endSubtask();
 						timer_baseline2.endSubtask();
 					}
-					std::cout <<"current L size is " << hop_info.compute_label_bit_size() << std::endl;
+					// std::cout << "current L size is " << hop_info.compute_label_bit_size() << std::endl;
 				}
 				std::cout << "finish maintain label" << std::endl;
 				std::ofstream FILE_HOP_LABEL(hopLabelPath.string(), std::ios::out | std::ofstream::binary);
@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
 				timer_baseline2.writeStatsToFile(outFile);
 				graph_time.record_all_details_stream(outFile);
 				outFile.close();
-				std::cout <<"all finished" <<std::endl;
+				std::cout << "all finished" << std::endl;
 			}
 			else if (config.hop_limit == 0)
 			{

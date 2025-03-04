@@ -1628,7 +1628,7 @@ namespace experiment
 									insert_sorted_hop_constrained_two_hop_label((*L)[x], v, h_x, MAX_VALUE, t); // this does not change the size of L[x] here, so does not need to lock here
 									mtx_ruc_increase[x].unlock();
 									mtx_599_1.lock();
-									al2->push_back(hop_constrained_pair_label(x, v, h_x));
+									al2->push_back(hop_constrained_pair_label{x, v, h_x});
 									mtx_599_1.unlock();
 
 									for (auto nei : instance_graph[x])
@@ -1671,26 +1671,24 @@ namespace experiment
 				void HOP_maintain_SPREAD2_batch(graph<int> &instance_graph, std::vector<std::vector<two_hop_label>> *L, PPR_TYPE::PPR_type *PPR,
 												std::vector<hop_constrained_pair_label> &al2, std::vector<hop_constrained_affected_label> *al3, ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int upper_k)
 				{
-
-					for (auto it : al2)
+					for (const auto &it : al2)
 					{
-						results_dynamic.emplace_back(pool_dynamic.enqueue([it, L, PPR, al3, &instance_graph, upper_k]
+						results_dynamic.emplace_back(pool_dynamic.enqueue([&it, L, PPR, al3, &instance_graph, upper_k]
 																		  {
 								int v = it.first, u = it.second, h_u = it.hop;
-								mtx_5992[v].lock();
+								mtx_5992[v].lock_shared();
 								std::vector<int> temp = PPR_TYPE::PPR_retrieve(*PPR, v, u);
-								mtx_5992[v].unlock();
+								mtx_5992[v].unlock_shared();
 								PPR_TYPE::PPR_binary_operations_insert(temp, u);
-
-								// mtx_ruc_increase[v].lock_shared();
-								// auto Lv = (*L)[v]; // to avoid interlocking
-								// mtx_ruc_increase[v].unlock_shared();
+								mtx_ruc_increase[v].lock_shared();
+								auto Lv = (*L)[v]; // to avoid interlocking
+								mtx_ruc_increase[v].unlock_shared();
 
 								for (auto t : temp) {
 									if (v < t) {
 										long long int d1 = MAX_VALUE;
 										int hop_vn = 0;
-										for (auto nei : instance_graph[t]) {
+										for (const auto& nei : instance_graph[t]) {
 											//mtx_599[nei.first].lock();
 											std::pair<int, int> dis_hop = get_shortest_distance_hop_two_hop_label2((*L)[nei.first], v);
 											//mtx_599[nei.first].unlock();
@@ -1701,16 +1699,16 @@ namespace experiment
 											}
 
 										}
-
+										
 										// if(d1 >= TwoM_value)
 										// 	continue;
-
+										
 										for (int hop_i = 1; hop_i <= hop_vn + 1; hop_i++)
 										{
 											if (hop_i > upper_k)
 												break;
 											long long int di = MAX_VALUE;
-											for (auto nei : instance_graph[t]) {
+											for (const auto& nei : instance_graph[t]) {
 												//mtx_599[nei.first].lock();
 												di = std::min(di, search_sorted_hop_constrained_weight_two_hop_label((*L)[nei.first], v, hop_i - 1) + (long long int)nei.second);
 												//mtx_599[nei.first].unlock();
@@ -1718,8 +1716,8 @@ namespace experiment
 											if (di >= TwoM_value)
 												continue;
 											//mtx_599[t].lock_shared();
-											//auto query_result = graph_hash_of_mixed_weighted_two_hop_v2_extract_distance_no_reduc2(*L, t.first, v, hop_i);
-											auto query_result = hop_constrained_extract_distance_and_hub(*L, t, v, hop_i);
+											//auto query_result = graph_hash_of_mixed_weightejd_two_hop_v2_extract_distance_no_reduc2(*L, t.first, v, hop_i);
+											auto query_result = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[t], Lv, hop_i);
 											//mtx_599[t].unlock_shared();
 
 											if (query_result.first > di) { // only add new label when it's absolutely necessary
@@ -1746,7 +1744,7 @@ namespace experiment
 									if (t < v) {
 										long long int d1 = MAX_VALUE;
 										int hop_vn = 0;
-										for (auto nei : instance_graph[v]) {
+										for (const auto& nei : instance_graph[v]) {
 											//d1 = min(d1, search_sorted_two_hop_label((*L)[nei.first], t_first, t.second) + (int)nei.second);
 											//mtx_599[nei.first].lock();
 											std::pair<int, int> dis_hop = get_shortest_distance_hop_two_hop_label2((*L)[nei.first], t);
@@ -1777,7 +1775,7 @@ namespace experiment
 
 											//mtx_599[t].lock_shared();
 											//auto query_result = graph_hash_of_mixed_weighted_two_hop_v2_extract_distance_no_reduc2(*L, v, t_first, hop_i);
-											auto query_result = hop_constrained_extract_distance_and_hub(*L, v, t, hop_i);
+											auto query_result = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[t], Lv, hop_i);
 											//mtx_599[t].unlock_shared();
 
 											if (query_result.first > di) {
