@@ -549,6 +549,7 @@ int main(int argc, char *argv[])
 						std::vector<std::pair<int, int>>().swap(path_increase);
 						std::vector<int>().swap(weight_increase);
 						std::vector<int>().swap(weight_old_increase);
+						std::map<std::pair<int, int>, int>().swap(path2Index4Increase);
 					}
 					timer_baseline1.startSubtask("save graph " + std::to_string(i));
 					graph_list.push_back(instance_graph_temp);

@@ -1187,16 +1187,23 @@ namespace experiment
 				int mid = (right - left) / 2 + left;
 				if (input_vector[mid].t_e != std::numeric_limits<int>::max())
 				{
-					right = mid -1;
-				}else{
-					if(input_vector[mid].hub_vertex < key){
-						left = mid+1;
-					}else if(input_vector[mid].hub_vertex > key){
-						right = mid-1;
-					}else{
+					right = mid - 1;
+				}
+				else
+				{
+					if (input_vector[mid].hub_vertex < key)
+					{
+						left = mid + 1;
+					}
+					else if (input_vector[mid].hub_vertex > key)
+					{
+						right = mid - 1;
+					}
+					else
+					{
 						mindis = input_vector[mid].distance;
 						hop_val = input_vector[mid].hop;
-						left = mid+1;
+						left = mid + 1;
 					}
 				}
 			}
@@ -1270,37 +1277,38 @@ namespace experiment
 
 							input_vector[mid].distance = new_distance;
 							input_vector[mid].t_s = t;
-
-							int insert_left = mid + 1, insert_right = input_vector.size() - 1;
-
-							while (insert_left <= insert_right)
+							if (old_label.distance != MAX_VALUE)
 							{
-								int insert_mid = insert_left + ((insert_right - insert_left) / 2);
+								int insert_left = mid + 1, insert_right = input_vector.size() - 1;
 
-								if (input_vector[insert_mid].t_e < t)
+								while (insert_left <= insert_right)
 								{
-									insert_right = insert_mid - 1;
-								}
-								else if (input_vector[insert_mid].t_e == t)
-								{
-									if (input_vector[insert_mid].hub_vertex > key ||
-										(input_vector[insert_mid].hub_vertex == key && input_vector[insert_mid].hop > hop))
+									int insert_mid = insert_left + ((insert_right - insert_left) / 2);
+
+									if (input_vector[insert_mid].t_e < t)
 									{
 										insert_right = insert_mid - 1;
+									}
+									else if (input_vector[insert_mid].t_e == t)
+									{
+										if (input_vector[insert_mid].hub_vertex > key ||
+											(input_vector[insert_mid].hub_vertex == key && input_vector[insert_mid].hop > hop))
+										{
+											insert_right = insert_mid - 1;
+										}
+										else
+										{
+											insert_left = insert_mid + 1;
+										}
 									}
 									else
 									{
 										insert_left = insert_mid + 1;
 									}
 								}
-								else
-								{
-									insert_left = insert_mid + 1;
-								}
+
+								input_vector.insert(input_vector.begin() + insert_left, old_label);
 							}
-
-							input_vector.insert(input_vector.begin() + insert_left, old_label);
-
 							return;
 						}
 						else if (input_vector[mid].hop < hop)
