@@ -473,39 +473,41 @@ namespace experiment
 
 						input_vector[mid].distance = value;
 						input_vector[mid].t_s = time;
-
-						int insert_left = mid + 1, insert_right = input_vector.size() - 1;
-
-						while (insert_left <= insert_right)
+						if (old_label.distance != MAX_VALUE)
 						{
-							int insert_mid = insert_left + ((insert_right - insert_left) / 2);
+							int insert_left = mid + 1, insert_right = input_vector.size() - 1;
 
-							if (input_vector[insert_mid].t_e < time)
+							while (insert_left <= insert_right)
 							{
-								insert_right = insert_mid - 1;
-							}
-							else if (input_vector[insert_mid].t_e == time)
-							{
-								if (input_vector[insert_mid].vertex > key)
+								int insert_mid = insert_left + ((insert_right - insert_left) / 2);
+
+								if (input_vector[insert_mid].t_e < time)
 								{
 									insert_right = insert_mid - 1;
 								}
-								else if (input_vector[insert_mid].vertex < key)
+								else if (input_vector[insert_mid].t_e == time)
 								{
-									insert_left = insert_mid + 1;
+									if (input_vector[insert_mid].vertex > key)
+									{
+										insert_right = insert_mid - 1;
+									}
+									else if (input_vector[insert_mid].vertex < key)
+									{
+										insert_left = insert_mid + 1;
+									}
+									else
+									{
+										insert_left = insert_mid;
+										break;
+									}
 								}
 								else
 								{
-									insert_left = insert_mid;
-									break;
+									insert_left = insert_mid + 1;
 								}
 							}
-							else
-							{
-								insert_left = insert_mid + 1;
-							}
+							input_vector.insert(input_vector.begin() + insert_left, old_label);
 						}
-						input_vector.insert(input_vector.begin() + insert_left, old_label);
 						return;
 					}
 					else if (input_vector[mid].vertex < key)
@@ -522,12 +524,14 @@ namespace experiment
 					right = mid - 1;
 				}
 			}
+			if (value != MAX_VALUE)
+			{
+				two_hop_label new_label(time);
+				new_label.vertex = key;
+				new_label.distance = value;
 
-			two_hop_label new_label(time);
-			new_label.vertex = key;
-			new_label.distance = value;
-
-			input_vector.insert(input_vector.begin() + left, new_label);
+				input_vector.insert(input_vector.begin() + left, new_label);
+			}
 		}
 
 		class two_hop_case_info

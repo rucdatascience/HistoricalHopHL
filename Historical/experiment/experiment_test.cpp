@@ -111,6 +111,10 @@ int main(int argc, char *argv[])
 			timer_baseline2.startTask("maintain graph by saving edge info with time label");
 			timer_ruc.startSubtask("step-1 read graph and original 2hop label");
 			timer_2021.startSubtask("step-1 read graph and original 2hop label");
+			long long int half_ruc_size = 0;
+			long long int half_2021_size = 0;
+			long long int half_baseline1_size = 0;
+			long long int half_baseline2_size = 0;
 			if (config.hop_limit != 0)
 			{
 				experiment::hop::two_hop_case_info hop_info;
@@ -140,7 +144,7 @@ int main(int argc, char *argv[])
 					graph_time.v_num, config.iterations, config.change_count, config.max_value, config.min_value, init_graph);
 				change_info.build_random_change();
 				std::ofstream CHANGE_PATH_STREAM(changePath.string(), std::ios::out | std::ofstream::binary);
-				experiment::saveBinary(CHANGE_PATH_STREAM,change_info);
+				experiment::saveBinary(CHANGE_PATH_STREAM, change_info);
 
 				// std::ifstream CHANGE_PATH_STREAM(changePath.string(), std::ios::in | std::ifstream::binary);
 				// experiment::loadBinary(CHANGE_PATH_STREAM, change_info);
@@ -163,6 +167,13 @@ int main(int argc, char *argv[])
 				{
 					if (i == config.iterations / 2 + 1)
 					{
+						half_ruc_size = hop_info.compute_label_bit_size();
+						half_2021_size = hop_info_2021.compute_label_bit_size();
+						for (const auto &graph_instance : graph_list)
+						{
+							half_baseline1_size += graph_instance.computeSize();
+						};
+						half_baseline2_size = graph_time.computeSize();
 						timer_ruc.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 						timer_2021.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 						timer_baseline1.startSubtask("step-2 save graph from " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
@@ -339,9 +350,11 @@ int main(int argc, char *argv[])
 				outFile << "========================ruc maintain======================" << std::endl;
 				timer_ruc.writeStatsToFile(outFile);
 				hop_info.record_all_details_stream(outFile);
+				outFile << "half compute_label_bit_size()=" << half_ruc_size << std::endl;
 				outFile << "========================2021 maintain=====================" << std::endl;
 				timer_2021.writeStatsToFile(outFile);
 				hop_info_2021.record_all_details_stream(outFile);
+				outFile << "half compute_label_bit_size()=" << half_2021_size << std::endl;
 				outFile << "========================baseline1=========================" << std::endl;
 				timer_baseline1.writeStatsToFile(outFile);
 				long long int graph_list_size = 0;
@@ -350,9 +363,11 @@ int main(int argc, char *argv[])
 					graph_list_size += graph_instance.computeSize();
 				}
 				outFile << "graph list size is " << graph_list_size << std::endl;
+				outFile << "half graph list size is " << half_baseline1_size << std::endl;
 				outFile << "========================baseline2=========================" << std::endl;
 				timer_baseline2.writeStatsToFile(outFile);
 				graph_time.record_all_details_stream(outFile);
+				outFile << "the size of half graph with time info label = " << half_baseline1_size << std::endl;
 				outFile.close();
 				std::cout << "all finished" << std::endl;
 			}
@@ -366,6 +381,11 @@ int main(int argc, char *argv[])
 				std::string experiment_MAINTAIN_LABEL_res_filename = "MAINTAIN_LABEL_nonhop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result.txt";
 				std::filesystem::path hopLabelPath = saveDir.string() + "//" + hop_label_res_filename;
 				std::filesystem::path resultPath = saveDir.string() + "//" + experiment_MAINTAIN_LABEL_res_filename;
+
+				long long int half_ruc_size = 0;
+				long long int half_2021_size = 0;
+				long long int half_baseline1_size = 0;
+				long long int half_baseline2_size = 0;
 
 				std::ifstream FILE_GRAPH(dataSource, std::ios::in | std::ifstream::binary);
 				experiment::loadBinary(FILE_GRAPH, init_graph);
@@ -401,6 +421,13 @@ int main(int argc, char *argv[])
 				{
 					if (i == config.iterations / 2 + 1)
 					{
+						half_ruc_size = hop_info.compute_L_byte_size();
+						half_2021_size = hop_info_2021.compute_L_byte_size();
+						for (const auto &graph_instance : graph_list)
+						{
+							half_baseline1_size += graph_instance.computeSize();
+						};
+						half_baseline2_size = graph_time.computeSize();
 						timer_ruc.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 						timer_2021.startSubtask("step-3 maintain 2 hop label " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 						timer_baseline1.startSubtask("step-2 save graph from " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
@@ -578,9 +605,11 @@ int main(int argc, char *argv[])
 				outFile << "========================ruc maintain======================" << std::endl;
 				timer_ruc.writeStatsToFile(outFile);
 				hop_info.record_all_details_stream(outFile);
+				outFile << "half compute_label_byte_size()=" << half_ruc_size << std::endl;
 				outFile << "========================2021 maintain=====================" << std::endl;
 				timer_2021.writeStatsToFile(outFile);
 				hop_info_2021.record_all_details_stream(outFile);
+				outFile << "half compute_label_byte_size()=" << half_2021_size << std::endl;
 				outFile << "========================baseline1=========================" << std::endl;
 				timer_baseline1.writeStatsToFile(outFile);
 				long long int graph_list_size = 0;
@@ -589,9 +618,11 @@ int main(int argc, char *argv[])
 					graph_list_size += graph_instance.computeSize();
 				}
 				outFile << "graph list size is " << graph_list_size << std::endl;
+				outFile << "half graph list size is " << half_baseline1_size << std::endl;
 				outFile << "========================baseline2=========================" << std::endl;
 				timer_baseline2.writeStatsToFile(outFile);
 				graph_time.record_all_details_stream(outFile);
+				outFile << "the size of half graph with time info label = " << half_baseline2_size << std::endl;
 				FILE_HOP_LABEL.close();
 				outFile.close();
 			}
