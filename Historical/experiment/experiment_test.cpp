@@ -142,12 +142,12 @@ int main(int argc, char *argv[])
 
 				experiment::iteration_info<int> change_info(
 					graph_time.v_num, config.iterations, config.change_count, config.max_value, config.min_value, init_graph);
-				change_info.build_random_change();
-				std::ofstream CHANGE_PATH_STREAM(changePath.string(), std::ios::out | std::ofstream::binary);
-				experiment::saveBinary(CHANGE_PATH_STREAM, change_info);
+				// change_info.build_random_change();
+				// std::ofstream CHANGE_PATH_STREAM(changePath.string(), std::ios::out | std::ofstream::binary);
+				// experiment::saveBinary(CHANGE_PATH_STREAM, change_info);
 
-				// std::ifstream CHANGE_PATH_STREAM(changePath.string(), std::ios::in | std::ifstream::binary);
-				// experiment::loadBinary(CHANGE_PATH_STREAM, change_info);
+				std::ifstream CHANGE_PATH_STREAM(changePath.string(), std::ios::in | std::ifstream::binary);
+				experiment::loadBinary(CHANGE_PATH_STREAM, change_info);
 				std::vector<std::pair<int, int>> path_decrease;
 				std::map<std::pair<int, int>, int> path2Index4Decrease;
 				std::vector<int> weight_decrease;
@@ -230,7 +230,8 @@ int main(int argc, char *argv[])
 								int v1 = path_decrease[i].first;
 								int v2 = path_decrease[i].second;
 								int w = weight_decrease[i];
-								instance_graph_temp.add_edge(v1, v2, w);
+								std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << instance_graph_temp[v1][v2].second << std::endl;
+								instance_graph_temp[v1][v2].second = w;
 							}
 							std::cout << "decrease ruc maintain" << std::endl;
 							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
@@ -254,7 +255,8 @@ int main(int argc, char *argv[])
 								int v2 = path_increase[i].second;
 								int w = weight_increase[i];
 								int w_old = weight_old_increase[i];
-								instance_graph_temp.add_edge(v1, v2, w);
+								std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << instance_graph_temp[v1][v2].second << std::endl;
+								instance_graph_temp[v1][v2].second = w;
 							}
 							std::cout << "increase ruc maintain" << std::endl;
 							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
@@ -279,7 +281,8 @@ int main(int argc, char *argv[])
 							int v1 = path_decrease[i].first;
 							int v2 = path_decrease[i].second;
 							int w = weight_decrease[i];
-							instance_graph_temp.add_edge(v1, v2, w);
+							std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << instance_graph_temp[v1][v2].second << std::endl;
+							instance_graph_temp[v1][v2].second = w;
 						}
 						std::cout << "decrease ruc maintain" << std::endl;
 						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
@@ -303,7 +306,8 @@ int main(int argc, char *argv[])
 							int v2 = path_increase[i].second;
 							int w = weight_increase[i];
 							int w_old = weight_old_increase[i];
-							instance_graph_temp.add_edge(v1, v2, w);
+							std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << instance_graph_temp[v1][v2].second << std::endl;
+							instance_graph_temp[v1][v2].second = w;
 						}
 						std::cout << "increase ruc maintain" << std::endl;
 						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
@@ -484,7 +488,7 @@ int main(int argc, char *argv[])
 								int v1 = path_decrease[i].first;
 								int v2 = path_decrease[i].second;
 								int w = weight_decrease[i];
-								// std::cout << "decrease old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
+								std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << instance_graph_temp[v1][v2].second << std::endl;
 								instance_graph_temp[v1][v2].second = w;
 							}
 							std::cout << "decrease ruc maintain" << std::endl;
@@ -509,7 +513,7 @@ int main(int argc, char *argv[])
 								int v2 = path_increase[i].second;
 								int w = weight_increase[i];
 								int w_old = weight_old_increase[i];
-								// std::cout << "increase old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
+								std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << instance_graph_temp[v1][v2].second << std::endl;
 								instance_graph_temp[v1][v2].second = w;
 							}
 							std::cout << "increase ruc maintain" << std::endl;
@@ -535,7 +539,7 @@ int main(int argc, char *argv[])
 							int v1 = path_decrease[i].first;
 							int v2 = path_decrease[i].second;
 							int w = weight_decrease[i];
-							// std::cout << "decrease old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
+							std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << instance_graph_temp[v1][v2].second << std::endl;
 							instance_graph_temp[v1][v2].second = w;
 						}
 						std::cout << "decrease ruc maintain" << std::endl;
@@ -560,7 +564,7 @@ int main(int argc, char *argv[])
 							int v2 = path_increase[i].second;
 							int w = weight_increase[i];
 							int w_old = weight_old_increase[i];
-							// std::cout << "increase old weight is " << instance_graph_temp[v1][v2].second << " new weight is " << w << std::endl;
+							std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << instance_graph_temp[v1][v2].second << std::endl;
 							instance_graph_temp[v1][v2].second = w;
 						}
 						std::cout << "increase ruc maintain" << std::endl;
