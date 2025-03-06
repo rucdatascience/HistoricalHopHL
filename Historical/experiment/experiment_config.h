@@ -9,11 +9,18 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/heap/fibonacci_heap.hpp>
 #include <iostream>
-boost::random::mt19937 boost_random_time_seed{ static_cast<std::uint32_t>(std::time(0)) };
-namespace experiment {
-	enum Mode { GENERATE_LABEL, MAINTAIN_LABEL, QUERY_RESULT };
+boost::random::mt19937 boost_random_time_seed{static_cast<std::uint32_t>(std::time(0))};
+namespace experiment
+{
+	enum Mode
+	{
+		GENERATE_LABEL,
+		MAINTAIN_LABEL,
+		QUERY_RESULT
+	};
 
-	struct ExperimentConfig {
+	struct ExperimentConfig
+	{
 		enum Mode mode;
 		int threads = 0;
 		std::filesystem::path data_source;
@@ -27,7 +34,8 @@ namespace experiment {
 		int min_value = 0;
 	};
 
-	ExperimentConfig parse_arguments(int argc, char* argv[]) {
+	ExperimentConfig parse_arguments(int argc, char *argv[])
+	{
 		argparse::ArgumentParser program("experiment");
 
 		// generate-label
@@ -48,7 +56,7 @@ namespace experiment {
 		maintain_label.add_argument("-max", "--max_value").required().scan<'i', int>();
 		maintain_label.add_argument("-min", "--min_value").required().scan<'i', int>();
 
-		//query-result
+		// query-result
 		argparse::ArgumentParser query_label("query-result");
 		query_label.add_argument("-f", "--data_source").required();
 		query_label.add_argument("-c", "--search_count").required().scan<'i', int>();
@@ -58,27 +66,32 @@ namespace experiment {
 		program.add_subparser(maintain_label);
 		program.add_subparser(query_label);
 
-		try {
+		try
+		{
 			program.parse_args(argc, argv);
 		}
-		catch (const std::runtime_error& err) {
+		catch (const std::runtime_error &err)
+		{
 			std::cerr << "Error: " << err.what() << "\n";
 			std::cerr << program;
 			exit(EXIT_FAILURE);
 		}
 
 		ExperimentConfig config;
-		if (program.is_subcommand_used("generate-label")) {
+		if (program.is_subcommand_used("generate-label"))
+		{
 			config.mode = GENERATE_LABEL;
 			config.threads = generate_label.get<int>("-t");
 			config.data_source = generate_label.get<std::string>("-f");
 			config.save_path = generate_label.get<std::string>("-p");
 			config.hop_limit = generate_label.get<int>("-k");
-			if (config.hop_limit < 0) {
+			if (config.hop_limit < 0)
+			{
 				throw std::invalid_argument("Error: hop_constrained (-k) must be >= 0.");
 			}
 		}
-		else if (program.is_subcommand_used("maintain-label")) {
+		else if (program.is_subcommand_used("maintain-label"))
+		{
 			config.mode = MAINTAIN_LABEL;
 			config.threads = maintain_label.get<int>("-t");
 			config.data_source = maintain_label.get<std::string>("-f");
@@ -89,17 +102,20 @@ namespace experiment {
 			config.max_value = maintain_label.get<int>("-max");
 			config.min_value = maintain_label.get<int>("-min");
 
-			if (config.max_value <= 0 || config.min_value <= 0) {
+			if (config.max_value <= 0 || config.min_value <= 0)
+			{
 				throw std::invalid_argument("Error: max_value and min_value must be greater than 0.");
 			}
 		}
-		else if (program.is_subcommand_used("query-result")) {
+		else if (program.is_subcommand_used("query-result"))
+		{
 			config.mode = QUERY_RESULT;
 			config.data_source = query_label.get<std::string>("-f");
 			config.change_count = query_label.get<int>("-c");
 			config.hop_limit = query_label.get<int>("-k");
 		}
-		else {
+		else
+		{
 			std::cerr << "Error: Unknown subcommand.\n";
 			std::cerr << program;
 			exit(EXIT_FAILURE);
@@ -113,11 +129,12 @@ namespace experiment {
 		std::vector<std::string> Parsed_content;
 		size_t pos = 0;
 		std::string token;
-		while ((pos = parse_target.find(delimiter)) != std::string::npos) {
+		while ((pos = parse_target.find(delimiter)) != std::string::npos)
+		{
 			// find(const string& str, size_t pos = 0) function returns the position of the first occurrence of str in the string, or npos if the string is not found.
 			token = parse_target.substr(0, pos);
 			// The substr(size_t pos = 0, size_t n = npos) function returns a substring of the object, starting at position pos and of length npos
-			Parsed_content.push_back(token); // store the subtr to the list
+			Parsed_content.push_back(token);				 // store the subtr to the list
 			parse_target.erase(0, pos + delimiter.length()); // remove the front substr and the first delimiter
 		}
 		Parsed_content.push_back(parse_target); // store the subtr to the list
@@ -131,5 +148,6 @@ namespace experiment {
 		int v2;
 		int weight;
 		int time;
+		change_edge_info(int _v1, int _v2, int _w, int _t) : v1(_v1), v2(_v2), weight(_w), time(_t) {}
 	};
 }

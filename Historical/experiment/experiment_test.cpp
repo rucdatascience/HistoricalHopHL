@@ -142,12 +142,12 @@ int main(int argc, char *argv[])
 
 				experiment::iteration_info<int> change_info(
 					graph_time.v_num, config.iterations, config.change_count, config.max_value, config.min_value, init_graph);
-				// change_info.build_random_change();
-				// std::ofstream CHANGE_PATH_STREAM(changePath.string(), std::ios::out | std::ofstream::binary);
-				// experiment::saveBinary(CHANGE_PATH_STREAM, change_info);
+				change_info.build_random_change();
+				std::ofstream CHANGE_PATH_STREAM(changePath.string(), std::ios::out | std::ofstream::binary);
+				experiment::saveBinary(CHANGE_PATH_STREAM, change_info);
 
-				std::ifstream CHANGE_PATH_STREAM(changePath.string(), std::ios::in | std::ifstream::binary);
-				experiment::loadBinary(CHANGE_PATH_STREAM, change_info);
+				// std::ifstream CHANGE_PATH_STREAM(changePath.string(), std::ios::in | std::ifstream::binary);
+				// experiment::loadBinary(CHANGE_PATH_STREAM, change_info);
 				std::vector<std::pair<int, int>> path_decrease;
 				std::map<std::pair<int, int>, int> path2Index4Decrease;
 				std::vector<int> weight_decrease;
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 						int weight = info.weight;
 						if (instance_graph_temp.ADJs[v1][v2].second < weight)
 						{
-							auto pairPathV = std::make_pair(v1, instance_graph_temp.ADJs[v1][v2].first);
+							auto pairPathV = std::make_pair(v1, v2);
 							auto it = path2Index4Increase.find(pairPathV);
 							// increase
 							if (it == path2Index4Increase.end())
@@ -210,11 +210,11 @@ int main(int argc, char *argv[])
 						}
 						else if (instance_graph_temp.ADJs[v1][v2].second > weight)
 						{
-							auto pairPathV = std::make_pair(v1, instance_graph_temp.ADJs[v1][v2].first);
+							auto pairPathV = std::make_pair(v1, v2);
 							auto it = path2Index4Decrease.find(pairPathV);
 							if (it == path2Index4Decrease.end())
 							{
-								path_decrease.push_back({v1, instance_graph_temp.ADJs[v1][v2].first});
+								path_decrease.push_back(pairPathV);
 								weight_decrease.push_back(weight);
 								path2Index4Decrease[pairPathV] = weight_decrease.size() - 1;
 							}
@@ -444,7 +444,7 @@ int main(int argc, char *argv[])
 					{
 						experiment::change_edge_info info = q.front();
 						q.pop();
-						// 1. ��ȡ����
+						// 1. ��ȡ����g
 						int v1 = info.v1;
 						int v2 = info.v2;
 						int weight = info.weight;

@@ -85,7 +85,6 @@ namespace experiment
 					int index_j = dis_inner(boost_random_time_seed);
 					int i_j_weight = this->_random_weight(boost_random_time_seed);
 					change_edge_info info = {index_i, index_j, i_j_weight, i};
-					std::pair index = std::make_pair(index_j, index_j);
 					q_list[i].push(info);
 					++j;
 				}
