@@ -82,8 +82,13 @@ namespace experiment
 						continue;
 					}
 					boost::random::uniform_int_distribution<> dis_inner(0, instance_graph[index_i].size() - 1);
-					int index_j = dis_inner(boost_random_time_seed);
+					int index_j_relatively = dis_inner(boost_random_time_seed);
 					int i_j_weight = this->_random_weight(boost_random_time_seed);
+					int index_j = instance_graph[index_i][index_j_relatively].first;
+					if (index_i > index_j)
+					{
+						std::swap(index_i, index_j);
+					}
 					change_edge_info info = {index_i, index_j, i_j_weight, i};
 					q_list[i].push(info);
 					++j;
