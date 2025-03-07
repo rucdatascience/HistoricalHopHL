@@ -17,7 +17,7 @@ namespace experiment
 		std::string readPath = config.data_source.string();
 		std::string line_content;
 		boost::random::uniform_int_distribution<> random_v;
-		boost::random::uniform_int_distribution<> random_weight = boost::random::uniform_int_distribution<>(0, 100);
+		boost::random::uniform_int_distribution<> random_weight = boost::random::uniform_int_distribution<>(1, 100);
 		int v_num = 0;
 		std::ifstream myfile(readPath);
 		if (myfile.is_open())
