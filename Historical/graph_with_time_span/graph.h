@@ -11,6 +11,18 @@
 
 namespace experiment
 {
+	bool sortEdgeById(const std::pair<int, int> &i, std::pair<int, int> &j)
+	{
+		/*< is nearly 10 times slower than >*/
+		return i.first < j.first; // < is from small to big; > is from big to small.  sort by the second item of pair<int, int>
+	}
+
+	bool compare_graph_v_of_v_update_vertexIDs_by_degrees_large_to_small(const std::pair<int, int> &i, std::pair<int, int> &j)
+	{
+		/*< is nearly 10 times slower than >*/
+		return i.second > j.second; // < is from small to big; > is from big to small.  sort by the second item of pair<int, int>
+	}
+
 	template <typename weight_type> // weight_type may be int, long long int, float, double...
 	class graph
 	{
@@ -246,6 +258,40 @@ namespace experiment
 				exit(1);																  // end the program
 			}
 		}
+
+		void graph_v_of_v_update_vertexIDs_by_degrees_large_to_small()
+		{
+			int N = this->ADJs.size();
+
+			std::vector<std::pair<int, int>> sorted_vertices;
+			for (int i = 0; i < N; i++)
+			{
+				sorted_vertices.push_back({i, this->ADJs[i].size()});
+			}
+			std::sort(sorted_vertices.begin(), sorted_vertices.end(), compare_graph_v_of_v_update_vertexIDs_by_degrees_large_to_small);
+			std::vector<int> vertexID_old_to_new(N);
+			for (int i = 0; i < N; i++)
+			{
+				vertexID_old_to_new[sorted_vertices[i].first] = i;
+			}
+			for (int i = 0; i < N; i++)
+			{
+				std::vector<std::pair<int, weight_type>> &edge_info = this->ADJs.at(i);
+				for (std::pair<int, weight_type> &edge : edge_info)
+				{
+					edge.first = vertexID_old_to_new[edge.first];
+				}
+				std::sort(edge_info.begin(), edge_info.end(), sortEdgeById);
+			}
+			for (int i = 0; i < N; i++)
+			{
+				if (vertexID_old_to_new[i] < i)
+				{
+					std::swap(this->ADJs[i], this->ADJs[vertexID_old_to_new[i]]);
+				}
+			}
+		}
+
 		void serialize(std::ofstream &out) const
 		{
 			saveBinary(out, this->ADJs);

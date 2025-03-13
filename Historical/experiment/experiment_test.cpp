@@ -38,6 +38,7 @@ int main(int argc, char *argv[])
 			timer.startTask("generate graph and 2hop label " + std::to_string(config.hop_limit));
 			timer.startSubtask("generate graph " + std::to_string(config.hop_limit));
 			experiment::read_graph(instance_graph, config);
+			instance_graph.graph_v_of_v_update_vertexIDs_by_degrees_large_to_small();
 			timer.endSubtask();
 			experiment::graph_with_time_span<int> graph_time;
 			graph_time.add_graph_time(instance_graph, 0);
@@ -660,7 +661,7 @@ int main(int argc, char *argv[])
 				int hop = config.hop_limit;
 				boost::random::uniform_int_distribution<> _random_v = boost::random::uniform_int_distribution<>(0, v_num);
 				boost::random::uniform_int_distribution<> _random_time = boost::random::uniform_int_distribution<>(0, time);
-				boost::random::uniform_int_distribution<> _random_hop = boost::random::uniform_int_distribution<>(0, hop);
+				boost::random::uniform_int_distribution<> _random_hop = boost::random::uniform_int_distribution<>(1, hop);
 				std::ofstream outFile;
 				outFile.precision(6);
 				outFile.setf(std::ios::fixed);
@@ -677,6 +678,7 @@ int main(int argc, char *argv[])
 					{
 						std::swap(t_1, t_2);
 					}
+					std::cout << "from " << index_i << " to " << index_j << " between " << t_1 << " and " << t_2 << " by " << hop << std::endl;
 					timer.startSubtask("====iteration " + std::to_string(i) + " query result info====");
 					timer.startSubtask("baseline 1: traverse each time graph");
 					int resb1 = experiment::hop::dijkstra_iterator(graph_list, index_i, index_j, t_1, t_2, hop);

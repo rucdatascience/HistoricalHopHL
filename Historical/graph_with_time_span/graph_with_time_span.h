@@ -86,12 +86,12 @@ namespace experiment
 		long long int computeSize() const
 		{
 			long long int res = 0;
-			for (const auto &item_first : this->ADJs)
+			for (const std::vector<std::pair<int, std::vector<experiment::EdgeInfoWithTimeSpan<weight_type>>>> &item_first : this->ADJs)
 			{
-				for (const auto &item_second : item_first)
+				for (const std::pair<int, std::vector<experiment::EdgeInfoWithTimeSpan<weight_type>>> &item_second : item_first)
 				{
 					res += sizeof(item_second.first);
-					for (const auto &item : item_second.second)
+					for (const experiment::EdgeInfoWithTimeSpan<weight_type> &item : item_second.second)
 					{
 						res += item.computeSize();
 					}
