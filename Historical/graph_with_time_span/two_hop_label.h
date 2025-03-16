@@ -664,6 +664,29 @@ namespace experiment
 				outputFile << "PLL info:" << std::endl;
 				outputFile << "thread_num=" << thread_num << std::endl;
 				outputFile << "compute_label_byte_size()=" << compute_L_byte_size() << std::endl;
+				outputFile << "print_L:" << std::endl;
+				for (int i = 0; i < L.size(); i++)
+				{
+					outputFile << "L[" << i << "]=";
+					for (int j = 0; j < L[i].size(); j++)
+					{
+						outputFile << "{" << L[i][j].vertex << "," << L[i][j].distance << "," << L[i][j].t_s << "," << L[i][j].t_e << "}";
+					}
+					outputFile << std::endl;
+				}
+				outputFile << "print_PPR:" << std::endl;
+				for (int i = 0; i < PPR.size(); i++)
+				{
+					for (int j = 0; j < PPR[i].size(); j++)
+					{
+						outputFile << "PPR(" << i << "," << PPR[i][j].first << "): ";
+						for (int k = 0; k < PPR[i][j].second.size(); k++)
+						{
+							outputFile << PPR[i][j].second[k] << " ";
+						}
+						outputFile << std::endl;
+					}
+				}
 			}
 
 			long long int query(int source, int terminal, int t_s, int t_e)
