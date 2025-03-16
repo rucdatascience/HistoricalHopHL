@@ -462,7 +462,7 @@ namespace experiment
 
 			//----------------------------------------------- step 3: canonical_repair ---------------------------------------------------------------
 			timer.startSubtask("step 4: canonical_repair");
-			clean_L_new(case_info, num_of_threads);
+			clean_L(case_info, num_of_threads);
 			timer.endSubtask();
 			//---------------------------------------------------------------------------------------------------------------------------------------
 			PLL_clear_global_values();
