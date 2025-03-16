@@ -118,6 +118,10 @@ namespace experiment
 			int vertex;
 			WEIGHT_TYPE distance;
 			int t_s, t_e;
+			bool operator==(const two_hop_label &other) const
+			{
+				return vertex == other.vertex && distance == other.distance && t_s == other.t_s && t_e == other.t_e;
+			}
 			two_hop_label()
 			{
 				t_s = 0;
@@ -542,7 +546,14 @@ namespace experiment
 			/*labels*/
 			std::vector<std::vector<two_hop_label>> L;
 			PPR_TYPE::PPR_type PPR;
-
+			bool operator==(const two_hop_case_info &other) const
+			{
+				if (thread_num != other.thread_num || L != other.L || PPR != other.PPR)
+				{
+					return false;
+				}
+				return true;
+			}
 			void serialize(std::ofstream &out) const
 			{
 				experiment::saveBinary(out, thread_num);

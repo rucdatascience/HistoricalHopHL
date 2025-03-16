@@ -174,7 +174,7 @@ namespace experiment
 		typedef typename boost::heap::fibonacci_heap<two_hop_label>::handle_type PLL_handle_t_for_sp;
 		std::vector<std::vector<PLL_handle_t_for_sp>> Q_handles_595;
 		std::queue<int> Qid_595;
-
+		std::vector<std::vector<two_hop_label>> Lv_final;
 		void PLL_dij_function(int v_k, graph<int> &input_graph)
 		{
 			mtx_595[max_N_ID_for_mtx_595 - 1].lock();
@@ -185,6 +185,7 @@ namespace experiment
 
 			std::vector<int> P_changed_vertices, T_changed_vertices;
 			std::vector<int> &T_dij = T_dij_595[used_id], P_dij = P_dij_595[used_id];
+
 			std::vector<PLL_handle_t_for_sp> &Q_handles = Q_handles_595[used_id];
 
 			boost::heap::fibonacci_heap<two_hop_label> Q;
@@ -400,6 +401,77 @@ namespace experiment
 			results.clear();
 		}
 
+		void clean_L_new(two_hop_case_info &case_info, int thread_num)
+		{
+
+			auto &L = case_info.L;
+			int N = L.size();
+
+			ThreadPool pool(thread_num);
+			std::vector<std::future<int>> results;
+
+			for (int v = 0; v < N; v++)
+			{
+				results.emplace_back(
+					pool.enqueue([v, &L] { // pass const type value j to thread; [] can be empty
+						mtx_595[max_N_ID_for_mtx_595 - 1].lock();
+						int used_id = Qid_595.front();
+						Qid_595.pop();
+						mtx_595[max_N_ID_for_mtx_595 - 1].unlock();
+
+						std::vector<two_hop_label> &Lv_final_inner = Lv_final[v];
+
+						std::vector<two_hop_label> Lv = L[v];
+
+						auto &T = T_dij_595[used_id];
+
+						for (const auto &Lvi : Lv)
+						{
+							int u = Lvi.vertex;
+							if (v == u)
+							{
+								Lv_final_inner.push_back(Lvi);
+								T[v] = Lvi.distance;
+								continue;
+							}
+							auto Lu = L[u];
+
+							int min_dis = std::numeric_limits<int>::max();
+							for (const auto &label : Lu)
+							{
+								long long int query_dis = label.distance + (long long int)T[label.vertex];
+								if (query_dis < min_dis)
+								{
+									min_dis = query_dis;
+								}
+							}
+
+							if (min_dis > Lvi.distance)
+							{
+								Lv_final_inner.push_back(Lvi);
+								T[u] = Lvi.distance;
+							}
+						}
+
+						for (const auto &label : Lv_final_inner)
+						{
+							T[label.vertex] = std::numeric_limits<int>::max();
+						}
+
+						mtx_595[max_N_ID_for_mtx_595 - 1].lock();
+						Qid_595.push(used_id);
+						mtx_595[max_N_ID_for_mtx_595 - 1].unlock();
+
+						return 1; // return to results; the return type must be the same with results
+					}));
+			}
+
+			for (auto &&result : results)
+				result.get(); // all threads finish here
+			case_info.L = Lv_final;
+			results.clear();
+		}
+
 		void PLL_clear_global_values()
 		{
 			std::vector<std::vector<two_hop_label>>().swap(L_temp_595);
@@ -420,6 +492,7 @@ namespace experiment
 
 			L_temp_595.resize(N);
 			PPR_595.resize(N);
+			Lv_final.resize(N);
 			timer.endSubtask();
 			//---------------------------------------------------------------------------------------------------------------------------------------
 
@@ -469,6 +542,71 @@ namespace experiment
 			//----------------------------------------------- step 3: canonical_repair ---------------------------------------------------------------
 			timer.startSubtask("step 4: canonical_repair");
 			clean_L(case_info, num_of_threads);
+			timer.endSubtask();
+			//---------------------------------------------------------------------------------------------------------------------------------------
+			PLL_clear_global_values();
+		}
+		
+		template <typename weight_type>
+		void pll_new(graph<weight_type> &input_graph, nonhop::two_hop_case_info &case_info)
+		{
+			//----------------------------------- step 1: initialization ------------------------------------------------------------------
+			timer.startSubtask("step 1: initialization");
+			int num_of_threads = case_info.thread_num;
+			int N = input_graph.ADJs.size();
+
+			L_temp_595.resize(N);
+			PPR_595.resize(N);
+			Lv_final.resize(N);
+			timer.endSubtask();
+			//---------------------------------------------------------------------------------------------------------------------------------------
+
+			//----------------------------------------------- step 2: generate labels ---------------------------------------------------------------
+			timer.startSubtask("step 2: generate labels");
+			{
+				// to save RAM of ThreadPool
+				/*seaching shortest paths*/
+				ThreadPool pool(num_of_threads);
+				std::vector<std::future<int>> results; // return typename: xxx
+				P_dij_595.resize(num_of_threads);
+				T_dij_595.resize(num_of_threads);
+				Q_handles_595.resize(num_of_threads);
+				std::queue<int>().swap(Qid_595);
+				for (int i = 0; i < num_of_threads; i++)
+				{
+					P_dij_595[i].resize(N, std::numeric_limits<int>::max());
+					T_dij_595[i].resize(N, std::numeric_limits<int>::max());
+					Q_handles_595[i].resize(N);
+					Qid_595.push(i);
+				}
+
+				int last_check_vID = N - 1;
+
+				for (int v_k = 0; v_k <= last_check_vID; v_k++)
+				{
+					results.emplace_back(
+						pool.enqueue([v_k, &input_graph, last_check_vID] { // pass const type value j to thread; [] can be empty
+							PLL_dij_function(v_k, input_graph);
+							return 1; // return to results; the return type must be the same with results
+						}));
+				}
+				for (auto &&result : results)
+					result.get(); // all threads finish here
+				results.clear();
+			}
+			timer.endSubtask();
+			//---------------------------------------------------------------------------------------------------------------------------------------
+
+			//----------------------------------------------- step 3: sortL ---------------------------------------------------------------
+			timer.startSubtask("step 3: sortL");
+			case_info.L = sortL(num_of_threads);
+			case_info.PPR = PPR_595;
+			timer.endSubtask();
+			//---------------------------------------------------------------------------------------------------------------------------------------
+
+			//----------------------------------------------- step 3: canonical_repair ---------------------------------------------------------------
+			timer.startSubtask("step 4: canonical_repair");
+			clean_L_new(case_info, num_of_threads);
 			timer.endSubtask();
 			//---------------------------------------------------------------------------------------------------------------------------------------
 			PLL_clear_global_values();

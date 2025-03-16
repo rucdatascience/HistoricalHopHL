@@ -39,6 +39,8 @@ int main(int argc, char *argv[])
 			timer.startSubtask("generate graph " + std::to_string(config.hop_limit));
 			experiment::read_graph(instance_graph, config);
 			instance_graph.graph_v_of_v_update_vertexIDs_by_degrees_large_to_small();
+			std::cout << instance_graph.ADJs[0].size() << std::endl;
+			std::cout << instance_graph.ADJs[1].size() << std::endl;
 			timer.endSubtask();
 			experiment::graph_with_time_span<int> graph_time;
 			graph_time.add_graph_time(instance_graph, 0);
@@ -74,29 +76,59 @@ int main(int argc, char *argv[])
 			}
 			else
 			{
-				std::string graph_res_filename = "binary_nonhop_constrained_" + std::to_string(config.hop_limit) + "_graph";
-				std::string experiment_res_filename = "GENERATE_LABEL_nonhop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result.txt";
-				std::filesystem::path graphPath = saveDir.string() + "//" + graph_res_filename;
-				std::filesystem::path resultPath = saveDir.string() + "//" + experiment_res_filename;
 				experiment::nonhop::two_hop_case_info hop_info;
-				hop_info.thread_num = config.threads;
-				timer.startSubtask("generate graph and 2hop label " + std::to_string(config.hop_limit) + " nonhop constrained");
-				experiment::nonhop::pll(instance_graph, hop_info);
-				timer.endSubtask();
-				// hop_info.print_L();
-				std::ofstream FILE_GRAPH(graphPath.string(), std::ios::out | std::ofstream::binary);
-				experiment::saveBinary(FILE_GRAPH, instance_graph);
-				experiment::saveBinary(FILE_GRAPH, graph_time);
-				experiment::saveBinary(FILE_GRAPH, hop_info);
-				FILE_GRAPH.close();
-				std::ofstream outFile;
-				outFile.precision(6);
-				outFile.setf(std::ios::fixed);
-				outFile.setf(std::ios::showpoint);
-				outFile.open(resultPath.string());
-				timer.writeStatsToFile(outFile);
-				hop_info.record_all_details_stream(outFile);
-				outFile.close();
+				experiment::nonhop::two_hop_case_info hop_info_new;
+				{
+					std::string graph_res_filename = "binary_nonhop_constrained_" + std::to_string(config.hop_limit) + "_graph";
+					std::string experiment_res_filename = "GENERATE_LABEL_nonhop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result_old.txt";
+					std::filesystem::path graphPath = saveDir.string() + "//" + graph_res_filename;
+					std::filesystem::path resultPath = saveDir.string() + "//" + experiment_res_filename;
+
+					hop_info.thread_num = config.threads;
+					timer.startSubtask("generate graph and 2hop label " + std::to_string(config.hop_limit) + " nonhop constrained");
+					experiment::nonhop::pll(instance_graph, hop_info);
+					timer.endSubtask();
+					// hop_info.print_L();
+					std::ofstream FILE_GRAPH(graphPath.string(), std::ios::out | std::ofstream::binary);
+					experiment::saveBinary(FILE_GRAPH, instance_graph);
+					experiment::saveBinary(FILE_GRAPH, graph_time);
+					experiment::saveBinary(FILE_GRAPH, hop_info);
+					FILE_GRAPH.close();
+					std::ofstream outFile;
+					outFile.precision(6);
+					outFile.setf(std::ios::fixed);
+					outFile.setf(std::ios::showpoint);
+					outFile.open(resultPath.string());
+					timer.writeStatsToFile(outFile);
+					hop_info.record_all_details_stream(outFile);
+					outFile.close();
+				}
+				{
+					std::string graph_res_filename = "binary_nonhop_constrained_" + std::to_string(config.hop_limit) + "_graph";
+					std::string experiment_res_filename = "GENERATE_LABEL_nonhop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result_new.txt";
+					std::filesystem::path graphPath = saveDir.string() + "//" + graph_res_filename;
+					std::filesystem::path resultPath = saveDir.string() + "//" + experiment_res_filename;
+					experiment::nonhop::two_hop_case_info hop_info;
+					hop_info.thread_num = config.threads;
+					timer.startSubtask("generate graph and 2hop label " + std::to_string(config.hop_limit) + " nonhop constrained");
+					experiment::nonhop::pll(instance_graph, hop_info);
+					timer.endSubtask();
+					// hop_info.print_L();
+					std::ofstream FILE_GRAPH(graphPath.string(), std::ios::out | std::ofstream::binary);
+					experiment::saveBinary(FILE_GRAPH, instance_graph);
+					experiment::saveBinary(FILE_GRAPH, graph_time);
+					experiment::saveBinary(FILE_GRAPH, hop_info);
+					FILE_GRAPH.close();
+					std::ofstream outFile;
+					outFile.precision(6);
+					outFile.setf(std::ios::fixed);
+					outFile.setf(std::ios::showpoint);
+					outFile.open(resultPath.string());
+					timer.writeStatsToFile(outFile);
+					hop_info.record_all_details_stream(outFile);
+					outFile.close();
+				}
+				std::cout << "old equal new ? " << (hop_info == hop_info_new ? "true" : "false") << std::endl;
 			}
 		}
 		else if (config.mode == experiment::MAINTAIN_LABEL)
