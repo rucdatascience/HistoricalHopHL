@@ -166,6 +166,7 @@ namespace experiment
 	{
 		int max_N_ID_for_mtx_595 = 1e7;
 		std::vector<std::shared_mutex> mtx_595(max_N_ID_for_mtx_595);
+		std::vector<std::shared_mutex> ppr_595(max_N_ID_for_mtx_595);
 		std::vector<std::vector<two_hop_label>> L_temp_595;
 		PPR_TYPE::PPR_type PPR_595;
 		std::vector<std::vector<int>> P_dij_595;
@@ -177,6 +178,7 @@ namespace experiment
 		void PLL_dij_function(int v_k, graph<int> &input_graph)
 		{
 			mtx_595[max_N_ID_for_mtx_595 - 1].lock();
+			auto startTime = std::chrono::steady_clock::now();
 			int used_id = Qid_595.front();
 			Qid_595.pop();
 			mtx_595[max_N_ID_for_mtx_595 - 1].unlock();
@@ -192,21 +194,19 @@ namespace experiment
 			Q_handles[v_k] = Q.push(node);
 			P_dij[v_k] = 0;
 			P_changed_vertices.push_back(v_k);
-
 			mtx_595[v_k].lock_shared();
-			for (auto xx : L_temp_595[v_k])
-			{ // ��Ϊv-k�ı�ǩ�ڴ��Լ������Ĺ����в��ᷢ���ı䣬��������query�Ĺ�����ÿ�ζ����õ������Կ�����ǰȡ��������T���飬��ʡ������ҵ�ʱ��
+			for (const auto &xx : L_temp_595[v_k])
+			{
 				int L_v_k_i_vertex = xx.vertex;
-				T_dij[L_v_k_i_vertex] = xx.distance; // allocate T values for L_temp_595[v_k]
+				T_dij[L_v_k_i_vertex] = xx.distance;
 				T_changed_vertices.push_back(L_v_k_i_vertex);
 			}
 			mtx_595[v_k].unlock_shared();
-
 			int new_label_num = 0;
-
+			int count = 0;
 			while (Q.size())
 			{
-
+				count++;
 				node = Q.top();
 				Q.pop();
 				int u = node.vertex;
@@ -216,7 +216,7 @@ namespace experiment
 				int query_v_k_u = std::numeric_limits<int>::max();
 				int common_hub_for_query_v_k_u = 0;
 				mtx_595[u].lock_shared(); // put lock in for loop is very slow
-				for (auto xx : L_temp_595[u])
+				for (const auto &xx : L_temp_595[u])
 				{
 					long long int dis = xx.distance + (long long int)T_dij[xx.vertex]; // long long int is to avoid overflow
 					if (query_v_k_u > dis)
@@ -224,7 +224,7 @@ namespace experiment
 						query_v_k_u = dis;
 						common_hub_for_query_v_k_u = xx.vertex;
 					}
-				} // ��query��ֵ
+				}
 				mtx_595[u].unlock_shared();
 
 				if (P_u < query_v_k_u)
@@ -233,17 +233,15 @@ namespace experiment
 					node.distance = P_u;
 
 					mtx_595[u].lock();
-					L_temp_595[u].push_back(node); // ����ʱL_temp_595[u]����ı�ǩ��һ���ǰ���vertex ID�ź���ģ�������Ϊʲôqueryʱ����T_dij_595��trick��û��Ҫ��L_temp_595[u]����ı�ǩ�ź���
+					L_temp_595[u].push_back(node);
 					mtx_595[u].unlock();
 					new_label_num++;
 
-					/*������dij�����ڽӵ�Ĺ��̣�ͬʱ�������ȶ��к;���*/
-					for (auto xx : input_graph.ADJs[u])
+					for (const auto &xx : input_graph.ADJs[u])
 					{
 						int adj_v = xx.first, ec = xx.second;
-						mtx_595[adj_v].lock();
 						if (P_dij[adj_v] == std::numeric_limits<int>::max())
-						{ // ��δ����ĵ�
+						{
 							node.vertex = adj_v;
 							node.distance = P_u + ec;
 
@@ -258,23 +256,21 @@ namespace experiment
 							Q.update(Q_handles[adj_v], node);
 							P_dij[adj_v] = node.distance;
 						}
-						mtx_595[adj_v].unlock();
 					}
 				}
-				// else if (PLL_dynamic_generate_PPR)
 				else
 				{
 					if (common_hub_for_query_v_k_u != v_k)
 					{
-						mtx_595[u].lock();
+						ppr_595[u].lock();
 						PPR_TYPE::PPR_insert(PPR_595, u, common_hub_for_query_v_k_u, v_k);
-						mtx_595[u].unlock();
+						ppr_595[u].unlock();
 					}
 					if (common_hub_for_query_v_k_u != u)
 					{
-						mtx_595[v_k].lock();
+						ppr_595[v_k].lock();
 						PPR_TYPE::PPR_insert(PPR_595, v_k, common_hub_for_query_v_k_u, u);
-						mtx_595[v_k].unlock();
+						ppr_595[v_k].unlock();
 					}
 				}
 			}
@@ -289,6 +285,8 @@ namespace experiment
 			}
 
 			mtx_595[max_N_ID_for_mtx_595 - 1].lock();
+			auto endTime = std::chrono::steady_clock::now();
+			std::cout << "print pll v_k: " << v_k << " time cost is " << std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count() << std::endl;
 			Qid_595.push(used_id);
 			mtx_595[max_N_ID_for_mtx_595 - 1].unlock();
 		}
@@ -349,7 +347,7 @@ namespace experiment
 
 						auto &T = T_dij_595[used_id];
 
-						for (auto Lvi : Lv)
+						for (const auto &Lvi : Lv)
 						{
 							int u = Lvi.vertex;
 							if (v == u)
@@ -363,7 +361,7 @@ namespace experiment
 							mtx_595[u].unlock_shared();
 
 							int min_dis = std::numeric_limits<int>::max();
-							for (auto label : Lu)
+							for (const auto &label : Lu)
 							{
 								long long int query_dis = label.distance + (long long int)T[label.vertex];
 								if (query_dis < min_dis)
@@ -379,7 +377,7 @@ namespace experiment
 							}
 						}
 
-						for (auto label : Lv_final)
+						for (const auto &label : Lv_final)
 						{
 							T[label.vertex] = std::numeric_limits<int>::max();
 						}

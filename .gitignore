@@ -1,5 +1,5 @@
 .vscode/
-
+.history/
 **/**.exe
 **/try*.cpp
 HistoricalHopHL/x64/
