@@ -523,8 +523,7 @@ namespace experiment
 			Q_handle_priorities_changes.push_back({v_k, 0});
 
 			/* Temp_L_vk_599 stores the label (dist and hop) of vertex v_k */
-			mtx_599[v_k].lock();
-			L_temp_599[v_k].push_back(node);
+			mtx_599[v_k].lock_shared();
 			/* root is vk-> vk->obj info -> vector<obj> -> index-> vertexId obj-><distance,hop> */
 			for (auto &xx : L_temp_599[v_k])
 			{
@@ -532,7 +531,7 @@ namespace experiment
 				Temp_L_vk[L_vk_vertex].push_back({xx.distance, xx.hop});
 				Temp_L_vk_changes.push_back(L_vk_vertex);
 			}
-			mtx_599[v_k].unlock();
+			mtx_599[v_k].unlock_shared();
 
 			/*  dist_hop_599 stores the shortest distance from vk to any other vertices with its hop_cst,
 				note that the hop_cst is determined by the shortest distance */
@@ -551,22 +550,15 @@ namespace experiment
 				int u_hop = node.hop;
 				int P_u = node.distance;
 				int common_hub_for_query_v_k_u = -1;
-				int common_hub_for_query_v_k_u_opt = -1;
 				int query_v_k_u = std::numeric_limits<int>::max();
-				int query_v_k_u_opt = std::numeric_limits<int>::max();
 
-				mtx_599[u].lock();
+				mtx_599[u].lock_shared();
 				for (auto &xx : L_temp_599[u])
 				{
 					int common_v = xx.hub_vertex;
 					for (auto &yy : Temp_L_vk[common_v])
 					{
 						long long int dis_opt = (long long int)xx.distance + yy.first;
-						if (query_v_k_u_opt > dis_opt)
-						{
-							query_v_k_u_opt = dis_opt;
-							common_hub_for_query_v_k_u_opt = xx.hub_vertex;
-						}
 						if (xx.hop + yy.second <= u_hop)
 						{
 							long long int dis = (long long int)xx.distance + yy.first;
@@ -579,37 +571,15 @@ namespace experiment
 						}
 					}
 				}
-				mtx_599[u].unlock();
-
-				// Either a shorter path to the current label exists, or the node is v_k
-				if (P_u < query_v_k_u || query_v_k_u == 0)
-				{ // query_v_k_u == 0 is to start the while loop by searching neighbors of v_k
-
-					if (P_u < query_v_k_u)
-					{
-						node.hub_vertex = v_k;
-						node.hop = u_hop;
-						node.distance = P_u;
-						mtx_599[u].lock();
-						L_temp_599[u].push_back(node);
-						mtx_599[u].unlock();
-					}
-
-					// if (HSDL_dynamic_generate_PPR && query_v_k_u_opt < P_u)
-					// {
-					// 	if (common_hub_for_query_v_k_u_opt != v_k)
-					// 	{
-					// 		mtx_599[u].lock();
-					// 		PPR_insert(PPR_599, u, common_hub_for_query_v_k_u_opt, v_k);
-					// 		mtx_599[u].unlock();
-					// 	}
-					// 	if (common_hub_for_query_v_k_u_opt != u)
-					// 	{
-					// 		mtx_599[v_k].lock();
-					// 		PPR_insert(PPR_599, v_k, common_hub_for_query_v_k_u_opt, u);
-					// 		mtx_599[v_k].unlock();
-					// 	}
-					// }
+				mtx_599[u].unlock_shared();
+				if (P_u < query_v_k_u)
+				{
+					node.hub_vertex = v_k;
+					node.hop = u_hop;
+					node.distance = P_u;
+					mtx_599[u].lock();
+					L_temp_599[u].push_back(node);
+					mtx_599[u].unlock();
 
 					if (u_hop + 1 > global_upper_k)
 					{
@@ -629,18 +599,6 @@ namespace experiment
 						node.hop = u_hop + 1;
 
 						auto &yy = Q_handle_priorities[adj_v][node.hop];
-
-						/*directly using the following codes without dist_hop is OK, but is slower; dist_hop is a pruning technique without increasing the time complexity*/
-						// if (yy.second != std::numeric_limits<int>::max()) {
-						//	if (yy.second > node.distance) {
-						//		Q.update(yy.first, node);
-						//		yy.second = node.distance;
-						//	}
-						// }
-						// else {
-						//	yy = { Q.push(node), node.distance };
-						//	Q_handle_priorities_changes.push_back({ adj_v, node.hop });
-						// }
 
 						if (yy.second <= node.distance)
 						{ // adj_v has been reached with a smaller distance and the same hop
@@ -718,9 +676,9 @@ namespace experiment
 				Q_handle_priorities[xx.first][xx.second] = {handle_x, std::numeric_limits<int>::max()};
 			}
 
-			mtx_599[v_k].lock();
-			std::vector<two_hop_label>(L_temp_599[v_k]).swap(L_temp_599[v_k]);
-			mtx_599[v_k].unlock();
+			// mtx_599[v_k].lock();
+			// std::vector<two_hop_label>(L_temp_599[v_k]).swap(L_temp_599[v_k]);
+			// mtx_599[v_k].unlock();
 
 			mtx_599[max_N_ID_for_mtx_599 - 1].lock();
 			Qid_599.push(used_id);
@@ -784,14 +742,13 @@ namespace experiment
 						Qid_599.pop();
 						mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
 
-						std::vector<two_hop_label> Lv_final;
+						std::vector<two_hop_label> &Lv_final = Lv_final_599[v];
 
 						/**
 						 * get the L result of the current vertex
 						 */
-						mtx_599[v].lock_shared();
-						std::vector<two_hop_label> Lv = L[v];
-						mtx_599[v].unlock_shared();
+
+						std::vector<two_hop_label> &Lv = L[v];
 
 						/**
 						 * the temp_L in this thread
@@ -809,9 +766,7 @@ namespace experiment
 							/**
 							 * Traverse the L on the opposite vertex of the current label.
 							 */
-							mtx_599[u].lock_shared();
-							auto Lu = L[u];
-							mtx_599[u].unlock_shared();
+							const auto &Lu = L[u];
 
 							/**
 							 * traverse downward from the perfectly correct first vertex
@@ -843,12 +798,7 @@ namespace experiment
 						{
 							std::vector<std::pair<int, int>>().swap(T[label.hub_vertex]);
 						}
-
-						mtx_599[v].lock();
-						L[v] = Lv_final;
-						L[v].shrink_to_fit();
-						mtx_599[v].unlock();
-
+						
 						mtx_599[max_N_ID_for_mtx_599 - 1].lock();
 						Qid_599.push(used_id);
 						mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
@@ -859,6 +809,7 @@ namespace experiment
 
 			for (auto &&result : results)
 				result.get(); // all threads finish here
+			case_info.L = Lv_final_599;
 			results.clear();
 		}
 
