@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 			{
 				// k-constrained pll
 				std::string graph_res_filename = "binary_hop_constrained_" + std::to_string(config.hop_limit) + "_graph";
-				std::string experiment_res_filename = "GENERATE_LABEL__hop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result.txt";
+				std::string experiment_res_filename = "GENERATE_LABEL__hop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result_new.txt";
 				std::filesystem::path graphPath = saveDir.string() + "//" + graph_res_filename;
 				std::filesystem::path resultPath = saveDir.string() + "//" + experiment_res_filename;
 				experiment::hop::two_hop_case_info hop_info;
