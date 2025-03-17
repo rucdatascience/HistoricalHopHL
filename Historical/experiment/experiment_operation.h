@@ -342,7 +342,7 @@ namespace experiment
 
 						std::vector<two_hop_label> &Lv_final_inner = Lv_final[v];
 
-						std::vector<two_hop_label> Lv = L[v];
+						std::vector<two_hop_label> &Lv = L[v];
 
 						auto &T = T_dij_595[used_id];
 
@@ -351,11 +351,11 @@ namespace experiment
 							int u = Lvi.vertex;
 							if (v == u)
 							{
-								Lv_final_inner.push_back(Lvi);
+								Lv_final_inner.push_back(two_hop_label(Lvi));
 								T[v] = Lvi.distance;
 								continue;
 							}
-							auto Lu = L[u];
+							const auto &Lu = L[u];
 
 							int min_dis = std::numeric_limits<int>::max();
 							for (const auto &label : Lu)
@@ -369,7 +369,7 @@ namespace experiment
 
 							if (min_dis > Lvi.distance)
 							{
-								Lv_final_inner.push_back(Lvi);
+								Lv_final_inner.push_back(two_hop_label(Lvi));
 								T[u] = Lvi.distance;
 							}
 						}
@@ -475,6 +475,7 @@ namespace experiment
 		int max_N_ID_for_mtx_599 = 1e7;
 		std::queue<int> Qid_599;
 		std::vector<std::shared_mutex> mtx_599(max_N_ID_for_mtx_599);
+		std::vector<std::shared_mutex> ppr_599(max_N_ID_for_mtx_599);
 
 		int global_upper_k = 0;
 
@@ -483,6 +484,7 @@ namespace experiment
 
 		typedef typename boost::heap::fibonacci_heap<two_hop_label>::handle_type hop_constrained_node_handle;
 		std::vector<std::vector<two_hop_label>> L_temp_599;
+		std::vector<std::vector<two_hop_label>> Lv_final_599;
 		PPR_TYPE::PPR_type PPR_599;
 		std::vector<std::vector<std::vector<std::pair<int, int>>>> Temp_L_vk_599;
 		std::vector<std::vector<std::pair<int, int>>> dist_hop_599;
@@ -509,8 +511,6 @@ namespace experiment
 			/* get the label list in current thread*/
 			auto &Q_handle_priorities = Q_handle_priorities_599[used_id];
 
-			long long int new_label_num = 0;
-
 			/* a class contains information about destination vertex, hop count, and cost in the priority queue */
 			boost::heap::fibonacci_heap<two_hop_label> Q;
 
@@ -525,7 +525,6 @@ namespace experiment
 			/* Temp_L_vk_599 stores the label (dist and hop) of vertex v_k */
 			mtx_599[v_k].lock();
 			L_temp_599[v_k].push_back(node);
-			new_label_num++;
 			/* root is vk-> vk->obj info -> vector<obj> -> index-> vertexId obj-><distance,hop> */
 			for (auto &xx : L_temp_599[v_k])
 			{
@@ -594,7 +593,6 @@ namespace experiment
 						mtx_599[u].lock();
 						L_temp_599[u].push_back(node);
 						mtx_599[u].unlock();
-						new_label_num++;
 					}
 
 					// if (HSDL_dynamic_generate_PPR && query_v_k_u_opt < P_u)
@@ -694,15 +692,15 @@ namespace experiment
 				/* add v_k into PPR(u,common_hub_for_query_v_k_u), and add u into PPR(v_k,common_hub_for_query_v_k_u)*/
 				if (common_hub_for_query_v_k_u != v_k)
 				{
-					mtx_599[u].lock();
+					ppr_599[u].lock();
 					PPR_TYPE::PPR_insert(PPR_599, u, common_hub_for_query_v_k_u, v_k);
-					mtx_599[u].unlock();
+					ppr_599[u].unlock();
 				}
 				if (common_hub_for_query_v_k_u != u)
 				{
-					mtx_599[v_k].lock();
+					ppr_599[v_k].lock();
 					PPR_TYPE::PPR_insert(PPR_599, v_k, common_hub_for_query_v_k_u, u);
-					mtx_599[v_k].unlock();
+					ppr_599[v_k].unlock();
 				}
 			}
 

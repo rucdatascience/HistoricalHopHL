@@ -129,6 +129,15 @@ namespace experiment
 				vertex = std::numeric_limits<int>::max();
 				distance = std::numeric_limits<WEIGHT_TYPE>::max();
 			}
+
+			two_hop_label(const two_hop_label &other)
+			{
+				t_s = other.t_s;
+				t_e = other.t_e;
+				vertex = other.vertex;
+				distance = other.distance;
+			}
+
 			two_hop_label(int start_time)
 			{
 				t_s = start_time;
