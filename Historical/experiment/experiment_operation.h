@@ -840,6 +840,7 @@ namespace experiment
 			int N = graph.size();
 			/* store the L Label and PPR*/
 			L_temp_599.resize(N);
+			Lv_final_599.resize(N);
 			PPR_599.resize(N);
 
 			int num_of_threads = case_info.thread_num;
