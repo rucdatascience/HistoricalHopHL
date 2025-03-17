@@ -762,7 +762,7 @@ namespace experiment
 						/**
 						 * Traverse the L-list of the current vertex
 						 */
-						for (auto Lvi : Lv)
+						for (const auto &Lvi : Lv)
 						{
 							int u = Lvi.hub_vertex;
 							int u_hop = Lvi.hop;
@@ -793,7 +793,7 @@ namespace experiment
 
 							if (min_dis > Lvi.distance)
 							{
-								Lv_final.push_back(Lvi);
+								Lv_final.push_back(two_hop_label(Lvi));
 								T[u].push_back({Lvi.distance, Lvi.hop});
 							}
 						}
@@ -806,7 +806,7 @@ namespace experiment
 						mtx_599[max_N_ID_for_mtx_599 - 1].lock();
 						Qid_599.push(used_id);
 						auto endTime = std::chrono::steady_clock::now();
-						std::cout << "print pll v_k: " << v_k << " time cost is " << std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count() << std::endl;
+						std::cout << "print pll v: " << v << " time cost is " << std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count() << std::endl;
 						mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
 
 						return 1; // return to results; the return type must be the same with results

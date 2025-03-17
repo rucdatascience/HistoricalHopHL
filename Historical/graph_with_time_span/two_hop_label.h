@@ -717,6 +717,15 @@ namespace experiment
 			int hub_vertex, hop;
 			WEIGHT_TYPE distance;
 			int t_s, t_e;
+
+			two_hop_label(const two_hop_label &other)
+			{
+				t_s = other.t_s;
+				t_e = other.t_e;
+				hub_vertex = other.hub_vertex;
+				hop = other.hop;
+				distance = other.distance;
+			}
 			// hop_constrained_two_hop_label() {}
 			// hop_constrained_two_hop_label(int _vertex, int _hop, int _dis)
 			// {
