@@ -498,6 +498,7 @@ namespace experiment
 			/* get unique thread id */
 			/* critical section obtain array index  */
 			mtx_599[max_N_ID_for_mtx_599 - 1].lock();
+			auto startTime = std::chrono::steady_clock::now();
 			int used_id = Qid_599.front();
 			Qid_599.pop();
 			mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
@@ -681,6 +682,8 @@ namespace experiment
 			// mtx_599[v_k].unlock();
 
 			mtx_599[max_N_ID_for_mtx_599 - 1].lock();
+			auto endTime = std::chrono::steady_clock::now();
+			std::cout << "print pll v_k: " << v_k << " time cost is " << std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count() << std::endl;
 			Qid_599.push(used_id);
 			mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
 		}
@@ -738,6 +741,7 @@ namespace experiment
 				results.emplace_back(
 					pool.enqueue([v, &L] { // pass const type value j to thread; [] can be empty
 						mtx_599[max_N_ID_for_mtx_599 - 1].lock();
+						auto startTime = std::chrono::steady_clock::now();
 						int used_id = Qid_599.front();
 						Qid_599.pop();
 						mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
@@ -798,9 +802,11 @@ namespace experiment
 						{
 							std::vector<std::pair<int, int>>().swap(T[label.hub_vertex]);
 						}
-						
+
 						mtx_599[max_N_ID_for_mtx_599 - 1].lock();
 						Qid_599.push(used_id);
+						auto endTime = std::chrono::steady_clock::now();
+						std::cout << "print pll v_k: " << v_k << " time cost is " << std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count() << std::endl;
 						mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
 
 						return 1; // return to results; the return type must be the same with results
