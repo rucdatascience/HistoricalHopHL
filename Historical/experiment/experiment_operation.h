@@ -524,7 +524,7 @@ namespace experiment
 			Q_handle_priorities_changes.push_back({v_k, 0});
 			double costQuery = 0;
 			double costUpdate = 0;
-			long size = 0;
+			size_t size = 0;
 			/* Temp_L_vk_599 stores the label (dist and hop) of vertex v_k */
 			mtx_599[v_k].lock_shared();
 			/* root is vk-> vk->obj info -> vector<obj> -> index-> vertexId obj-><distance,hop> */
@@ -541,7 +541,7 @@ namespace experiment
 			dist_hop_changes.push_back(v_k);
 			while (Q.size() > 0)
 			{
-				size = std::max(size, Q.size());
+				size = std::max(size,Q.size());
 				/* poll the vertex from heap.In other words, poll the vertex with the minimal cost */
 				node = Q.top();
 				Q.pop();
