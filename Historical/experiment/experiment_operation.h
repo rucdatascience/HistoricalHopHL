@@ -648,7 +648,6 @@ namespace experiment
 								{
 									Q.update(yy.first, node);
 									yy.second = node.distance;
-									costUpdate += std::chrono::duration_cast<std::chrono::duration<double>>(updateEndTime - updateStartTime).count();
 								}
 								else
 								{
