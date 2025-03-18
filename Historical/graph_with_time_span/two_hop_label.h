@@ -49,17 +49,17 @@ namespace experiment
 		{
 
 			/*add v3 into PPR(v1, v2)*/
-
-			int pos = graph_hash_of_mixed_weighted_binary_operations_search_position(PPR[v1], v2);
-			if (pos == -1)
-			{
-				std::vector<int> x = {v3};
-				graph_hash_of_mixed_weighted_binary_operations_insert(PPR[v1], v2, x);
-			}
-			else
-			{
-				PPR_binary_operations_insert(PPR[v1][pos].second, v3);
-			}
+			graph_hash_of_mixed_weighted_binary_operations_ppr_insert(PPR[v1], v2, v3);
+			// int pos = graph_hash_of_mixed_weighted_binary_operations_search_position(PPR[v1], v2);
+			// if (pos == -1)
+			// {
+			// 	std::vector<int> x = {v3};
+			// 	graph_hash_of_mixed_weighted_binary_operations_insert(PPR[v1], v2, x);
+			// }
+			// else
+			// {
+			// 	PPR_binary_operations_insert(PPR[v1][pos].second, v3);
+			// }
 		}
 
 		std::vector<int> PPR_retrieve(PPR_type &PPR, int v1, int v2)
