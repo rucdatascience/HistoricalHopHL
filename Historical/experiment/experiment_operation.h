@@ -525,7 +525,7 @@ namespace experiment
 			double costQuery = 0;
 			double costUpdate = 0;
 			double costPPR = 0;
-			size_t size = 0;
+			// size_t size = 0;
 			/* Temp_L_vk_599 stores the label (dist and hop) of vertex v_k */
 			mtx_599[v_k].lock_shared();
 			/* root is vk-> vk->obj info -> vector<obj> -> index-> vertexId obj-><distance,hop> */
@@ -542,13 +542,17 @@ namespace experiment
 			dist_hop_changes.push_back(v_k);
 			while (Q.size() > 0)
 			{
-				size = std::max(size, Q.size());
+				// size = std::max(size, Q.size());
 				/* poll the vertex from heap.In other words, poll the vertex with the minimal cost */
 				node = Q.top();
 				Q.pop();
 
 				/* current node, u, which is the node generating the labels*/
 				int u = node.hub_vertex;
+
+				if(v_k > u){
+					continue;
+				}
 
 				int u_hop = node.hop;
 				int P_u = node.distance;
@@ -570,7 +574,6 @@ namespace experiment
 								query_v_k_u = dis;
 								common_hub_for_query_v_k_u = xx.hub_vertex;
 							}
-							break;
 						}
 					}
 				}
@@ -710,7 +713,7 @@ namespace experiment
 				std::cout << " update cost is " << costUpdate << std::endl;
 				std::cout << " ppr update cost is " << costPPR << std::endl;
 				std::cout << " restore update cost is " << std::chrono::duration_cast<std::chrono::duration<double>>(restoreEndTime - restoreStartTime).count() << std::endl;
-				std::cout << " Q size is " << size << std::endl;
+				// std::cout << " Q size is " << size << std::endl;
 			}
 			Qid_599.push(used_id);
 			mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
