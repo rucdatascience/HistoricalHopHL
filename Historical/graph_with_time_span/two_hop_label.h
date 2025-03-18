@@ -1467,6 +1467,18 @@ namespace experiment
 				outputFile << "upper_k=" << upper_k << std::endl;
 
 				outputFile << "compute_label_bit_size()=" << compute_label_bit_size() << std::endl;
+
+				int index = 0;
+				std::cout << "print_L: (hub_vertex, hop, distance)" << std::endl;
+				for (auto &xx : L)
+				{
+					outputFile << "vertex " << index++ << ": ";
+					for (auto &yy : xx)
+					{
+						outputFile << "(" << yy.hub_vertex << "," << yy.hop << "," << yy.distance << "," << yy.t_s << "," << yy.t_e << ")";
+					}
+					outputFile << std::endl;
+				}
 			}
 
 			long long int query(int source, int terminal, int t_s, int t_e, int hop_cst)

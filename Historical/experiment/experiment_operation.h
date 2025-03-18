@@ -660,22 +660,25 @@ namespace experiment
 						}
 					}
 				}
-				auto pprStartTime = std::chrono::steady_clock::now();
-				/* add v_k into PPR(u,common_hub_for_query_v_k_u), and add u into PPR(v_k,common_hub_for_query_v_k_u)*/
-				if (common_hub_for_query_v_k_u != v_k)
+				else
 				{
-					ppr_599[u].lock();
-					PPR_TYPE::PPR_insert(PPR_599, u, common_hub_for_query_v_k_u, v_k);
-					ppr_599[u].unlock();
+					auto pprStartTime = std::chrono::steady_clock::now();
+					/* add v_k into PPR(u,common_hub_for_query_v_k_u), and add u into PPR(v_k,common_hub_for_query_v_k_u)*/
+					if (common_hub_for_query_v_k_u != v_k)
+					{
+						ppr_599[u].lock();
+						PPR_TYPE::PPR_insert(PPR_599, u, common_hub_for_query_v_k_u, v_k);
+						ppr_599[u].unlock();
+					}
+					if (common_hub_for_query_v_k_u != u)
+					{
+						ppr_599[v_k].lock();
+						PPR_TYPE::PPR_insert(PPR_599, v_k, common_hub_for_query_v_k_u, u);
+						ppr_599[v_k].unlock();
+					}
+					auto pprEndTime = std::chrono::steady_clock::now();
+					costPPR += std::chrono::duration_cast<std::chrono::duration<double>>(pprEndTime - pprStartTime).count();
 				}
-				if (common_hub_for_query_v_k_u != u)
-				{
-					ppr_599[v_k].lock();
-					PPR_TYPE::PPR_insert(PPR_599, v_k, common_hub_for_query_v_k_u, u);
-					ppr_599[v_k].unlock();
-				}
-				auto pprEndTime = std::chrono::steady_clock::now();
-				costPPR += std::chrono::duration_cast<std::chrono::duration<double>>(pprEndTime - pprStartTime).count();
 			}
 			auto restoreStartTime = std::chrono::steady_clock::now();
 			for (auto &xx : Temp_L_vk_changes)
