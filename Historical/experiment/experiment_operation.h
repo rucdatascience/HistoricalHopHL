@@ -522,10 +522,9 @@ namespace experiment
 			node.distance = 0;
 			Q_handle_priorities[v_k][0] = {Q.push({node}), node.distance};
 			Q_handle_priorities_changes.push_back({v_k, 0});
-			std::chrono::steady_clock::time_point startTime1;
-			std::chrono::steady_clock::time_point endTime1;
-			std::chrono::steady_clock::time_point updateStartTime;
-			std::chrono::steady_clock::time_point updateEndTime;
+			double costQuery = 0;
+			double costUpdate = 0;
+			long size = 0;
 			/* Temp_L_vk_599 stores the label (dist and hop) of vertex v_k */
 			mtx_599[v_k].lock_shared();
 			/* root is vk-> vk->obj info -> vector<obj> -> index-> vertexId obj-><distance,hop> */
@@ -542,6 +541,7 @@ namespace experiment
 			dist_hop_changes.push_back(v_k);
 			while (Q.size() > 0)
 			{
+				size = std::max(size, Q.size());
 				/* poll the vertex from heap.In other words, poll the vertex with the minimal cost */
 				node = Q.top();
 				Q.pop();
@@ -553,7 +553,7 @@ namespace experiment
 				int P_u = node.distance;
 				int common_hub_for_query_v_k_u = -1;
 				int query_v_k_u = std::numeric_limits<int>::max();
-				startTime1 = std::chrono::steady_clock::now();
+				auto startTime1 = std::chrono::steady_clock::now();
 				mtx_599[u].lock_shared();
 				for (auto &xx : L_temp_599[u])
 				{
@@ -574,7 +574,8 @@ namespace experiment
 					}
 				}
 				mtx_599[u].unlock_shared();
-				endTime1 = std::chrono::steady_clock::now();
+				auto endTime1 = std::chrono::steady_clock::now();
+				costQuery += std::chrono::duration_cast<std::chrono::duration<double>>(endTime1 - startTime1).count();
 				if (P_u < query_v_k_u)
 				{
 					node.hub_vertex = v_k;
@@ -610,9 +611,10 @@ namespace experiment
 						/* the vertex has not been visited*/
 						if (dist_hop[adj_v].first == std::numeric_limits<int>::max())
 						{ // adj_v has not been reached
-							updateStartTime = std::chrono::steady_clock::now();
+							auto updateStartTime = std::chrono::steady_clock::now();
 							yy = {Q.push({node}), node.distance};
-							updateEndTime = std::chrono::steady_clock::now();
+							auto updateEndTime = std::chrono::steady_clock::now();
+							costUpdate += std::chrono::duration_cast<std::chrono::duration<double>>(updateEndTime - updateStartTime).count();
 							Q_handle_priorities_changes.push_back({adj_v, node.hop});
 							dist_hop[adj_v].first = node.distance;
 							dist_hop[adj_v].second = node.hop;
@@ -624,16 +626,18 @@ namespace experiment
 							{ // adj_v has been reached with a less distance
 								if (yy.second != std::numeric_limits<int>::max())
 								{
-									updateStartTime = std::chrono::steady_clock::now();
+									auto updateStartTime = std::chrono::steady_clock::now();
 									Q.update(yy.first, node);
-									updateEndTime = std::chrono::steady_clock::now();
+									auto updateEndTime = std::chrono::steady_clock::now();
+									costUpdate += std::chrono::duration_cast<std::chrono::duration<double>>(updateEndTime - updateStartTime).count();
 									yy.second = node.distance;
 								}
 								else
 								{
-									updateStartTime = std::chrono::steady_clock::now();
+									auto updateStartTime = std::chrono::steady_clock::now();
 									yy = {Q.push(node), node.distance};
-									updateEndTime = std::chrono::steady_clock::now();
+									auto updateEndTime = std::chrono::steady_clock::now();
+									costUpdate += std::chrono::duration_cast<std::chrono::duration<double>>(updateEndTime - updateStartTime).count();
 									Q_handle_priorities_changes.push_back({adj_v, node.hop});
 								}
 								dist_hop[adj_v].first = node.distance;
@@ -643,16 +647,18 @@ namespace experiment
 							{ // adj_v has been reached with a less hop
 								if (yy.second != std::numeric_limits<int>::max())
 								{
-									updateStartTime = std::chrono::steady_clock::now();
+									auto updateStartTime = std::chrono::steady_clock::now();
 									Q.update(yy.first, node);
-									updateEndTime = std::chrono::steady_clock::now();
+									auto updateEndTime = std::chrono::steady_clock::now();
+									costUpdate += std::chrono::duration_cast<std::chrono::duration<double>>(updateEndTime - updateStartTime).count();
 									yy.second = node.distance;
 								}
 								else
 								{
-									updateStartTime = std::chrono::steady_clock::now();
+									auto updateStartTime = std::chrono::steady_clock::now();
 									yy = {Q.push(node), node.distance};
-									updateEndTime = std::chrono::steady_clock::now();
+									auto updateEndTime = std::chrono::steady_clock::now();
+									costUpdate += std::chrono::duration_cast<std::chrono::duration<double>>(updateEndTime - updateStartTime).count();
 									Q_handle_priorities_changes.push_back({adj_v, node.hop});
 								}
 							}
@@ -697,8 +703,9 @@ namespace experiment
 			std::cout << "print pll v_k: " << v_k << " time cost is " << cost << std::endl;
 			if (cost > 50)
 			{
-				std::cout << " query opt by L cost is " << std::chrono::duration_cast<std::chrono::duration<double>>(endTime1 - startTime1).count() << std::endl;
-				std::cout << " update cost is " << std::chrono::duration_cast<std::chrono::duration<double>>(updateStartTime - updateEndTime).count() << std::endl;
+				std::cout << " query opt by L cost is " << costQuery << std::endl;
+				std::cout << " update cost is " << costUpdate << std::endl;
+				std::cout << " Q size is " << size << std::endl;
 			}
 			Qid_599.push(used_id);
 			mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
