@@ -100,26 +100,6 @@ namespace experiment {
 
 	}
 
-	int graph_hash_of_mixed_weighted_binary_operations_ppr_insert(std::vector<std::pair<int, std::vector<int>>> &input_vector, int key, int load)
-	{
-		auto it = std::lower_bound(input_vector.begin(), input_vector.end(), key,
-								   [](const std::pair<int, std::vector<int>> &a, int key)
-								   {
-									   return a.first < key;
-								   });
-
-		if (it != input_vector.end() && it->first == key)
-		{
-			auto &vec = it->second;
-			auto pos = std::lower_bound(vec.begin(), vec.end(), load);
-			vec.insert(pos, load);
-			return std::distance(input_vector.begin(), it);
-		}
-
-		it = input_vector.emplace(it, key, std::vector<int>{load});
-		return std::distance(input_vector.begin(), it);
-	}
-
 	template <typename T>
 	int graph_hash_of_mixed_weighted_binary_operations_insert(std::vector<std::pair<int, T>>& input_vector, int key, T load) {
 

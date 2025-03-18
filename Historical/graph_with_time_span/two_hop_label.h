@@ -2,6 +2,8 @@
 #include <climits>
 #include <limits>
 #include <vector>
+#include <map>
+#include <set>
 #include <iostream>
 #include "Historical/utils/BinaryPersistence.h"
 #include <algorithm>
@@ -13,101 +15,32 @@ namespace experiment
 {
 	namespace PPR_TYPE
 	{
-		using PPR_type = std::vector<std::vector<std::pair<int, std::vector<int>>>>;
-
-		int PPR_binary_operations_insert(std::vector<int> &input_vector, int key)
+		using PPR_type = std::vector<std::map<int, std::set<int>>>;
+		std::set<int> PPR_retrieve(PPR_type &PPR, int v1, int v2)
 		{
-
-			int left = 0, right = input_vector.size() - 1;
-
-			while (left <= right) // it will be skept when input_vector.size() == 0
+			const auto &ppr_inner = PPR[v1];
+			if (ppr_inner.find(v2) != ppr_inner.end())
 			{
-				int mid = left + ((right - left) / 2); // mid is between left and right (may be equal);
-				if (input_vector[mid] == key)
-				{
-					return mid;
-				}
-				else if (input_vector[mid] > key)
-				{
-					right = mid - 1; // the elements after right are always either empty, or have larger keys than input key
-				}
-				else
-				{
-					left = mid + 1; // the elements before left are always either empty, or have smaller keys than input key
-				}
+				return ppr_inner.at(v2);
 			}
-
-			/*the following code is used when key is not in vector, i.e., left > right, specifically, left = right + 1;
-			the elements before left are always either empty, or have smaller keys than input key;
-			the elements after right are always either empty, or have larger keys than input key;
-			so, the input key should be insert between right and left at this moment*/
-			input_vector.insert(input_vector.begin() + left, key);
-			return left;
+			return std::set<int>();
 		}
 
 		void PPR_insert(PPR_type &PPR, int v1, int v2, int v3)
 		{
-
 			/*add v3 into PPR(v1, v2)*/
-			graph_hash_of_mixed_weighted_binary_operations_ppr_insert(PPR[v1], v2, v3);
-			// int pos = graph_hash_of_mixed_weighted_binary_operations_search_position(PPR[v1], v2);
-			// if (pos == -1)
-			// {
-			// 	std::vector<int> x = {v3};
-			// 	graph_hash_of_mixed_weighted_binary_operations_insert(PPR[v1], v2, x);
-			// }
-			// else
-			// {
-			// 	PPR_binary_operations_insert(PPR[v1][pos].second, v3);
-			// }
-		}
-
-		std::vector<int> PPR_retrieve(PPR_type &PPR, int v1, int v2)
-		{
-
-			/*retrieve PPR(v1, v2)*/
-
-			int pos = graph_hash_of_mixed_weighted_binary_operations_search_position(PPR[v1], v2);
-			if (pos == -1)
+			std::map<int, std::set<int>> &ppr_inner = PPR[v1];
+			if (ppr_inner.find(v2) == ppr_inner.end())
 			{
-				std::vector<int> x;
-				return x;
+				std::set<int> temp = std::set<int>();
+				temp.emplace(v3);
+				ppr_inner[v2] = temp;
 			}
 			else
 			{
-				return PPR[v1][pos].second;
+				ppr_inner.at(v2).emplace(v3);
 			}
 		}
-
-		void PPR_replace(PPR_type &PPR, int v1, int v2, std::vector<int> &loads)
-		{
-
-			/*replace PPR(v1, v2) = loads*/
-
-			int pos = graph_hash_of_mixed_weighted_binary_operations_search_position(PPR[v1], v2);
-			if (pos == -1)
-			{
-				graph_hash_of_mixed_weighted_binary_operations_insert(PPR[v1], v2, loads);
-			}
-			else
-			{
-				PPR[v1][pos].second = loads;
-			}
-		}
-
-		void PPR_erase(PPR_type &PPR, int v1, int v2, int v3)
-		{
-			int pos = graph_hash_of_mixed_weighted_binary_operations_search_position(PPR[v1], v2);
-			for (auto it = PPR[v1][pos].second.begin(); it != PPR[v1][pos].second.end(); it++)
-			{
-				if (*it == v3)
-				{
-					PPR[v1][pos].second.erase(it);
-					break;
-				}
-			}
-		}
-
 	}
 
 	namespace nonhop
@@ -615,7 +548,8 @@ namespace experiment
 				{
 					for (int j = 0; j < PPR[i].size(); j++)
 					{
-						size = size + (PPR[i][j].second.size() + 1) * sizeof(int); // + 1 ��Ӧ PPR[i][j].first
+						// TODO-GPY 如果正确要修改这里
+						// size = size + (PPR[i][j].second.size() + 1) * sizeof(int);
 					}
 				}
 				return size;
@@ -635,22 +569,22 @@ namespace experiment
 					std::cout << std::endl;
 				}
 			}
-			void print_PPR()
-			{
-				std::cout << "print_PPR:" << std::endl;
-				for (int i = 0; i < PPR.size(); i++)
-				{
-					for (int j = 0; j < PPR[i].size(); j++)
-					{
-						std::cout << "PPR(" << i << "," << PPR[i][j].first << "): ";
-						for (int k = 0; k < PPR[i][j].second.size(); k++)
-						{
-							std::cout << PPR[i][j].second[k] << " ";
-						}
-						std::cout << std::endl;
-					}
-				}
-			}
+			// void print_PPR()
+			// {
+			// 	std::cout << "print_PPR:" << std::endl;
+			// 	for (int i = 0; i < PPR.size(); i++)
+			// 	{
+			// 		for (int j = 0; j < PPR[i].size(); j++)
+			// 		{
+			// 			std::cout << "PPR(" << i << "," << PPR[i][j].first << "): ";
+			// 			for (int k = 0; k < PPR[i][j].second.size(); k++)
+			// 			{
+			// 				std::cout << PPR[i][j].second[k] << " ";
+			// 			}
+			// 			std::cout << std::endl;
+			// 		}
+			// 	}
+			// }
 
 			/*record_all_details*/
 			void record_all_details(std::string save_name)
@@ -1482,22 +1416,22 @@ namespace experiment
 				}
 			}
 
-			void print_PPR()
-			{
-				std::cout << "print_PPR:" << std::endl;
-				for (int i = 0; i < PPR.size(); i++)
-				{
-					for (int j = 0; j < PPR[i].size(); j++)
-					{
-						std::cout << "PPR(" << i << "," << PPR[i][j].first << "): ";
-						for (int k = 0; k < PPR[i][j].second.size(); k++)
-						{
-							std::cout << PPR[i][j].second[k] << " ";
-						}
-						std::cout << std::endl;
-					}
-				}
-			}
+			// void print_PPR()
+			// {
+			// 	std::cout << "print_PPR:" << std::endl;
+			// 	for (int i = 0; i < PPR.size(); i++)
+			// 	{
+			// 		for (int j = 0; j < PPR[i].size(); j++)
+			// 		{
+			// 			std::cout << "PPR(" << i << "," << PPR[i][j].first << "): ";
+			// 			for (int k = 0; k < PPR[i][j].second.size(); k++)
+			// 			{
+			// 				std::cout << PPR[i][j].second[k] << " ";
+			// 			}
+			// 			std::cout << std::endl;
+			// 		}
+			// 	}
+			// }
 
 			void print_L_vk(int v_k)
 			{
