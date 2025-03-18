@@ -524,6 +524,7 @@ namespace experiment
 			Q_handle_priorities_changes.push_back({v_k, 0});
 
 			/* Temp_L_vk_599 stores the label (dist and hop) of vertex v_k */
+			auto startTime1 = std::chrono::steady_clock::now();
 			mtx_599[v_k].lock_shared();
 			/* root is vk-> vk->obj info -> vector<obj> -> index-> vertexId obj-><distance,hop> */
 			for (auto &xx : L_temp_599[v_k])
@@ -533,12 +534,12 @@ namespace experiment
 				Temp_L_vk_changes.push_back(L_vk_vertex);
 			}
 			mtx_599[v_k].unlock_shared();
-
+			auto endTime1 = std::chrono::steady_clock::now();
 			/*  dist_hop_599 stores the shortest distance from vk to any other vertices with its hop_cst,
 				note that the hop_cst is determined by the shortest distance */
 			dist_hop[v_k] = {0, 0};
 			dist_hop_changes.push_back(v_k);
-
+			auto startTime2 = std::chrono::steady_clock::now();
 			while (Q.size() > 0)
 			{
 				/* poll the vertex from heap.In other words, poll the vertex with the minimal cost */
@@ -662,7 +663,7 @@ namespace experiment
 					ppr_599[v_k].unlock();
 				}
 			}
-
+			auto endTime2 = std::chrono::steady_clock::now();
 			for (auto &xx : Temp_L_vk_changes)
 			{
 				std::vector<std::pair<int, int>>().swap(Temp_L_vk[xx]);
@@ -683,7 +684,12 @@ namespace experiment
 
 			mtx_599[max_N_ID_for_mtx_599 - 1].lock();
 			auto endTime = std::chrono::steady_clock::now();
-			std::cout << "print pll v_k: " << v_k << " time cost is " << std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count() << std::endl;
+			double cost = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count();
+			std::cout << "print pll v_k: " << v_k << " time cost is " << cost << std::endl;
+			if(cost > 50){
+				std::cout <<" init Temp_L_vk cost is " << std::chrono::duration_cast<std::chrono::duration<double>>(endTime1 - startTime1).count() <<std::endl;
+				std::cout <<" Traverse cost is " << std::chrono::duration_cast<std::chrono::duration<double>>(endTime2 - startTime2).count() <<std::endl;
+			}
 			Qid_599.push(used_id);
 			mtx_599[max_N_ID_for_mtx_599 - 1].unlock();
 		}
