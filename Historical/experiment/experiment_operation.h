@@ -931,7 +931,7 @@ namespace experiment
 			timer.endSubtask();
 			//----------------------------------------------- step 4: canonical_repair---------------------------------------------------------------
 			timer.startSubtask("step 4: canonical_repair");
-			// hop_constrained_clean_L(case_info, num_of_threads);
+			hop_constrained_clean_L(case_info, num_of_threads);
 			timer.endSubtask();
 			//---------------------------------------------------------------------------------------------------------------------------------------
 			hop_constrained_clear_global_values<weight_type>();
