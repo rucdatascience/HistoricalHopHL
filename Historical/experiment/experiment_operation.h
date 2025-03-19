@@ -216,6 +216,10 @@ namespace experiment
 				int u = node.vertex;
 
 				int P_u = node.distance;
+				
+				if(v_k > u){
+					continue;
+				}
 
 				int query_v_k_u = std::numeric_limits<int>::max();
 				int common_hub_for_query_v_k_u = 0;
