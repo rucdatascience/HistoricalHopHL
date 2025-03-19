@@ -164,6 +164,9 @@ namespace experiment
 
 	namespace nonhop
 	{
+		int globalLabelSize = 0;
+		int globalLabelCleanSize = 0;
+		int globalPprSize = 0;
 		int max_N_ID_for_mtx_595 = 1e7;
 		std::vector<std::shared_mutex> mtx_595(max_N_ID_for_mtx_595);
 		std::vector<std::shared_mutex> ppr_595(max_N_ID_for_mtx_595);
@@ -235,6 +238,7 @@ namespace experiment
 
 					mtx_595[u].lock();
 					L_temp_595[u].push_back(node);
+					++globalLabelSize;
 					mtx_595[u].unlock();
 					new_label_num++;
 
@@ -352,6 +356,7 @@ namespace experiment
 							if (v == u)
 							{
 								Lv_final_inner.push_back(two_hop_label(Lvi));
+								++globalLabelCleanSize;
 								T[v] = Lvi.distance;
 								continue;
 							}
@@ -370,6 +375,7 @@ namespace experiment
 							if (min_dis > Lvi.distance)
 							{
 								Lv_final_inner.push_back(two_hop_label(Lvi));
+								++globalLabelCleanSize;
 								T[u] = Lvi.distance;
 							}
 						}
@@ -472,6 +478,9 @@ namespace experiment
 
 	namespace hop
 	{
+		int globalLabelSize = 0;
+		int globalLabelCleanSize = 0;
+		int globalPprSize = 0;
 		int max_N_ID_for_mtx_599 = 1e7;
 		std::queue<int> Qid_599;
 		std::vector<std::shared_mutex> mtx_599(max_N_ID_for_mtx_599);
@@ -550,7 +559,8 @@ namespace experiment
 				/* current node, u, which is the node generating the labels*/
 				int u = node.hub_vertex;
 
-				if(v_k > u){
+				if (v_k > u)
+				{
 					continue;
 				}
 
@@ -587,6 +597,7 @@ namespace experiment
 					node.distance = P_u;
 					mtx_599[u].lock();
 					L_temp_599[u].push_back(node);
+					++globalLabelSize;
 					mtx_599[u].unlock();
 
 					if (u_hop + 1 > global_upper_k)
@@ -671,12 +682,14 @@ namespace experiment
 					{
 						ppr_599[u].lock();
 						PPR_TYPE::PPR_insert(PPR_599, u, common_hub_for_query_v_k_u, v_k);
+						++globalPprSize;
 						ppr_599[u].unlock();
 					}
 					if (common_hub_for_query_v_k_u != u)
 					{
 						ppr_599[v_k].lock();
 						PPR_TYPE::PPR_insert(PPR_599, v_k, common_hub_for_query_v_k_u, u);
+						++globalPprSize;
 						ppr_599[v_k].unlock();
 					}
 					auto pprEndTime = std::chrono::steady_clock::now();
@@ -825,6 +838,7 @@ namespace experiment
 							if (min_dis > Lvi.distance)
 							{
 								Lv_final.push_back(two_hop_label(Lvi));
+								++globalLabelCleanSize;
 								T[u].push_back({Lvi.distance, Lvi.hop});
 							}
 						}
@@ -935,7 +949,7 @@ namespace experiment
 			timer.endSubtask();
 			//---------------------------------------------------------------------------------------------------------------------------------------
 			hop_constrained_clear_global_values<weight_type>();
-			std::cout<< "end"<<std::endl;
+			std::cout << "end" << std::endl;
 		}
 
 	}

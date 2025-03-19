@@ -58,9 +58,9 @@ int main(int argc, char *argv[])
 				hop_info.upper_k = config.hop_limit;
 				timer.startSubtask("generate 2hop label " + std::to_string(config.hop_limit) + " hop constrained");
 				experiment::hop::pll(instance_graph, hop_info);
-				std::cout <<"1"<<std::endl;
+				std::cout << "1" << std::endl;
 				timer.endSubtask();
-				std::cout << "finish pll " <<std::endl;
+				std::cout << "finish pll " << std::endl;
 				// hop_info.print_L();
 				std::ofstream FILE_GRAPH(graphPath.string(), std::ios::out | std::ofstream::binary);
 				experiment::saveBinary(FILE_GRAPH, instance_graph);
@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
 				outFile.open(resultPath.string());
 				timer.writeStatsToFile(outFile);
 				hop_info.record_all_details_stream(outFile);
+				outFile << "pre L size is " << experiment::hop::globalLabelSize << " clean L size is " << experiment::hop::globalLabelCleanSize << " ppr size is " << experiment::hop::globalPprSize;
 				outFile.close();
 			}
 			else
@@ -102,6 +103,7 @@ int main(int argc, char *argv[])
 				outFile.open(resultPath.string());
 				timer.writeStatsToFile(outFile);
 				hop_info.record_all_details_stream(outFile);
+				outFile << "pre L size is " << experiment::nonhop::globalLabelSize << " clean L size is " << experiment::nonhop::globalLabelCleanSize << " ppr size is " << experiment::nonhop::globalPprSize;
 				outFile.close();
 			}
 		}

@@ -1485,22 +1485,22 @@ namespace PPR_TYPE
 				}
 			}
 
-			// void print_PPR()
-			// {
-			// 	std::cout << "print_PPR:" << std::endl;
-			// 	for (int i = 0; i < PPR.size(); i++)
-			// 	{
-			// 		for (int j = 0; j < PPR[i].size(); j++)
-			// 		{
-			// 			std::cout << "PPR(" << i << "," << PPR[i][j].first << "): ";
-			// 			for (int k = 0; k < PPR[i][j].second.size(); k++)
-			// 			{
-			// 				std::cout << PPR[i][j].second[k] << " ";
-			// 			}
-			// 			std::cout << std::endl;
-			// 		}
-			// 	}
-			// }
+			void print_PPR()
+			{
+				std::cout << "print_PPR:" << std::endl;
+				for (int i = 0; i < PPR.size(); i++)
+				{
+					for (int j = 0; j < PPR[i].size(); j++)
+					{
+						std::cout << "PPR(" << i << "," << PPR[i][j].first << "): ";
+						for (int k = 0; k < PPR[i][j].second.size(); k++)
+						{
+							std::cout << PPR[i][j].second[k] << " ";
+						}
+						std::cout << std::endl;
+					}
+				}
+			}
 
 			void print_L_vk(int v_k)
 			{
@@ -1536,18 +1536,6 @@ namespace PPR_TYPE
 				outputFile << "upper_k=" << upper_k << std::endl;
 
 				outputFile << "compute_label_bit_size()=" << compute_label_bit_size() << std::endl;
-
-				int index = 0;
-				outputFile << "print_L: (hub_vertex, hop, distance)" << std::endl;
-				for (auto &xx : L)
-				{
-					outputFile << "vertex " << index++ << ": ";
-					for (auto &yy : xx)
-					{
-						outputFile << "(" << yy.hub_vertex << "," << yy.hop << "," << yy.distance << "," << yy.t_s << "," << yy.t_e << ")";
-					}
-					outputFile << std::endl;
-				}
 			}
 
 			long long int query(int source, int terminal, int t_s, int t_e, int hop_cst)
