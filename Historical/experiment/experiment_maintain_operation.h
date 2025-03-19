@@ -408,9 +408,9 @@ namespace experiment
 
 							int v = it.first, u = it.second;
 							mtx_5952[v].lock();
-							std::set<int> temp = PPR_TYPE::PPR_retrieve(*PPR, v, u);
+							std::vector<int> temp = PPR_TYPE::PPR_retrieve(*PPR, v, u);
 							mtx_5952[v].unlock();
-							temp.emplace(u);
+							temp.push_back(u);
 							for (auto t : temp) {
 								if (v < t) {
 									long long d1 = MAX_VALUE;
@@ -969,9 +969,9 @@ namespace experiment
 
 							int v = it.first, u = it.second;
 							mtx_5952[v].lock();
-							std::set<int> temp = PPR_TYPE::PPR_retrieve(*PPR, v, u);
+							std::vector<int> temp = PPR_TYPE::PPR_retrieve(*PPR, v, u);
 							mtx_5952[v].unlock();
-							temp.emplace(u);
+							temp.push_back(u);
 
 							mtx_595[v].lock_shared();
 							auto Lv = (*L)[v]; // to avoid interlocking
@@ -1677,9 +1677,9 @@ namespace experiment
 																		  {
 								int v = it.first, u = it.second, h_u = it.hop;
 								mtx_5992[v].lock_shared();
-								std::set<int> temp = PPR_TYPE::PPR_retrieve(*PPR, v, u);
+								std::vector<int> temp = PPR_TYPE::PPR_retrieve(*PPR, v, u);
 								mtx_5992[v].unlock_shared();
-								temp.emplace(u);
+								temp.push_back(u);
 								mtx_ruc_increase[v].lock_shared();
 								auto Lv = (*L)[v]; // to avoid interlocking
 								mtx_ruc_increase[v].unlock_shared();
@@ -2320,9 +2320,9 @@ namespace experiment
 								int v = it.first, u = it.second;
 								int hop_u = it.hop;
 								mtx_5992[v].lock();
-								std::set<int> temp = PPR_TYPE::PPR_retrieve(*PPR, v, u);
+								std::vector<int> temp = PPR_TYPE::PPR_retrieve(*PPR, v, u);
 								mtx_5992[v].unlock();
-								temp.emplace(u);
+								temp.push_back(u);
 
 								mtx_2021_increase[v].lock_shared();
 								auto Lv = (*L)[v]; // to avoid interlocking

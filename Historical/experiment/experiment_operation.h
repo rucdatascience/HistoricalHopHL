@@ -846,7 +846,9 @@ namespace experiment
 
 			for (auto &&result : results)
 				result.get(); // all threads finish here
-			case_info.L = Lv_final_599;
+			std::cout << "start move" << std::endl;
+			case_info.L = std::move(Lv_final_599);
+			std::cout << "end move" << std::endl;
 			results.clear();
 		}
 
@@ -854,6 +856,7 @@ namespace experiment
 		void hop_constrained_clear_global_values()
 		{
 			std::vector<std::vector<two_hop_label>>().swap(L_temp_599);
+			std::vector<std::vector<two_hop_label>>().swap(Lv_final_599);
 			ideal_graph_599<weight_type>.clear();
 			std::vector<std::vector<std::vector<std::pair<int, int>>>>().swap(Temp_L_vk_599);
 			std::vector<std::vector<std::pair<int, int>>>().swap(dist_hop_599);
@@ -928,10 +931,11 @@ namespace experiment
 			timer.endSubtask();
 			//----------------------------------------------- step 4: canonical_repair---------------------------------------------------------------
 			timer.startSubtask("step 4: canonical_repair");
-			hop_constrained_clean_L(case_info, num_of_threads);
+			// hop_constrained_clean_L(case_info, num_of_threads);
 			timer.endSubtask();
 			//---------------------------------------------------------------------------------------------------------------------------------------
 			hop_constrained_clear_global_values<weight_type>();
+			std::cout<< "end"<<std::endl;
 		}
 
 	}

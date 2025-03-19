@@ -13,34 +13,103 @@ using WEIGHT_TYPE = long;
 #define MAX_VALUE 1e7
 namespace experiment
 {
-	namespace PPR_TYPE
+namespace PPR_TYPE
 	{
-		using PPR_type = std::vector<std::map<int, std::set<int>>>;
-		std::set<int> PPR_retrieve(PPR_type &PPR, int v1, int v2)
+		using PPR_type = std::vector<std::vector<std::pair<int, std::vector<int>>>>;
+
+		int PPR_binary_operations_insert(std::vector<int> &input_vector, int key)
 		{
-			const auto &ppr_inner = PPR[v1];
-			if (ppr_inner.find(v2) != ppr_inner.end())
+
+			int left = 0, right = input_vector.size() - 1;
+
+			while (left <= right) // it will be skept when input_vector.size() == 0
 			{
-				return ppr_inner.at(v2);
+				int mid = left + ((right - left) / 2); // mid is between left and right (may be equal);
+				if (input_vector[mid] == key)
+				{
+					return mid;
+				}
+				else if (input_vector[mid] > key)
+				{
+					right = mid - 1; // the elements after right are always either empty, or have larger keys than input key
+				}
+				else
+				{
+					left = mid + 1; // the elements before left are always either empty, or have smaller keys than input key
+				}
 			}
-			return std::set<int>();
+
+			/*the following code is used when key is not in vector, i.e., left > right, specifically, left = right + 1;
+			the elements before left are always either empty, or have smaller keys than input key;
+			the elements after right are always either empty, or have larger keys than input key;
+			so, the input key should be insert between right and left at this moment*/
+			input_vector.insert(input_vector.begin() + left, key);
+			return left;
 		}
 
 		void PPR_insert(PPR_type &PPR, int v1, int v2, int v3)
 		{
+
 			/*add v3 into PPR(v1, v2)*/
-			std::map<int, std::set<int>> &ppr_inner = PPR[v1];
-			if (ppr_inner.find(v2) == ppr_inner.end())
+
+			int pos = graph_hash_of_mixed_weighted_binary_operations_search_position(PPR[v1], v2);
+			if (pos == -1)
 			{
-				std::set<int> temp = std::set<int>();
-				temp.emplace(v3);
-				ppr_inner[v2] = temp;
+				std::vector<int> x = {v3};
+				graph_hash_of_mixed_weighted_binary_operations_insert(PPR[v1], v2, x);
 			}
 			else
 			{
-				ppr_inner.at(v2).emplace(v3);
+				PPR_binary_operations_insert(PPR[v1][pos].second, v3);
 			}
 		}
+
+		std::vector<int> PPR_retrieve(PPR_type &PPR, int v1, int v2)
+		{
+
+			/*retrieve PPR(v1, v2)*/
+
+			int pos = graph_hash_of_mixed_weighted_binary_operations_search_position(PPR[v1], v2);
+			if (pos == -1)
+			{
+				std::vector<int> x;
+				return x;
+			}
+			else
+			{
+				return PPR[v1][pos].second;
+			}
+		}
+
+		void PPR_replace(PPR_type &PPR, int v1, int v2, std::vector<int> &loads)
+		{
+
+			/*replace PPR(v1, v2) = loads*/
+
+			int pos = graph_hash_of_mixed_weighted_binary_operations_search_position(PPR[v1], v2);
+			if (pos == -1)
+			{
+				graph_hash_of_mixed_weighted_binary_operations_insert(PPR[v1], v2, loads);
+			}
+			else
+			{
+				PPR[v1][pos].second = loads;
+			}
+		}
+
+		void PPR_erase(PPR_type &PPR, int v1, int v2, int v3)
+		{
+			int pos = graph_hash_of_mixed_weighted_binary_operations_search_position(PPR[v1], v2);
+			for (auto it = PPR[v1][pos].second.begin(); it != PPR[v1][pos].second.end(); it++)
+			{
+				if (*it == v3)
+				{
+					PPR[v1][pos].second.erase(it);
+					break;
+				}
+			}
+		}
+
 	}
 
 	namespace nonhop
@@ -1468,17 +1537,17 @@ namespace experiment
 
 				outputFile << "compute_label_bit_size()=" << compute_label_bit_size() << std::endl;
 
-				// int index = 0;
-				// std::cout << "print_L: (hub_vertex, hop, distance)" << std::endl;
-				// for (auto &xx : L)
-				// {
-				// 	outputFile << "vertex " << index++ << ": ";
-				// 	for (auto &yy : xx)
-				// 	{
-				// 		outputFile << "(" << yy.hub_vertex << "," << yy.hop << "," << yy.distance << "," << yy.t_s << "," << yy.t_e << ")";
-				// 	}
-				// 	outputFile << std::endl;
-				// }
+				int index = 0;
+				outputFile << "print_L: (hub_vertex, hop, distance)" << std::endl;
+				for (auto &xx : L)
+				{
+					outputFile << "vertex " << index++ << ": ";
+					for (auto &yy : xx)
+					{
+						outputFile << "(" << yy.hub_vertex << "," << yy.hop << "," << yy.distance << "," << yy.t_s << "," << yy.t_e << ")";
+					}
+					outputFile << std::endl;
+				}
 			}
 
 			long long int query(int source, int terminal, int t_s, int t_e, int hop_cst)

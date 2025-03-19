@@ -58,7 +58,9 @@ int main(int argc, char *argv[])
 				hop_info.upper_k = config.hop_limit;
 				timer.startSubtask("generate 2hop label " + std::to_string(config.hop_limit) + " hop constrained");
 				experiment::hop::pll(instance_graph, hop_info);
+				std::cout <<"1"<<std::endl;
 				timer.endSubtask();
+				std::cout << "finish pll " <<std::endl;
 				// hop_info.print_L();
 				std::ofstream FILE_GRAPH(graphPath.string(), std::ios::out | std::ofstream::binary);
 				experiment::saveBinary(FILE_GRAPH, instance_graph);
