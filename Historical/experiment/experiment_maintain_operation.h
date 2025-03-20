@@ -1309,7 +1309,7 @@ namespace experiment
 				void decrease_maintain_step1_batch(std::map<std::pair<int, int>, weightTYPE> &v_map, std::vector<std::vector<two_hop_label>> *L, PPR_TYPE::PPR_type *PPR, std::vector<hop_constrained_affected_label> *CL,
 												   ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
 				{
-					for (auto v_map_item : v_map)
+					for (const auto& v_map_item : v_map)
 					{
 						results_dynamic.emplace_back(pool_dynamic.enqueue([t, v_map_item, L, PPR, CL]
 																		  {
@@ -1401,10 +1401,9 @@ namespace experiment
 						}
 						else
 						{
-							std::vector<hop_constrained_label_v2> vec_with_hub_v = CL_map[v];
+							std::vector<hop_constrained_label_v2> &vec_with_hub_v = CL_map[v];
 							hop_constrained_label_v2 tmp(u, hop, dis);
 							vec_with_hub_v.emplace_back(tmp);
-							CL_map[v] = vec_with_hub_v;
 						}
 					}
 
@@ -1428,8 +1427,7 @@ namespace experiment
 								auto& dist_hop = dist_hop_599_v2[current_tid];
 								boost::heap::fibonacci_heap<hop_constrained_node_for_DIFFUSE> pq;
 								std::map<std::pair<int, int>, std::pair<hop_constrained_handle_t_for_DIFFUSE, int>> Q_handle;
-								std::vector<int> hubs;
-								hubs.resize(instance_graph.size(), -1);
+								std::vector<int> hubs(instance_graph.size(), -1);
 								auto& Q_VALUE = Q_value[current_tid];
 
 								for (auto& it : vec_with_hub_v) {
@@ -1680,9 +1678,9 @@ namespace experiment
 								std::vector<int> temp = PPR_TYPE::PPR_retrieve(*PPR, v, u);
 								mtx_5992[v].unlock_shared();
 								temp.push_back(u);
-								mtx_ruc_increase[v].lock_shared();
-								auto Lv = (*L)[v]; // to avoid interlocking
-								mtx_ruc_increase[v].unlock_shared();
+								// mtx_ruc_increase[v].lock_shared();
+								// auto Lv = (*L)[v]; // to avoid interlocking
+								// mtx_ruc_increase[v].unlock_shared();
 
 								for (auto t : temp) {
 									if (v < t) {
@@ -1717,7 +1715,7 @@ namespace experiment
 												continue;
 											//mtx_599[t].lock_shared();
 											//auto query_result = graph_hash_of_mixed_weightejd_two_hop_v2_extract_distance_no_reduc2(*L, t.first, v, hop_i);
-											auto query_result = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[t], Lv, hop_i);
+											auto query_result = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[t], (*L)[v], hop_i);
 											//mtx_599[t].unlock_shared();
 
 											if (query_result.first > di) { // only add new label when it's absolutely necessary
@@ -1775,7 +1773,7 @@ namespace experiment
 
 											//mtx_599[t].lock_shared();
 											//auto query_result = graph_hash_of_mixed_weighted_two_hop_v2_extract_distance_no_reduc2(*L, v, t_first, hop_i);
-											auto query_result = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[t], Lv, hop_i);
+											auto query_result = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[t], (*L)[v], hop_i);
 											//mtx_599[t].unlock_shared();
 
 											if (query_result.first > di) {
