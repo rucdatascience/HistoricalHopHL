@@ -192,18 +192,11 @@ namespace experiment
 			return -1;
 		}
 
-		void txt_save(std::string save_name) const
+		void txt_save(std::ofstream &out) const
 		{
-
-			std::ofstream outputFile;
-			outputFile.precision(10);
-			outputFile.setf(std::ios::fixed);
-			outputFile.setf(std::ios::showpoint);
-			outputFile.open(save_name);
-
-			outputFile << "|V|= " << ADJs.size() << std::endl;
-			outputFile << "|E|= " << graph<weight_type>::edge_number() << std::endl;
-			outputFile << std::endl;
+			out << "|V|= " << ADJs.size() << std::endl;
+			out << "|E|= " << graph<weight_type>::edge_number() << std::endl;
+			out << std::endl;
 
 			int size = ADJs.size();
 			for (int i = 0; i < size; i++)
@@ -211,15 +204,12 @@ namespace experiment
 				int v_size = ADJs[i].size();
 				for (int j = 0; j < v_size; j++)
 				{
-					if (i < ADJs[i][j].first)
-					{
-						outputFile << "Edge " << i << " " << ADJs[i][j].first << " " << ADJs[i][j].second << '\n';
-					}
+					out << "Edge " << i << " " << ADJs[i][j].first << " " << ADJs[i][j].second << '\n';
 				}
 			}
-			outputFile << std::endl;
+			out << std::endl;
 
-			outputFile << "EOF" << std::endl;
+			out << "EOF" << std::endl;
 		}
 
 		void txt_read(std::string save_name)
@@ -262,34 +252,36 @@ namespace experiment
 		void graph_v_of_v_update_vertexIDs_by_degrees_large_to_small()
 		{
 			int N = this->ADJs.size();
-
 			std::vector<std::pair<int, int>> sorted_vertices;
+			sorted_vertices.reserve(N);			 
+
 			for (int i = 0; i < N; i++)
 			{
-				sorted_vertices.push_back({i, this->ADJs[i].size()});
+				sorted_vertices.push_back({i, static_cast<int>(this->ADJs[i].size())});
 			}
 			std::sort(sorted_vertices.begin(), sorted_vertices.end(), compare_graph_v_of_v_update_vertexIDs_by_degrees_large_to_small);
+
 			std::vector<int> vertexID_old_to_new(N);
 			for (int i = 0; i < N; i++)
 			{
 				vertexID_old_to_new[sorted_vertices[i].first] = i;
 			}
+
 			for (int i = 0; i < N; i++)
 			{
-				std::vector<std::pair<int, weight_type>> &edge_info = this->ADJs.at(i);
-				for (std::pair<int, weight_type> &edge : edge_info)
+				for (auto &edge : this->ADJs[i])
 				{
 					edge.first = vertexID_old_to_new[edge.first];
 				}
-				std::sort(edge_info.begin(), edge_info.end(), sortEdgeById);
+				std::sort(this->ADJs[i].begin(), this->ADJs[i].end(), sortEdgeById);
 			}
+
+			std::vector<std::vector<std::pair<int, weight_type>>> newADJs(N);
 			for (int i = 0; i < N; i++)
 			{
-				if (vertexID_old_to_new[i] < i)
-				{
-					std::swap(this->ADJs[i], this->ADJs[vertexID_old_to_new[i]]);
-				}
+				newADJs[vertexID_old_to_new[i]] = std::move(this->ADJs[i]);
 			}
+			this->ADJs = std::move(newADJs);
 		}
 
 		void serialize(std::ofstream &out) const

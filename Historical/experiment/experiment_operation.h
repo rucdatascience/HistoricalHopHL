@@ -16,7 +16,6 @@ namespace experiment
 	{
 		std::string readPath = config.data_source.string();
 		std::string line_content;
-		boost::random::uniform_int_distribution<> random_v;
 		boost::random::uniform_int_distribution<> random_weight = boost::random::uniform_int_distribution<>(1, 100);
 		int v_num = 0;
 		std::ifstream myfile(readPath);
@@ -32,7 +31,6 @@ namespace experiment
 					{
 						v_num = std::stoi(Parsed_content[2]);
 						graph.resize(v_num);
-						random_v = boost::random::uniform_int_distribution<>(0, v_num);
 					}
 				}
 				else

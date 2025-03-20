@@ -163,6 +163,7 @@ namespace experiment
 
 		void add_edge(int e1, int e2, weight_type ec, int time)
 		{
+			this->time_max = time > this->time_max ? time : this->time_max;
 			/* initialize a graph with a time span */
 			if (time == 0)
 			{
@@ -210,7 +211,7 @@ namespace experiment
 			this->time_max = time > this->time_max ? time : this->time_max;
 			for (int i = 0; i < N; i++)
 			{
-				std::vector<std::pair<int, weight_type>> list = graph.ADJs[i];
+				std::vector<std::pair<int, weight_type>> &list = graph.ADJs[i];
 				for (const auto &edges : list)
 				{
 					if (edges.first < i)

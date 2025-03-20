@@ -85,6 +85,7 @@ int main(int argc, char *argv[])
 				std::string experiment_res_filename = "GENERATE_LABEL_nonhop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result_old.txt";
 				std::filesystem::path graphPath = saveDir.string() + "//" + graph_res_filename;
 				std::filesystem::path resultPath = saveDir.string() + "//" + experiment_res_filename;
+				std::filesystem::path resultGraphPath = saveDir.string() + "//" + "test_save_graph";
 
 				hop_info.thread_num = config.threads;
 				timer.startSubtask("generate graph and 2hop label " + std::to_string(config.hop_limit) + " nonhop constrained");
@@ -104,6 +105,13 @@ int main(int argc, char *argv[])
 				timer.writeStatsToFile(outFile);
 				hop_info.record_all_details_stream(outFile);
 				outFile << "pre L size is " << experiment::nonhop::globalLabelSize << " clean L size is " << experiment::nonhop::globalLabelCleanSize << " ppr size is " << experiment::nonhop::globalPprSize;
+				
+				std::ofstream outFile1;
+				outFile1.precision(6);
+				outFile1.setf(std::ios::fixed);
+				outFile1.setf(std::ios::showpoint);
+				outFile1.open(resultGraphPath.string());
+				instance_graph.txt_save(outFile1);
 				outFile.close();
 			}
 		}
@@ -232,14 +240,15 @@ int main(int argc, char *argv[])
 						}
 						if (path_decrease.size() > hop_info.thread_num)
 						{
-							for (int i = 0; i < path_decrease.size(); i++)
+							for (int index = 0; index < path_decrease.size(); index++)
 							{
-								int v1 = path_decrease[i].first;
-								int v2 = path_decrease[i].second;
-								int w = weight_decrease[i];
+								int v1 = path_decrease[index].first;
+								int v2 = path_decrease[index].second;
+								int w = weight_decrease[index];
 								int old_w = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 								std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << old_w << std::endl;
 								instance_graph_temp.add_edge(v1, v2, w);
+								graph_time.add_edge(v1, v2, w, i);
 							}
 							std::cout << "decrease ruc maintain" << std::endl;
 							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
@@ -257,15 +266,16 @@ int main(int argc, char *argv[])
 						}
 						if (path_increase.size() > hop_info.thread_num)
 						{
-							for (int i = 0; i < path_increase.size(); i++)
+							for (int index = 0; index < path_increase.size(); index++)
 							{
-								int v1 = path_increase[i].first;
-								int v2 = path_increase[i].second;
-								int w = weight_increase[i];
+								int v1 = path_increase[index].first;
+								int v2 = path_increase[index].second;
+								int w = weight_increase[index];
 								int old_w = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 								weight_old_increase.push_back(old_w);
 								std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << old_w << std::endl;
 								instance_graph_temp.add_edge(v1, v2, w);
+								graph_time.add_edge(v1, v2, w, i);
 							}
 							std::cout << "increase ruc maintain" << std::endl;
 							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
@@ -285,14 +295,15 @@ int main(int argc, char *argv[])
 					}
 					if (path_decrease.size() > 0)
 					{
-						for (int i = 0; i < path_decrease.size(); i++)
+						for (int index = 0; index < path_decrease.size(); index++)
 						{
-							int v1 = path_decrease[i].first;
-							int v2 = path_decrease[i].second;
-							int w = weight_decrease[i];
+							int v1 = path_decrease[index].first;
+							int v2 = path_decrease[index].second;
+							int w = weight_decrease[index];
 							int old_w = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 							std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << old_w << std::endl;
 							instance_graph_temp.add_edge(v1, v2, w);
+							graph_time.add_edge(v1, v2, w, i);
 						}
 						std::cout << "decrease ruc maintain" << std::endl;
 						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
@@ -310,15 +321,16 @@ int main(int argc, char *argv[])
 					}
 					if (path_increase.size() > 0)
 					{
-						for (int i = 0; i < path_increase.size(); i++)
+						for (int index = 0; index < path_increase.size(); index++)
 						{
-							int v1 = path_increase[i].first;
-							int v2 = path_increase[i].second;
-							int w = weight_increase[i];
+							int v1 = path_increase[index].first;
+							int v2 = path_increase[index].second;
+							int w = weight_increase[index];
 							int old_w = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 							weight_old_increase.push_back(old_w);
 							std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << old_w << std::endl;
 							instance_graph_temp.add_edge(v1, v2, w);
+							graph_time.add_edge(v1, v2, w, i);
 						}
 						std::cout << "increase ruc maintain" << std::endl;
 						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
@@ -338,9 +350,7 @@ int main(int argc, char *argv[])
 					timer_baseline1.startSubtask("save graph " + std::to_string(i));
 					graph_list.push_back(instance_graph_temp);
 					timer_baseline1.endSubtask();
-					timer_baseline2.startSubtask("save graph with time span label " + std::to_string(i));
-					graph_time.add_graph_time(instance_graph_temp, i);
-					timer_baseline2.endSubtask();
+
 					if (i == config.iterations / 2 || i == config.iterations)
 					{
 						timer_ruc.endSubtask();
@@ -396,6 +406,7 @@ int main(int argc, char *argv[])
 				std::string experiment_MAINTAIN_LABEL_res_filename = "MAINTAIN_LABEL_nonhop_constrained_" + std::to_string(config.hop_limit) + "_" + std::to_string(config.threads) + "_threads_result.txt";
 				std::filesystem::path hopLabelPath = saveDir.string() + "//" + hop_label_res_filename;
 				std::filesystem::path resultPath = saveDir.string() + "//" + experiment_MAINTAIN_LABEL_res_filename;
+				std::filesystem::path resultGraphPrePath = saveDir.string() + "//" + "test_read_graph";
 
 				long long int half_ruc_size = 0;
 				long long int half_2021_size = 0;
@@ -406,6 +417,12 @@ int main(int argc, char *argv[])
 				experiment::loadBinary(FILE_GRAPH, init_graph);
 				experiment::loadBinary(FILE_GRAPH, graph_time);
 				experiment::loadBinary(FILE_GRAPH, hop_info);
+				std::ofstream outFileTemp;
+				outFileTemp.precision(6);
+				outFileTemp.setf(std::ios::fixed);
+				outFileTemp.setf(std::ios::showpoint);
+				outFileTemp.open(resultGraphPrePath.string());
+				init_graph.txt_save(outFileTemp);
 				hop_info.thread_num = config.threads;
 				experiment::nonhop::two_hop_case_info hop_info_2021;
 				hop_info_2021 = hop_info;
@@ -492,14 +509,15 @@ int main(int argc, char *argv[])
 						}
 						if (path_decrease.size() > hop_info.thread_num)
 						{
-							for (int i = 0; i < path_decrease.size(); i++)
+							for (int index = 0; index < path_decrease.size(); index++)
 							{
-								int v1 = path_decrease[i].first;
-								int v2 = path_decrease[i].second;
-								int w = weight_decrease[i];
+								int v1 = path_decrease[index].first;
+								int v2 = path_decrease[index].second;
+								int w = weight_decrease[index];
 								int w_old = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 								std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << w_old << std::endl;
 								instance_graph_temp.add_edge(v1, v2, w);
+								graph_time.add_edge(v1, v2, w, i);
 							}
 							std::cout << "decrease ruc maintain" << std::endl;
 							experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
@@ -517,15 +535,16 @@ int main(int argc, char *argv[])
 						}
 						if (path_increase.size() > hop_info.thread_num)
 						{
-							for (int i = 0; i < path_increase.size(); i++)
+							for (int index = 0; index < path_increase.size(); index++)
 							{
-								int v1 = path_increase[i].first;
-								int v2 = path_increase[i].second;
-								int w = weight_increase[i];
+								int v1 = path_increase[index].first;
+								int v2 = path_increase[index].second;
+								int w = weight_increase[index];
 								int w_old = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 								weight_old_increase.push_back(w_old);
 								std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << w_old << std::endl;
 								instance_graph_temp.add_edge(v1, v2, w);
+								graph_time.add_edge(v1, v2, w, i);
 							}
 							std::cout << "increase ruc maintain" << std::endl;
 							experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
@@ -545,14 +564,15 @@ int main(int argc, char *argv[])
 					}
 					if (path_decrease.size() > 0)
 					{
-						for (int i = 0; i < path_decrease.size(); i++)
+						for (int index = 0; index < path_decrease.size(); index++)
 						{
-							int v1 = path_decrease[i].first;
-							int v2 = path_decrease[i].second;
-							int w = weight_decrease[i];
+							int v1 = path_decrease[index].first;
+							int v2 = path_decrease[index].second;
+							int w = weight_decrease[index];
 							int w_old = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 							std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << w_old << std::endl;
 							instance_graph_temp.add_edge(v1, v2, w);
+							graph_time.add_edge(v1, v2, w, i);
 						}
 						std::cout << "decrease ruc maintain" << std::endl;
 						experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
@@ -570,15 +590,16 @@ int main(int argc, char *argv[])
 					}
 					if (path_increase.size() > 0)
 					{
-						for (int i = 0; i < path_increase.size(); i++)
+						for (int index = 0; index < path_increase.size(); index++)
 						{
-							int v1 = path_increase[i].first;
-							int v2 = path_increase[i].second;
-							int w = weight_increase[i];
+							int v1 = path_increase[index].first;
+							int v2 = path_increase[index].second;
+							int w = weight_increase[index];
 							int w_old = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 							weight_old_increase.push_back(w_old);
 							std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << w_old << std::endl;
 							instance_graph_temp.add_edge(v1, v2, w);
+							graph_time.add_edge(v1, v2, w, i);
 						}
 						std::cout << "increase ruc maintain" << std::endl;
 						experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
@@ -599,7 +620,7 @@ int main(int argc, char *argv[])
 					graph_list.push_back(instance_graph_temp);
 					timer_baseline1.endSubtask();
 					timer_baseline2.startSubtask("save graph with time span label " + std::to_string(i));
-					graph_time.add_graph_time(instance_graph_temp, i);
+					// graph_time.add_graph_time(instance_graph_temp, i);
 					timer_baseline2.endSubtask();
 					if (i == config.iterations / 2 || i == config.iterations)
 					{
