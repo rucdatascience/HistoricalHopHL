@@ -391,6 +391,7 @@ namespace experiment
 
 						mtx_595[max_N_ID_for_mtx_595 - 1].lock();
 						Qid_595.push(used_id);
+						std::cout << "print pll v: " << v  << std::endl;
 						mtx_595[max_N_ID_for_mtx_595 - 1].unlock();
 
 						return 1; // return to results; the return type must be the same with results
@@ -399,13 +400,14 @@ namespace experiment
 
 			for (auto &&result : results)
 				result.get(); // all threads finish here
-			case_info.L = Lv_final;
+			case_info.L = std::move(Lv_final);
 			results.clear();
 		}
 
 		void PLL_clear_global_values()
 		{
 			std::vector<std::vector<two_hop_label>>().swap(L_temp_595);
+			std::vector<std::vector<two_hop_label>>().swap(Lv_final);
 			PPR_TYPE::PPR_type().swap(PPR_595);
 			std::queue<int>().swap(Qid_595);
 			std::vector<std::vector<int>>().swap(P_dij_595);
