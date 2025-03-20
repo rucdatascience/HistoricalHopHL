@@ -105,13 +105,6 @@ int main(int argc, char *argv[])
 				timer.writeStatsToFile(outFile);
 				hop_info.record_all_details_stream(outFile);
 				outFile << "pre L size is " << experiment::nonhop::globalLabelSize << " clean L size is " << experiment::nonhop::globalLabelCleanSize << " ppr size is " << experiment::nonhop::globalPprSize;
-
-				std::ofstream outFile1;
-				outFile1.precision(6);
-				outFile1.setf(std::ios::fixed);
-				outFile1.setf(std::ios::showpoint);
-				outFile1.open(resultGraphPath.string());
-				instance_graph.txt_save(outFile1);
 				outFile.close();
 			}
 		}
@@ -438,12 +431,6 @@ int main(int argc, char *argv[])
 				experiment::loadBinary(FILE_GRAPH, init_graph);
 				experiment::loadBinary(FILE_GRAPH, graph_time);
 				experiment::loadBinary(FILE_GRAPH, hop_info);
-				std::ofstream outFileTemp;
-				outFileTemp.precision(6);
-				outFileTemp.setf(std::ios::fixed);
-				outFileTemp.setf(std::ios::showpoint);
-				outFileTemp.open(resultGraphPrePath.string());
-				init_graph.txt_save(outFileTemp);
 				hop_info.thread_num = config.threads;
 				experiment::nonhop::two_hop_case_info hop_info_2021;
 				hop_info_2021 = hop_info;
