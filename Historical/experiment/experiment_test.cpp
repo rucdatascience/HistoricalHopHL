@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 				timer.writeStatsToFile(outFile);
 				hop_info.record_all_details_stream(outFile);
 				outFile << "pre L size is " << experiment::nonhop::globalLabelSize << " clean L size is " << experiment::nonhop::globalLabelCleanSize << " ppr size is " << experiment::nonhop::globalPprSize;
-				
+
 				std::ofstream outFile1;
 				outFile1.precision(6);
 				outFile1.setf(std::ios::fixed);
@@ -196,6 +196,10 @@ int main(int argc, char *argv[])
 						timer_baseline1.startSubtask("step-2 save graph from " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 						timer_baseline2.startSubtask("step-2 save graph with time span edge from " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 					}
+					timer_ruc.startSubtask("start " + std::to_string(i) + " iteration");
+					timer_2021.startSubtask("start " + std::to_string(i) + " iteration");
+					timer_baseline1.startSubtask("start " + std::to_string(i) + " iteration");
+					timer_baseline2.startSubtask("start " + std::to_string(i) + " iteration");
 					std::cout << "iteration " << i << std::endl;
 					std::queue<experiment::change_edge_info> q = change_info.q_list[i];
 					experiment::graph<int> instance_graph_temp = graph_list[i - 1];
@@ -247,8 +251,12 @@ int main(int argc, char *argv[])
 								int w = weight_decrease[index];
 								int old_w = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 								std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << old_w << std::endl;
+								timer_baseline1.startSubtask("modify baseline1 edge weight");
 								instance_graph_temp.add_edge(v1, v2, w);
+								timer_baseline1.endSubtask();
+								timer_baseline2.startSubtask("modify baseline2 edge weight");
 								graph_time.add_edge(v1, v2, w, i);
+								timer_baseline2.endSubtask();
 							}
 							std::cout << "decrease ruc maintain" << std::endl;
 							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
@@ -274,8 +282,12 @@ int main(int argc, char *argv[])
 								int old_w = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 								weight_old_increase.push_back(old_w);
 								std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << old_w << std::endl;
+								timer_baseline1.startSubtask("modify baseline1 edge weight");
 								instance_graph_temp.add_edge(v1, v2, w);
+								timer_baseline1.endSubtask();
+								timer_baseline2.startSubtask("modify baseline2 edge weight");
 								graph_time.add_edge(v1, v2, w, i);
+								timer_baseline2.endSubtask();
 							}
 							std::cout << "increase ruc maintain" << std::endl;
 							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
@@ -302,8 +314,12 @@ int main(int argc, char *argv[])
 							int w = weight_decrease[index];
 							int old_w = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 							std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << old_w << std::endl;
+							timer_baseline1.startSubtask("modify baseline1 edge weight");
 							instance_graph_temp.add_edge(v1, v2, w);
+							timer_baseline1.endSubtask();
+							timer_baseline2.startSubtask("modify baseline2 edge weight");
 							graph_time.add_edge(v1, v2, w, i);
+							timer_baseline2.endSubtask();
 						}
 						std::cout << "decrease ruc maintain" << std::endl;
 						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
@@ -329,8 +345,12 @@ int main(int argc, char *argv[])
 							int old_w = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 							weight_old_increase.push_back(old_w);
 							std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << old_w << std::endl;
+							timer_baseline1.startSubtask("modify baseline1 edge weight");
 							instance_graph_temp.add_edge(v1, v2, w);
+							timer_baseline1.endSubtask();
+							timer_baseline2.startSubtask("modify baseline2 edge weight");
 							graph_time.add_edge(v1, v2, w, i);
+							timer_baseline2.endSubtask();
 						}
 						std::cout << "increase ruc maintain" << std::endl;
 						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
@@ -347,10 +367,11 @@ int main(int argc, char *argv[])
 						std::vector<int>().swap(weight_old_increase);
 						std::map<std::pair<int, int>, int>().swap(path2Index4Increase);
 					}
-					timer_baseline1.startSubtask("save graph " + std::to_string(i));
 					graph_list.push_back(instance_graph_temp);
+					timer_ruc.endSubtask();
+					timer_2021.endSubtask();
 					timer_baseline1.endSubtask();
-
+					timer_baseline2.endSubtask();
 					if (i == config.iterations / 2 || i == config.iterations)
 					{
 						timer_ruc.endSubtask();
@@ -465,6 +486,11 @@ int main(int argc, char *argv[])
 						timer_baseline1.startSubtask("step-2 save graph from " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 						timer_baseline2.startSubtask("step-2 save graph with time span edge from " + std::to_string(config.iterations / 2 + 1) + " - " + std::to_string(config.iterations));
 					}
+					timer_ruc.startSubtask("start " + std::to_string(i) + " iteration");
+					timer_2021.startSubtask("start " + std::to_string(i) + " iteration");
+					timer_baseline1.startSubtask("start " + std::to_string(i) + " iteration");
+					timer_baseline2.startSubtask("start " + std::to_string(i) + " iteration");
+
 					std::cout << "iteration " << i << std::endl;
 					std::queue<experiment::change_edge_info> q = change_info.q_list[i];
 					experiment::graph<int> instance_graph_temp = graph_list[i - 1];
@@ -516,8 +542,12 @@ int main(int argc, char *argv[])
 								int w = weight_decrease[index];
 								int w_old = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 								std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << w_old << std::endl;
+								timer_baseline1.startSubtask("modify baseline1 edge weight");
 								instance_graph_temp.add_edge(v1, v2, w);
+								timer_baseline1.endSubtask();
+								timer_baseline2.startSubtask("modify baseline2 edge weight");
 								graph_time.add_edge(v1, v2, w, i);
+								timer_baseline2.endSubtask();
 							}
 							std::cout << "decrease ruc maintain" << std::endl;
 							experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
@@ -543,8 +573,12 @@ int main(int argc, char *argv[])
 								int w_old = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 								weight_old_increase.push_back(w_old);
 								std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << w_old << std::endl;
+								timer_baseline1.startSubtask("modify baseline1 edge weight");
 								instance_graph_temp.add_edge(v1, v2, w);
+								timer_baseline1.endSubtask();
+								timer_baseline2.startSubtask("modify baseline2 edge weight");
 								graph_time.add_edge(v1, v2, w, i);
+								timer_baseline2.endSubtask();
 							}
 							std::cout << "increase ruc maintain" << std::endl;
 							experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
@@ -571,8 +605,12 @@ int main(int argc, char *argv[])
 							int w = weight_decrease[index];
 							int w_old = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 							std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << w_old << std::endl;
+							timer_baseline1.startSubtask("modify baseline1 edge weight");
 							instance_graph_temp.add_edge(v1, v2, w);
+							timer_baseline1.endSubtask();
+							timer_baseline2.startSubtask("modify baseline2 edge weight");
 							graph_time.add_edge(v1, v2, w, i);
+							timer_baseline2.endSubtask();
 						}
 						std::cout << "decrease ruc maintain" << std::endl;
 						experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
@@ -598,8 +636,12 @@ int main(int argc, char *argv[])
 							int w_old = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
 							weight_old_increase.push_back(w_old);
 							std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << w_old << std::endl;
+							timer_baseline1.startSubtask("modify baseline1 edge weight");
 							instance_graph_temp.add_edge(v1, v2, w);
+							timer_baseline1.endSubtask();
+							timer_baseline2.startSubtask("modify baseline2 edge weight");
 							graph_time.add_edge(v1, v2, w, i);
+							timer_baseline2.endSubtask();
 						}
 						std::cout << "increase ruc maintain" << std::endl;
 						experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
@@ -616,11 +658,10 @@ int main(int argc, char *argv[])
 						std::vector<int>().swap(weight_old_increase);
 						std::map<std::pair<int, int>, int>().swap(path2Index4Increase);
 					}
-					timer_baseline1.startSubtask("save graph " + std::to_string(i));
 					graph_list.push_back(instance_graph_temp);
+					timer_ruc.endSubtask();
+					timer_2021.endSubtask();
 					timer_baseline1.endSubtask();
-					timer_baseline2.startSubtask("save graph with time span label " + std::to_string(i));
-					// graph_time.add_graph_time(instance_graph_temp, i);
 					timer_baseline2.endSubtask();
 					if (i == config.iterations / 2 || i == config.iterations)
 					{
