@@ -2,29 +2,26 @@
 
 #include <iostream>
 #include <vector>
+#include <utility>
 #include "Historical/utils/BinaryPersistence.h"
 #include "Historical/graph_with_time_span/graph.h"
 namespace experiment
 {
-	template <typename weight_type> // weight_type may be int, long long int, float, double...
 	class EdgeInfoWithTimeSpan
 	{
 	public:
 		int vertex;
-		weight_type weight;
+		int weight;
 		int startTimeLabel;
 		int endTimeLabel;
-		EdgeInfoWithTimeSpan() : vertex(-1) {};
-		EdgeInfoWithTimeSpan(int vertex, weight_type weight, int startTimeLabel) : vertex(vertex), weight(weight), startTimeLabel(startTimeLabel)
+		EdgeInfoWithTimeSpan() : vertex(-1),weight(-1),startTimeLabel(-1),endTimeLabel(-1) {};
+		EdgeInfoWithTimeSpan(int vertex, int weight, int startTimeLabel) : vertex(vertex), weight(weight), startTimeLabel(startTimeLabel)
 		{
 			endTimeLabel = std::numeric_limits<int>::max();
 		};
+		~EdgeInfoWithTimeSpan(){
 
-		long long int computeSize() const
-		{
-			return sizeof(weight_type) + 3 * sizeof(int);
-		}
-
+		};
 		void serialize(std::ofstream &out) const
 		{
 			saveBinary(out, vertex);
@@ -41,37 +38,48 @@ namespace experiment
 			loadBinary(in, endTimeLabel);
 		}
 	};
+	
 	template <typename weight_type> // weight_type may be int, long long int, float, double...
-	void saveBinary(std::ofstream &out, const EdgeInfoWithTimeSpan<weight_type> &data)
+	void saveBinary(std::ofstream &out, const EdgeInfoWithTimeSpan &data)
 	{
 		data.serialize(out);
 	}
 	template <typename weight_type> // weight_type may be int, long long int, float, double...
-	void loadBinary(std::ifstream &in, EdgeInfoWithTimeSpan<weight_type> &data)
+	void loadBinary(std::ifstream &in, EdgeInfoWithTimeSpan &data)
 	{
 		data.deserialize(in);
 	}
 	/**
 	 * define a graph where each edge has an associated time span
 	 */
-	template <typename weight_type> // weight_type may be int, long long int, float, double...
 	class graph_with_time_span
 	{
 	public:
-		std::vector<std::vector<std::pair<int, std::vector<EdgeInfoWithTimeSpan<weight_type>>>>> ADJs;
+		std::vector<std::vector<std::pair<int, std::vector<EdgeInfoWithTimeSpan>>>> ADJs;
 		/* the maximum of time*/
 		int time_max;
 		/* the number of vertices */
 		int v_num;
 		/* the number of edges */
 		int e_num;
-		std::vector<std::pair<int, std::vector<EdgeInfoWithTimeSpan<weight_type>>>> &operator[](int i) const
+		std::vector<std::pair<int, std::vector<EdgeInfoWithTimeSpan>>> &operator[](int i)
 		{
 			return ADJs[i];
 		}
 		/*constructors*/
-		graph_with_time_span() : v_num(0), e_num(0), time_max(0) {};
+		graph_with_time_span() : v_num(0), e_num(0), time_max(0) {
+		};
 		graph_with_time_span(int n, int e) : v_num(n), e_num(e), ADJs(n) {};
+
+		~graph_with_time_span() {
+			for (auto& outer_vector : ADJs) {
+				for (auto& inner_pair : outer_vector) {
+					inner_pair.second.clear();
+				}
+				outer_vector.clear();
+			}
+			ADJs.clear();
+		}
 
 		int size() const
 		{
@@ -80,25 +88,25 @@ namespace experiment
 
 		void resize(int n)
 		{
-			ADJs.resize(n); // initialize n vertices
+			ADJs.resize(n);
 		}
 
 		long long int computeSize() const
 		{
-			long long int res = 0;
-			for (const std::vector<std::pair<int, std::vector<experiment::EdgeInfoWithTimeSpan<weight_type>>>> &item_first : this->ADJs)
+			long long int res = sizeof(ADJs);
+			for (const auto &item_first : ADJs)
 			{
-				for (const std::pair<int, std::vector<experiment::EdgeInfoWithTimeSpan<weight_type>>> &item_second : item_first)
+				res += sizeof(item_first);
+				for (const auto &item_second : item_first)
 				{
 					res += sizeof(item_second.first);
-					for (const experiment::EdgeInfoWithTimeSpan<weight_type> &item : item_second.second)
-					{
-						res += item.computeSize();
-					}
+					res += sizeof(item_second.second);
+					res += item_second.second.size() * 4 * sizeof(int);
 				}
 			}
 			return res;
 		}
+
 
 		void txt_save(std::string save_name) const
 		{
@@ -122,7 +130,7 @@ namespace experiment
 					{
 						if (i < this->ADJs[i][j].first)
 						{
-							std::vector<EdgeInfoWithTimeSpan<int>> list = ADJs[i][j].second;
+							std::vector<EdgeInfoWithTimeSpan> list = ADJs[i][j].second;
 							for (int k = 0; k < list.size() && list[k].startTimeLabel <= index; k++)
 							{
 								if (this->ADJs[i][j].second[k].startTimeLabel == index)
@@ -161,7 +169,7 @@ namespace experiment
 			std::cout << "graph_v_of_v_with_time_span_print END" << std::endl;
 		}
 
-		void add_edge(int e1, int e2, weight_type ec, int time)
+		void add_edge(int e1, int e2, int ec, int time)
 		{
 			this->time_max = time > this->time_max ? time : this->time_max;
 			/* initialize a graph with a time span */
@@ -172,8 +180,8 @@ namespace experiment
 			}
 			else
 			{
-				int index_e1 = sorted_vector_binary_operations_search_position<std::vector<EdgeInfoWithTimeSpan<int>>>(this->ADJs[e1], e2);
-				int index_e2 = sorted_vector_binary_operations_search_position<std::vector<EdgeInfoWithTimeSpan<int>>>(this->ADJs[e2], e1);
+				int index_e1 = sorted_vector_binary_operations_search_position<std::vector<EdgeInfoWithTimeSpan>>(this->ADJs[e1], e2);
+				int index_e2 = sorted_vector_binary_operations_search_position<std::vector<EdgeInfoWithTimeSpan>>(this->ADJs[e2], e1);
 				if (this->ADJs[e1][index_e1].second.back().weight != ec)
 				{
 					this->ADJs[e1][index_e1].second.back().endTimeLabel = time - 1;
@@ -200,7 +208,7 @@ namespace experiment
 			loadBinary(in, ADJs);
 		}
 
-		void add_graph_time(experiment::graph<weight_type> &graph, int time)
+		void add_graph_time(experiment::graph<int> &graph, int time)
 		{
 			int N = graph.size();
 			if (N > this->v_num)
@@ -211,7 +219,7 @@ namespace experiment
 			this->time_max = time > this->time_max ? time : this->time_max;
 			for (int i = 0; i < N; i++)
 			{
-				std::vector<std::pair<int, weight_type>> &list = graph.ADJs[i];
+				std::vector<std::pair<int, int>> &list = graph.ADJs[i];
 				for (const auto &edges : list)
 				{
 					if (edges.first < i)
@@ -225,7 +233,7 @@ namespace experiment
 
 		void clear()
 		{
-			std::vector<std::vector<std::pair<int, std::vector<EdgeInfoWithTimeSpan<weight_type>>>>>().swap(this->ADJs);
+			std::vector<std::vector<std::pair<int, std::vector<EdgeInfoWithTimeSpan>>>>().swap(this->ADJs);
 			this->e_num = 0;
 			this->v_num = 0;
 			this->time_max = 0;
@@ -236,13 +244,13 @@ namespace experiment
 			outputFile << "the size of graph with time info label = " << this->computeSize() << std::endl;
 		}
 	};
-	template <typename weight_type> // weight_type may be int, long long int, float, double...
-	void saveBinary(std::ofstream &out, const graph_with_time_span<weight_type> &data)
+
+	void saveBinary(std::ofstream &out, const graph_with_time_span &data)
 	{
 		data.serialize(out);
 	}
-	template <typename weight_type> // weight_type may be int, long long int, float, double...
-	void loadBinary(std::ifstream &in, graph_with_time_span<weight_type> &data)
+
+	void loadBinary(std::ifstream &in, graph_with_time_span &data)
 	{
 		data.deserialize(in);
 	}

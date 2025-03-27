@@ -53,10 +53,10 @@ namespace experiment
 		{
 		public:
 			int first, second;
-			int dis;
+			long long int dis;
 			int t_s, t_e;
 			affected_label() {}
-			affected_label(int _first, int _second, int _dis)
+			affected_label(int _first, int _second, long long int _dis)
 			{
 				first = _first;
 				second = _second;
@@ -298,7 +298,7 @@ namespace experiment
 								for (int i : Dis_changed) {
 									DIS[i] = { -1, -1 };
 								}
-
+								Q_VALUE.resize(Q_VALUE.size(), 1e7);
 								mtx_595_1.lock();
 								Qid_595.push(current_tid);
 								mtx_595_1.unlock();
@@ -650,7 +650,7 @@ namespace experiment
 							for (int i : Dis_changed) {
 								DIS[i] = { -1, -1 };
 							}
-
+							Q_VALUE.resize(Q_VALUE.size(), 1e7);
 							mtx_595_1.lock();
 							Qid_595.push(current_tid);
 							mtx_595_1.unlock();
@@ -1281,6 +1281,9 @@ namespace experiment
 
 		bool operator<(hop_constrained_node_for_DIFFUSE const &x, hop_constrained_node_for_DIFFUSE const &y)
 		{
+			if(x.hop!=y.hop){
+				return  x.hop > y.hop;
+			}
 			return x.disx > y.disx; // < is the max-heap; > is the min heap
 		}
 
@@ -1306,12 +1309,13 @@ namespace experiment
 		{
 			namespace decrease
 			{
+				// int lInsertSize = 0;
 				void decrease_maintain_step1_batch(std::map<std::pair<int, int>, weightTYPE> &v_map, std::vector<std::vector<two_hop_label>> *L, PPR_TYPE::PPR_type *PPR, std::vector<hop_constrained_affected_label> *CL,
-												   ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
+												   ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t,int upper_k)
 				{
-					for (const auto& v_map_item : v_map)
+					for (const auto &v_map_item : v_map)
 					{
-						results_dynamic.emplace_back(pool_dynamic.enqueue([t, v_map_item, L, PPR, CL]
+						results_dynamic.emplace_back(pool_dynamic.enqueue([t, v_map_item, L, PPR, CL,upper_k]
 																		  {
 
 								int v1 = v_map_item.first.first, v2 = v_map_item.first.second;
@@ -1324,7 +1328,7 @@ namespace experiment
 									}
 									for (auto& it : (*L)[v1])
 									{
-										if (it.hub_vertex <= v2 && (long long int)it.distance + w_new < TwoM_value && it.t_e == std::numeric_limits<int>::max())
+										if (it.hub_vertex <= v2 && it.hop + 1 < upper_k && (long long int)it.distance + w_new < TwoM_value && it.t_e == std::numeric_limits<int>::max())
 										{
 											auto query_result = hop_constrained_extract_distance_and_hub(*L, it.hub_vertex, v2, it.hop + 1); // query_result is {distance, common hub}
 											if ((long long int)query_result.first > (long long int)it.distance + w_new)
@@ -1406,7 +1410,6 @@ namespace experiment
 							vec_with_hub_v.emplace_back(tmp);
 						}
 					}
-
 					for (auto &it : CL_map)
 					{
 						results_dynamic.emplace_back(pool_dynamic.enqueue([t, it, L, &instance_graph, PPR, upper_k]
@@ -1447,7 +1450,6 @@ namespace experiment
 										Q_VALUE[u][h_v] = du;
 
 								}
-
 								while (!pq.empty())
 								{
 									int x = pq.top().index;
@@ -1463,14 +1465,14 @@ namespace experiment
 									if (dx >= 0 && dx < d_old)
 									{
 										mtx_ruc_decrease[x].lock();
+										// ++lInsertSize;
 										insert_sorted_hop_constrained_two_hop_label((*L)[x], v, xhv, dx, t);
 										mtx_ruc_decrease[x].unlock();
 									}
 
 									if (xhv + 1 > upper_k)
 										continue;
-
-									for (auto nei : instance_graph[x])
+									for (const auto& nei : instance_graph[x])
 									{
 										if (dx + nei.second >= TwoM_value)
 											continue;
@@ -1485,14 +1487,13 @@ namespace experiment
 												// Q_handle[{xnei, hop_nei}] = {pq.push(node), d_new};
 												// Q_VALUE[xnei][hop_nei] = d_new;
 												mtx_ruc_decrease[xnei].lock_shared();
-												std::pair<int, int> temp_dis = graph_weighted_two_hop_extract_distance_and_hop_by_backup_label((*L)[xnei], Lv, xhv + 1);
-												std::pair<int, int> temp_dis_hub = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[xnei], Lv, xhv + 1);
+												std::tuple<int, int, int> temp_dis = graph_weighted_two_hop_extract_distance_and_hop_and_hub_by_backup_label((*L)[xnei], Lv, xhv + 1);
 												//std::pair<int, int> temp_dis = hop_constrained_extract_distance_and_hop(*L, xnei, v, xhv + 1);
 												mtx_ruc_decrease[xnei].unlock_shared();
-												hubs[xnei] = temp_dis_hub.second;
+												hubs[xnei] = std::get<2>(temp_dis);
 
-												dist_hop[xnei].first = temp_dis.first;
-												dist_hop[xnei].second = temp_dis.second;
+												dist_hop[xnei].first =std::get<0>(temp_dis);
+												dist_hop[xnei].second = std::get<1>(temp_dis);
 												dist_hop_changes.push_back(xnei);
 											}
 
@@ -1514,7 +1515,6 @@ namespace experiment
 												}
 												dist_hop[xnei].first = d_new;
 												dist_hop[xnei].second = hop_nei;
-												dist_hop_changes.push_back(xnei);
 												hubs[xnei] = v;
 												Q_VALUE[xnei][hop_nei] = d_new;
 											}
@@ -1558,19 +1558,16 @@ namespace experiment
 										}
 									}
 								}
-
-
 								for (int i : dist_hop_changes)
 								{
 									dist_hop[i] = { -1, 0 };
 								}
-
+								Q_VALUE.resize(Q_VALUE.size(), std::vector<weightTYPE>(upper_k + 1, MAX_VALUE));
 								mtx_599_1.lock();
 								Qid_599_v2.push(current_tid);
 								mtx_599_1.unlock();
 								return 1; }));
 					}
-
 					for (auto &&result : results_dynamic)
 					{
 						result.get();
@@ -1579,10 +1576,11 @@ namespace experiment
 				}
 
 				void HOP_WeightDecreaseMaintenance_improv_batch(graph<int> &instance_graph, two_hop_case_info &mm,
-																std::vector<std::pair<int, int>> &v, std::vector<int> &w_new, ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
+																std::vector<std::pair<int, int>> v, std::vector<int> w_new, ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
 				{
 					std::map<std::pair<int, int>, weightTYPE> w_new_map;
 					int batch_size = v.size();
+					// lInsertSize = 0;
 					for (int i = 0; i < batch_size; i++)
 					{
 						if (v[i].first > v[i].second)
@@ -1599,20 +1597,22 @@ namespace experiment
 						}
 					}
 					std::vector<hop_constrained_affected_label> CL;
-					decrease_maintain_step1_batch(w_new_map, &mm.L, &mm.PPR, &CL, pool_dynamic, results_dynamic, t);
-					std::cout << "ruc decrease CL size is" << CL.size() << std::endl;
+					decrease_maintain_step1_batch(w_new_map, &mm.L, &mm.PPR, &CL, pool_dynamic, results_dynamic, t,mm.upper_k);
 					DIFFUSE_batch(instance_graph, &mm.L, &mm.PPR, CL, pool_dynamic, results_dynamic, mm.upper_k, t);
+					// std::cout << "ruc L insert size is " << lInsertSize << std::endl;
+					std::cout << "ruc CL size is " << CL.size() << std::endl;
 				}
 			}
 			namespace increase
 			{
 				void HOP_maintain_SPREAD1_batch(graph<int> &instance_graph, std::vector<std::vector<two_hop_label>> *L,
-												std::vector<hop_constrained_affected_label> &al1, std::vector<hop_constrained_pair_label> *al2, std::map<std::pair<int, int>, int> &w_old_map, ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
+												std::vector<hop_constrained_affected_label> &al1, std::vector<hop_constrained_pair_label> *al2, std::map<std::pair<int, int>, int> &w_old_map, ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t, int upper_k)
 				{
-
-					for (auto it : al1)
+					// std::map<int, long> map;
+					for (const auto &it : al1)
 					{
-						results_dynamic.emplace_back(pool_dynamic.enqueue([t, it, L, al2, &instance_graph, &w_old_map]
+						// results_dynamic.emplace_back(pool_dynamic.enqueue([t, upper_k, &map, &it, L, al2, &instance_graph, &w_old_map]
+						results_dynamic.emplace_back(pool_dynamic.enqueue([t, upper_k, &it, L, al2, &instance_graph, &w_old_map]
 																		  {
 								std::queue<hop_constrained_node_for_DIFFUSE> q; //(u,h_v, d)
 								int v = it.second;
@@ -1628,12 +1628,14 @@ namespace experiment
 									mtx_599_1.lock();
 									al2->push_back(hop_constrained_pair_label{x, v, h_x});
 									mtx_599_1.unlock();
-
-									for (auto nei : instance_graph[x])
+									if(h_x +1 > upper_k){
+										continue;
+									}
+									for (const auto& nei : instance_graph[x])
 									{
 										if (v < nei.first) {
 											mtx_ruc_increase[nei.first].lock_shared();
-											int search_weight = search_sorted_hop_constrained_weight_two_hop_label((*L)[nei.first], v, h_x + 1);
+											auto search_weight = search_sorted_hop_constrained_label_two_hop_label((*L)[nei.first], v, h_x + 1);
 											mtx_ruc_increase[nei.first].unlock_shared();
 											int w_old = nei.second;
 											if (w_old_map.count(std::pair<int, int>(x, nei.first)) > 0) {
@@ -1645,17 +1647,12 @@ namespace experiment
 											else {
 												w_old = nei.second;
 											}
-											if (dx + w_old <= search_weight && search_weight < MAX_VALUE) {
-												// mtx_599_2.lock();
-												// std::cout << "x is "<< x <<" v is " << v << " x's nei is " << nei.first <<" dx is " << dx << " w_lod is " << w_old <<" search_weight is " << search_weight << std::endl;
-												// mtx_599_2.unlock();;
+											if (dx + w_old <= search_weight.distance && search_weight.distance < MAX_VALUE) {
 												q.push(hop_constrained_node_for_DIFFUSE(nei.first, h_x + 1, dx + nei.second));
 											}
-
 										}
 									}
 								}
-
 								return 1; }));
 					}
 
@@ -1681,7 +1678,6 @@ namespace experiment
 								// mtx_ruc_increase[v].lock_shared();
 								// auto Lv = (*L)[v]; // to avoid interlocking
 								// mtx_ruc_increase[v].unlock_shared();
-
 								for (auto t : temp) {
 									if (v < t) {
 										long long int d1 = MAX_VALUE;
@@ -1743,10 +1739,7 @@ namespace experiment
 										long long int d1 = MAX_VALUE;
 										int hop_vn = 0;
 										for (const auto& nei : instance_graph[v]) {
-											//d1 = min(d1, search_sorted_two_hop_label((*L)[nei.first], t_first, t.second) + (int)nei.second);
-											//mtx_599[nei.first].lock();
 											std::pair<int, int> dis_hop = get_shortest_distance_hop_two_hop_label2((*L)[nei.first], t);
-											//mtx_599[nei.first].unlock();
 											if (d1 > dis_hop.first + (long long int)nei.second)
 											{
 												d1 = dis_hop.first + (long long int)nei.second;
@@ -1763,18 +1756,12 @@ namespace experiment
 												break;
 											long long int di = MAX_VALUE;
 											for (auto nei : instance_graph[v]) {
-												//mtx_599[nei.first].lock();
 												di = std::min(di, search_sorted_hop_constrained_weight_two_hop_label((*L)[nei.first], t, hop_i - 1) + (long long int)nei.second);
-												//mtx_599[nei.first].unlock();
 											}
 
 											if (di >= TwoM_value)
 												continue;
-
-											//mtx_599[t].lock_shared();
-											//auto query_result = graph_hash_of_mixed_weighted_two_hop_v2_extract_distance_no_reduc2(*L, v, t_first, hop_i);
 											auto query_result = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[t], (*L)[v], hop_i);
-											//mtx_599[t].unlock_shared();
 
 											if (query_result.first > di) {
 												mtx_599_1.lock();
@@ -1840,13 +1827,11 @@ namespace experiment
 						}
 						else
 						{
-							std::vector<hop_constrained_label_v2> vec_with_hub_v = al3_map[v];
+							std::vector<hop_constrained_label_v2> &vec_with_hub_v = al3_map[v];
 							hop_constrained_label_v2 tmp(u, hop, dis);
 							vec_with_hub_v.emplace_back(tmp);
-							al3_map[v] = vec_with_hub_v;
 						}
 					}
-
 					for (auto &it : al3_map)
 					{
 						results_dynamic.emplace_back(pool_dynamic.enqueue([t, it, L, &instance_graph, PPR, upper_k]
@@ -1855,9 +1840,8 @@ namespace experiment
 								int current_tid = Qid_599_v2.front();
 								Qid_599_v2.pop();
 								mtx_599_1.unlock();
-
 								int v = it.first;
-								std::vector<hop_constrained_label_v2> vec_with_hub_v = it.second;
+								const std::vector<hop_constrained_label_v2> &vec_with_hub_v = it.second;
 
 								mtx_ruc_increase[v].lock_shared();
 								auto Lv = (*L)[v]; // to avoid interlocking
@@ -1870,13 +1854,11 @@ namespace experiment
 								std::vector<int> hubs;
 								hubs.resize(instance_graph.size(), -1);
 								auto& Q_VALUE = Q_value[current_tid];
-
 								for (auto& it : vec_with_hub_v)
 								{
 									int u = it.hub_vertex;
 									int h_v = it.hop;
 									int du = it.distance;
-
 									mtx_ruc_increase[u].lock_shared();
 									auto query_result = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[u], Lv, h_v);
 									mtx_ruc_increase[u].unlock_shared();
@@ -1914,7 +1896,6 @@ namespace experiment
 									Q_handle[{u, h_v}] = { pq.push({tmp}), du }; //{hop_constrained_node_for_DIFFUSE,dis}
 									Q_VALUE[u][h_v] = du;
 								}
-
 								while (!pq.empty())
 								{
 									int x = pq.top().index;
@@ -1925,9 +1906,9 @@ namespace experiment
 										Q_VALUE[x][xhv] = MAX_VALUE;
 
 									mtx_ruc_increase[x].lock_shared();
-									int d_old = search_sorted_hop_constrained_weight_two_hop_label((*L)[x], v, xhv);
+									std::pair<int, int> d_old = get_shortest_distance_hop_two_hop_label2((*L)[x], v, xhv);
 									mtx_ruc_increase[x].unlock_shared();
-									if (dx >= 0 && dx < d_old)
+									if (dx >= 0 && dx < d_old.first)
 									{
 										mtx_ruc_increase[x].lock();
 										insert_sorted_hop_constrained_two_hop_label((*L)[x], v, xhv, dx, t);
@@ -1937,36 +1918,29 @@ namespace experiment
 									if (xhv + 1 > upper_k)
 										continue;
 
-									for (auto nei : instance_graph[x])
+									for (const auto& nei : instance_graph[x])
 									{
 
-										if (dx + nei.second >= TwoM_value)
+										int xnei = nei.first;
+										if (v > xnei || dx + nei.second >= TwoM_value)
 											continue;
 
-										int xnei = nei.first;
 										int hop_nei = xhv + 1;
 										long long int d_new = dx + (long long int)nei.second;
 										hop_constrained_node_for_DIFFUSE node = { xnei, xhv + 1, (weightTYPE)d_new };
 
-										if (v < xnei)
-										{
-
 											if (dist_hop[xnei].first == -1)
 											{
-												//Q_handle[{xnei, hop_nei}] = {pq.push(node), d_new};
-												//Q_VALUE[xnei][hop_nei] = d_new;
-												dist_hop[xnei].first = d_new;
-												dist_hop[xnei].second = hop_nei;
-												dist_hop_changes.push_back(xnei);
-
 												mtx_ruc_increase[xnei].lock_shared();
-												std::pair<int, int> tmp = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[xnei], Lv, xhv + 1);
+												std::tuple<int, int, int> tmp = graph_weighted_two_hop_extract_distance_and_hop_and_hub_by_backup_label((*L)[xnei], Lv, xhv + 1);
 												mtx_ruc_increase[xnei].unlock_shared();
-												hubs[xnei] = tmp.second;
+												dist_hop[xnei].first = std::get<0>(tmp);
+												dist_hop[xnei].second = std::get<1>(tmp);
+												dist_hop_changes.push_back(xnei);
+												hubs[xnei] = std::get<2>(tmp);
 											}
 											if (d_new < dist_hop[xnei].first)
 											{
-												//if (Q_handle.find({xnei, node.hop}) != Q_handle.end())
 												if (Q_VALUE[xnei][hop_nei] < MAX_VALUE)
 												{
 													if (Q_handle[{xnei, hop_nei}].second > d_new)
@@ -1981,31 +1955,27 @@ namespace experiment
 												}
 												dist_hop[xnei].first = d_new;
 												dist_hop[xnei].second = hop_nei;
-												dist_hop_changes.push_back(xnei);
 												hubs[xnei] = v;
 												Q_VALUE[xnei][hop_nei] = d_new;
 											}
-											else if (hop_nei < dist_hop[xnei].second)
-											{
-												//if (Q_handle.find({xnei, node.hop}) != Q_handle.end())
-												if (Q_VALUE[xnei][hop_nei] < MAX_VALUE)
+											else {
+												if (hop_nei < dist_hop[xnei].second)
 												{
-													if (Q_handle[{xnei, hop_nei}].second > d_new)
+													//if (Q_handle.find({xnei, node.hop}) != Q_handle.end())
+													if (Q_VALUE[xnei][hop_nei] < MAX_VALUE)
 													{
-														pq.update(Q_handle[{xnei, hop_nei}].first, node);
-														Q_handle[{xnei, hop_nei}].second = d_new;
+														if (Q_handle[{xnei, hop_nei}].second > d_new)
+														{
+															pq.update(Q_handle[{xnei, hop_nei}].first, node);
+															Q_handle[{xnei, hop_nei}].second = d_new;
+														}
 													}
+													else
+													{
+														Q_handle[{xnei, hop_nei}] = { pq.push(node), d_new };
+													}
+													Q_VALUE[xnei][hop_nei] = d_new;
 												}
-												else
-												{
-													Q_handle[{xnei, hop_nei}] = { pq.push(node), d_new };
-												}
-												Q_VALUE[xnei][hop_nei] = d_new;
-											}
-
-											if (dist_hop[xnei].first < d_new)
-											{
-
 												if (hubs[xnei] != -1 && hubs[xnei] != v)
 												{
 													mtx_5992[xnei].lock();
@@ -2018,15 +1988,13 @@ namespace experiment
 													PPR_TYPE::PPR_insert(*PPR, v, hubs[xnei], xnei);
 													mtx_5992[v].unlock();
 												}
-											}
-										}
+											}			
 									}
 								}
-
 								for (int i : dist_hop_changes) {
 									dist_hop[i] = { -1, 0 };
 								}
-
+								Q_VALUE.resize(Q_VALUE.size(), std::vector<weightTYPE>(upper_k + 1, MAX_VALUE));
 								mtx_599_1.lock();
 								Qid_599_v2.push(current_tid);
 								mtx_599_1.unlock();
@@ -2040,11 +2008,9 @@ namespace experiment
 					}
 					std::vector<std::future<int>>().swap(results_dynamic);
 				}
-
-				void HOP_WeightIncreaseMaintenance_improv_batch(graph<int> &instance_graph, two_hop_case_info &mm, std::vector<std::pair<int, int>> &v, std::vector<int> &w_old_vec,
+				void HOP_WeightIncreaseMaintenance_improv_batch(graph<int> &instance_graph, two_hop_case_info &mm, std::vector<std::pair<int, int>> v, std::vector<int> w_old_vec,
 																ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
 				{
-
 					std::vector<hop_constrained_affected_label> al1, al3;
 					std::vector<hop_constrained_pair_label> al2;
 
@@ -2093,10 +2059,11 @@ namespace experiment
 						result.get();
 					}
 					std::vector<std::future<int>>().swap(results_dynamic);
-					HOP_maintain_SPREAD1_batch(instance_graph, &mm.L, al1, &al2, w_old_map, pool_dynamic, results_dynamic, t);
-					std::cout << "ruc increase al1 size is " << al1.size() << " and al2 size is " << al2.size() << std::endl;
+					std::cout << "ruc increase init al1 size is " << al1.size() << std::endl;
+					HOP_maintain_SPREAD1_batch(instance_graph, &mm.L, al1, &al2, w_old_map, pool_dynamic, results_dynamic, t, mm.upper_k);
+					std::cout << "ruc increase al2 size is " << al2.size() << std::endl;
 					HOP_maintain_SPREAD2_batch(instance_graph, &mm.L, &mm.PPR, al2, &al3, pool_dynamic, results_dynamic, mm.upper_k);
-					std::cout << "ruc increase al2 size is " << al2.size() << " and al3 size is " << al3.size() << std::endl;
+					std::cout << "ruc increase al3 size is " << al3.size() << std::endl;
 					HOP_maintain_SPREAD3_batch(instance_graph, &mm.L, &mm.PPR, al3, pool_dynamic, results_dynamic, mm.upper_k, t);
 				}
 			}
@@ -2110,7 +2077,7 @@ namespace experiment
 										ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int upper_k, int t)
 				{
 
-					for (auto it : CL_curr)
+					for (const auto& it : CL_curr)
 					{
 						results_dynamic.emplace_back(pool_dynamic.enqueue([t, it, L, PPR, CL_next, &instance_graph, upper_k]
 																		  {
@@ -2142,12 +2109,11 @@ namespace experiment
 										}
 										else {
 											mtx_2021_decrease[vnei].lock_shared();
-											auto search_result = search_sorted_hop_constrained_weight_and_index_two_hop_label((*L)[vnei], u, hop_u + 1);
+											auto search_result = search_sorted_hop_constrained_weight_two_hop_label((*L)[vnei], u, hop_u + 1);
 											mtx_2021_decrease[vnei].unlock_shared();
-											if (search_result.first < MAX_VALUE && search_result.first > dnew) {
+											if (search_result < MAX_VALUE && search_result > dnew) {
 												mtx_2021_decrease[vnei].lock();
 												insert_sorted_hop_constrained_two_hop_label((*L)[vnei], u, hop_u + 1, dnew, t);
-												// (*L)[vnei][search_result.second].distance = dnew;
 												mtx_2021_decrease[vnei].unlock();
 												mtx_599_1.lock();
 												CL_next->push_back(hop_constrained_affected_label{vnei, u, hop_u + 1, dnew});
@@ -2177,7 +2143,7 @@ namespace experiment
 					std::vector<std::future<int>>().swap(results_dynamic);
 				}
 
-				void HOP_WeightDecrease2021_batch(graph<int> &instance_graph, two_hop_case_info &mm, std::vector<std::pair<int, int>> &v, std::vector<weightTYPE> &w_new,
+				void HOP_WeightDecrease2021_batch(graph<int> &instance_graph, two_hop_case_info &mm, std::vector<std::pair<int, int>> v, std::vector<weightTYPE> w_new,
 												  ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
 				{
 					std::map<std::pair<int, int>, weightTYPE> w_new_map;
@@ -2216,12 +2182,12 @@ namespace experiment
 							{
 								std::swap(v1, v2);
 							}
-							for (auto it : L[v1])
+							for (const auto &it : L[v1])
 							{
 								int v = it.hub_vertex;
 								int hop_v = it.hop;
 								long long dis = it.distance + w_new;
-								if (v <= v2 && it.t_e == std::numeric_limits<int>::max())
+								if (v <= v2 && hop_v + 1 < mm.upper_k && it.t_e == std::numeric_limits<int>::max())
 								{
 									auto query_result = hop_constrained_extract_distance_and_hub(L, v, v2, hop_v + 1); // query_result is {distance, common hub}
 
@@ -2232,10 +2198,10 @@ namespace experiment
 									}
 									else
 									{
-										auto search_result = search_sorted_hop_constrained_weight_and_index_two_hop_label(L[v2], v, hop_v + 1);
-										if (search_result.first < MAX_VALUE && search_result.first > dis)
+										auto search_result = search_sorted_hop_constrained_weight_two_hop_label(L[v2], v, hop_v + 1);
+										if (search_result < MAX_VALUE && search_result > dis)
 										{
-											L[v2][search_result.second].distance = dis;
+											insert_sorted_hop_constrained_two_hop_label((L)[v2], v, hop_v + 1, dis, t);
 											CL_curr.push_back(hop_constrained_affected_label(v2, v, hop_v + 1, dis));
 										}
 										if (query_result.second != v)
@@ -2287,7 +2253,7 @@ namespace experiment
 										w_old = nei.second;
 									}
 
-									if (it.dis + w_old <= search_weight.distance && search_weight.distance < MAX_VALUE && search_weight.t_s != t) {
+									if (it.dis + w_old <= search_weight.distance && search_weight.distance < MAX_VALUE) {
 										mtx_599_1.lock();
 										al1_next->push_back(hop_constrained_affected_label{nei.first, it.second, it.hop + 1, it.dis + w_old});
 										mtx_599_1.unlock();
@@ -2499,7 +2465,7 @@ namespace experiment
 				}
 
 				void HOP_WeightIncrease2021_batch(graph<int> &instance_graph, two_hop_case_info &mm,
-												  std::vector<std::pair<int, int>> &v, std::vector<weightTYPE> &w_old_vec,
+												  std::vector<std::pair<int, int>> v, std::vector<weightTYPE> w_old_vec,
 												  ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int time)
 				{
 					std::map<std::pair<int, int>, weightTYPE> w_old_map;
@@ -2518,7 +2484,6 @@ namespace experiment
 
 					std::vector<hop_constrained_affected_label> al1_curr, al1_next;
 					std::vector<hop_constrained_pair_label> al2_curr, al2_next;
-
 					for (auto &iter : w_old_map)
 					{
 						int v1 = iter.first.first;
@@ -2543,19 +2508,16 @@ namespace experiment
 					}
 					while (al1_curr.size() || al2_curr.size())
 					{
-						std::cout << "al1 curr size is " << al1_curr.size() << " al2 cur size is " << al2_curr.size() << std::endl;
 						PI11(instance_graph, &mm.L, al1_curr, &al1_next, w_old_map, pool_dynamic, results_dynamic, time);
-						std::cout << "al1 next size is " << al1_next.size() << " al2 next size is " << al2_next.size() << std::endl;
 						PI12(instance_graph, &mm.L, &mm.PPR, al1_curr, &al2_next, pool_dynamic, results_dynamic, mm.upper_k, time);
-						std::cout << "al1 next size is " << al1_next.size() << " al2 next size is " << al2_next.size() << std::endl;
 						PI22(instance_graph, &mm.L, &mm.PPR, al2_curr, &al2_next, pool_dynamic, results_dynamic, mm.upper_k, time);
-						std::cout << "al1 next size is " << al1_next.size() << " al2 next size is " << al2_next.size() << std::endl;
 
 						al1_curr = al1_next;
 						al2_curr = al2_next;
 						std::vector<hop_constrained_affected_label>().swap(al1_next);
 						std::vector<hop_constrained_pair_label>().swap(al2_next);
 					}
+					std::cout << "2021 ppr size " << experiment::PPR_TYPE::getSize(mm.PPR) << std::endl;
 				}
 
 			}

@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 			std::cout << instance_graph.ADJs[0].size() << std::endl;
 			std::cout << instance_graph.ADJs[1].size() << std::endl;
 			timer.endSubtask();
-			experiment::graph_with_time_span<int> graph_time;
+			experiment::graph_with_time_span graph_time;
 			graph_time.add_graph_time(instance_graph, 0);
 			std::filesystem::path saveDir = std::filesystem::path(config.save_path);
 			std::filesystem::create_directory(saveDir);
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 		{
 			std::vector<experiment::graph<int>> graph_list;
 			experiment::graph<int> init_graph;
-			experiment::graph_with_time_span<int> graph_time;
+			experiment::graph_with_time_span graph_time;
 			std::filesystem::path saveDir = std::filesystem::path(config.save_path);
 			std::filesystem::create_directory(saveDir);
 			timer_ruc.startTask("maintain graph and 2hop label " + std::to_string(config.hop_limit) + (config.hop_limit == 0 ? "nonhop_constrained" : "hop constrained"));
@@ -156,6 +156,7 @@ int main(int argc, char *argv[])
 				std::ofstream CHANGE_PATH_STREAM(changePath.string(), std::ios::out | std::ofstream::binary);
 				experiment::saveBinary(CHANGE_PATH_STREAM, change_info);
 
+				// experiment::iteration_info<int> change_info;
 				// std::ifstream CHANGE_PATH_STREAM(changePath.string(), std::ios::in | std::ifstream::binary);
 				// experiment::loadBinary(CHANGE_PATH_STREAM, change_info);
 				std::vector<std::pair<int, int>> path_decrease;
@@ -243,7 +244,7 @@ int main(int argc, char *argv[])
 								int v2 = path_decrease[index].second;
 								int w = weight_decrease[index];
 								int old_w = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
-								std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << old_w << std::endl;
+								// std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << old_w << std::endl;
 								timer_baseline1.startSubtask("modify baseline1 edge weight");
 								instance_graph_temp.add_edge(v1, v2, w);
 								timer_baseline1.endSubtask();
@@ -282,16 +283,16 @@ int main(int argc, char *argv[])
 								graph_time.add_edge(v1, v2, w, i);
 								timer_baseline2.endSubtask();
 							}
-							std::cout << "increase ruc maintain" << std::endl;
-							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
-							timer_ruc.startSubtask("iteration " + std::to_string(i) + " algorithm ruc increase maintain");
-							experiment::hop::ruc::increase::HOP_WeightIncreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
-							timer_ruc.endSubtask();
 							std::cout << "increase 2021 maintain" << std::endl;
 							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
 							timer_2021.startSubtask("iteration " + std::to_string(i) + " algorithm 2021 increase maintain");
 							experiment::hop::algorithm2021::increase::HOP_WeightIncrease2021_batch(instance_graph_temp, hop_info_2021, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
 							timer_2021.endSubtask();
+							std::cout << "increase ruc maintain" << std::endl;
+							experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+							timer_ruc.startSubtask("iteration " + std::to_string(i) + " algorithm ruc increase maintain");
+							experiment::hop::ruc::increase::HOP_WeightIncreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+							timer_ruc.endSubtask();
 							std::vector<std::pair<int, int>>().swap(path_increase);
 							std::vector<int>().swap(weight_increase);
 							std::vector<int>().swap(weight_old_increase);
@@ -306,7 +307,7 @@ int main(int argc, char *argv[])
 							int v2 = path_decrease[index].second;
 							int w = weight_decrease[index];
 							int old_w = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
-							std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << old_w << std::endl;
+							// std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << old_w << std::endl;
 							timer_baseline1.startSubtask("modify baseline1 edge weight");
 							instance_graph_temp.add_edge(v1, v2, w);
 							timer_baseline1.endSubtask();
@@ -345,16 +346,16 @@ int main(int argc, char *argv[])
 							graph_time.add_edge(v1, v2, w, i);
 							timer_baseline2.endSubtask();
 						}
-						std::cout << "increase ruc maintain" << std::endl;
-						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
-						timer_ruc.startSubtask("iteration " + std::to_string(i) + " algorithm ruc increase maintain");
-						experiment::hop::ruc::increase::HOP_WeightIncreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
-						timer_ruc.endSubtask();
 						std::cout << "increase 2021 maintain" << std::endl;
 						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
 						timer_2021.startSubtask("iteration " + std::to_string(i) + " algorithm 2021 increase maintain");
 						experiment::hop::algorithm2021::increase::HOP_WeightIncrease2021_batch(instance_graph_temp, hop_info_2021, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
 						timer_2021.endSubtask();
+						std::cout << "increase ruc maintain" << std::endl;
+						experiment::hop::initialize_global_values_dynamic_hop_constrained(instance_graph_temp.size(), hop_info.thread_num, hop_info.upper_k);
+						timer_ruc.startSubtask("iteration " + std::to_string(i) + " algorithm ruc increase maintain");
+						experiment::hop::ruc::increase::HOP_WeightIncreaseMaintenance_improv_batch(instance_graph_temp, hop_info, path_increase, weight_old_increase, pool_dynamic, results_dynamic, i);
+						timer_ruc.endSubtask();
 						std::vector<std::pair<int, int>>().swap(path_increase);
 						std::vector<int>().swap(weight_increase);
 						std::vector<int>().swap(weight_old_increase);
@@ -372,7 +373,7 @@ int main(int argc, char *argv[])
 						timer_baseline1.endSubtask();
 						timer_baseline2.endSubtask();
 					}
-					// std::cout << "current L size is " << hop_info.compute_label_bit_size() << std::endl;
+					//std::cout <<" time graph size is "<< graph_time.computeSize() <<" when time is "<< i << std::endl;
 				}
 				std::cout << "finish maintain label" << std::endl;
 				std::ofstream FILE_HOP_LABEL(hopLabelPath.string(), std::ios::out | std::ofstream::binary);
@@ -406,7 +407,7 @@ int main(int argc, char *argv[])
 				outFile << "========================baseline2=========================" << std::endl;
 				timer_baseline2.writeStatsToFile(outFile);
 				graph_time.record_all_details_stream(outFile);
-				outFile << "the size of half graph with time info label = " << half_baseline1_size << std::endl;
+				outFile << "the size of half graph with time info label = " << half_baseline2_size << std::endl;
 				outFile.close();
 				std::cout << "all finished" << std::endl;
 			}
@@ -528,7 +529,7 @@ int main(int argc, char *argv[])
 								int v2 = path_decrease[index].second;
 								int w = weight_decrease[index];
 								int w_old = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
-								std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << w_old << std::endl;
+								// std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << w_old << std::endl;
 								timer_baseline1.startSubtask("modify baseline1 edge weight");
 								instance_graph_temp.add_edge(v1, v2, w);
 								timer_baseline1.endSubtask();
@@ -591,7 +592,7 @@ int main(int argc, char *argv[])
 							int v2 = path_decrease[index].second;
 							int w = weight_decrease[index];
 							int w_old = sorted_vector_binary_operations_search_weight(instance_graph_temp[v1], v2);
-							std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << w_old << std::endl;
+							// std::cout << "from " << v1 << " to " << v2 << " w " << w << " old_w is " << w_old << std::endl;
 							timer_baseline1.startSubtask("modify baseline1 edge weight");
 							instance_graph_temp.add_edge(v1, v2, w);
 							timer_baseline1.endSubtask();
@@ -657,6 +658,7 @@ int main(int argc, char *argv[])
 						timer_baseline1.endSubtask();
 						timer_baseline2.endSubtask();
 					}
+					// std::cout <<" time graph size is "<< graph_time.computeSize() <<" when time is "<< i << std::endl;
 				}
 				std::ofstream FILE_HOP_LABEL(hopLabelPath.string(), std::ios::out | std::ofstream::binary);
 				experiment::saveBinary(FILE_HOP_LABEL, graph_list);
@@ -698,7 +700,7 @@ int main(int argc, char *argv[])
 			// random src and dest
 			timer.startTask("query shorest path distance");
 			std::vector<experiment::graph<int>> graph_list;
-			experiment::graph_with_time_span<int> graph_time;
+			experiment::graph_with_time_span graph_time;
 			if (config.hop_limit != 0)
 			{
 				std::string experiment_QUERY_RESULT_res_filename = "QUERY_RESULT_nonhop_constrained_" + std::to_string(config.hop_limit) + "_result.txt";

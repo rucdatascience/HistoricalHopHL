@@ -17,6 +17,19 @@ namespace experiment
 	{
 		using PPR_type = std::vector<std::vector<std::pair<int, std::vector<int>>>>;
 
+		long long int getSize(PPR_type &PPR)
+		{
+			long long int res = 0;
+			for (const auto &array : PPR)
+			{
+				for (const auto &arrayInner : array)
+				{
+					res += arrayInner.second.size();
+				}
+			}
+			return res;
+		};
+
 		int PPR_binary_operations_insert(std::vector<int> &input_vector, int key)
 		{
 
@@ -967,6 +980,88 @@ namespace experiment
 			return {distance, hop};
 		}
 
+		std::tuple<weightTYPE, int, int> graph_weighted_two_hop_extract_distance_and_hop_and_hub_by_backup_label(std::vector<two_hop_label> &L_s, std::vector<two_hop_label> &L_t, int hop_cst)
+		{
+			/*return std::numeric_limits<int>::max() is not connected*/
+
+			if (hop_cst < 0)
+			{
+				return {std::numeric_limits<int>::max(), -1, -1};
+			}
+			else if (hop_cst == 0)
+			{
+				return {std::numeric_limits<int>::max(), -1, -1};
+			}
+
+			int distance = std::numeric_limits<int>::max();
+			int hop = std::numeric_limits<int>::max();
+			int hub = -1;
+			auto vector1_check_pointer = L_s.begin();
+			auto vector2_check_pointer = L_t.begin();
+			auto pointer_L_s_end = vector1_check_pointer, pointer_L_t_end = vector2_check_pointer;
+			while (pointer_L_s_end != L_s.end() && pointer_L_s_end->t_e == std::numeric_limits<int>::max())
+			{
+				pointer_L_s_end++;
+			}
+			while (pointer_L_t_end != L_t.end() && pointer_L_t_end->t_e == std::numeric_limits<int>::max())
+			{
+				pointer_L_t_end++;
+			}
+
+			while (vector1_check_pointer != pointer_L_s_end && vector2_check_pointer != pointer_L_t_end)
+			{
+				if (vector1_check_pointer->hub_vertex == vector2_check_pointer->hub_vertex)
+				{
+					auto vector1_end = vector1_check_pointer;
+					while (vector1_end != pointer_L_s_end && vector1_check_pointer->hub_vertex == vector1_end->hub_vertex && vector1_end->t_e == std::numeric_limits<int>::max())
+					{
+						vector1_end++;
+					}
+					auto vector2_end = vector2_check_pointer;
+					while (vector2_end != pointer_L_t_end && vector2_check_pointer->hub_vertex == vector2_end->hub_vertex && vector2_end->t_e == std::numeric_limits<int>::max())
+					{
+						vector2_end++;
+					}
+
+					for (auto vector1_begin = vector1_check_pointer; vector1_begin != vector1_end; vector1_begin++)
+					{
+						// cout << "x (" << vector1_begin->hub_vertex << "," << vector1_begin->hop << "," << vector1_begin->distance << "," << vector1_begin->parent_vertex << ") " << endl;
+						for (auto vector2_begin = vector2_check_pointer; vector2_begin != vector2_end; vector2_begin++)
+						{
+							// cout << "y (" << vector2_begin->hub_vertex << "," << vector2_begin->hop << "," << vector2_begin->distance << "," << vector2_begin->parent_vertex << ") " << endl;
+							if (vector1_begin->hop + vector2_begin->hop <= hop_cst)
+							{
+								long long int dis = (long long int)vector1_begin->distance + vector2_begin->distance;
+								if (distance > dis)
+								{
+									distance = dis;
+									hop = vector1_begin->hop + vector2_begin->hop;
+									hub = vector1_begin->hub_vertex;
+								}
+							}
+							else
+							{
+								break;
+							}
+						}
+					}
+
+					vector1_check_pointer = vector1_end;
+					vector2_check_pointer = vector2_end;
+				}
+				else if (vector1_check_pointer->hub_vertex > vector2_check_pointer->hub_vertex)
+				{
+					vector2_check_pointer++;
+				}
+				else
+				{
+					vector1_check_pointer++;
+				}
+			}
+
+			return {distance, hop, hub};
+		}
+
 		std::pair<weightTYPE, int> graph_weighted_two_hop_extract_distance_and_hop_by_backup_label(std::vector<two_hop_label> &L_s, std::vector<two_hop_label> &L_t, int hop_cst)
 		{
 			/*return std::numeric_limits<int>::max() is not connected*/
@@ -1247,51 +1342,43 @@ namespace experiment
 			return {mindis, hop_val};
 		}
 
-		weightTYPE search_sorted_hop_constrained_weight_two_hop_label_not_real_time(std::vector<two_hop_label> &input_vector, int key, int hop, int time)
+		std::pair<weightTYPE, int> get_shortest_distance_hop_two_hop_label2(std::vector<two_hop_label> &input_vector, int key, int hop_k)
 		{
 			int left = 0, right = input_vector.size() - 1;
+			weightTYPE mindis = std::numeric_limits<int>::max();
+			int hop_val = 0;
 
 			while (left <= right)
 			{
-				int mid = left + ((right - left) / 2);
-
-				if (input_vector[mid].t_e == std::numeric_limits<int>::max())
-				{
-					if (input_vector[mid].hub_vertex == key)
-					{
-						if (input_vector[mid].hop == hop && input_vector[mid].t_s != time)
-						{
-							return input_vector[mid].distance;
-						}
-						else if (input_vector[mid].hop == hop && input_vector[mid].t_s == time)
-						{
-							break;
-						}
-						else if (input_vector[mid].hop < hop)
-						{
-							left = mid + 1;
-						}
-						else
-						{
-							right = mid - 1;
-						}
-					}
-					else if (input_vector[mid].hub_vertex < key)
-					{
-						left = mid + 1;
-					}
-					else
-					{
-						right = mid - 1;
-					}
-				}
-				else
+				int mid = (right - left) / 2 + left;
+				if (input_vector[mid].t_e != std::numeric_limits<int>::max())
 				{
 					right = mid - 1;
 				}
+				else
+				{
+					if (input_vector[mid].hub_vertex < key)
+					{
+						left = mid + 1;
+					}
+					else if (input_vector[mid].hub_vertex > key)
+					{
+						right = mid - 1;
+					}
+					else
+					{
+						mindis = input_vector[mid].distance;
+						hop_val = input_vector[mid].hop;
+						left = mid + 1;
+						if (hop_val == hop_k)
+						{
+							return {mindis, hop_val};
+						}
+					}
+				}
 			}
 
-			return std::numeric_limits<int>::max();
+			return {mindis, hop_val};
 		}
 
 		void insert_sorted_hop_constrained_two_hop_label(std::vector<two_hop_label> &input_vector, int key, int hop, weightTYPE new_distance, int t)
@@ -1310,10 +1397,13 @@ namespace experiment
 						{
 							two_hop_label old_label = input_vector[mid];
 							old_label.t_e = t - 1;
-
+							if (input_vector[mid].distance < new_distance && new_distance != MAX_VALUE)
+							{
+								std::cout << "error input " << std::endl;
+							}
 							input_vector[mid].distance = new_distance;
 							input_vector[mid].t_s = t;
-							if (old_label.distance != MAX_VALUE)
+							if (old_label.t_s != t && old_label.distance != MAX_VALUE)
 							{
 								int insert_left = mid + 1, insert_right = input_vector.size() - 1;
 
@@ -1321,11 +1411,11 @@ namespace experiment
 								{
 									int insert_mid = insert_left + ((insert_right - insert_left) / 2);
 
-									if (input_vector[insert_mid].t_e < t)
+									if (input_vector[insert_mid].t_e < t - 1)
 									{
 										insert_right = insert_mid - 1;
 									}
-									else if (input_vector[insert_mid].t_e == t)
+									else if (input_vector[insert_mid].t_e == t - 1)
 									{
 										if (input_vector[insert_mid].hub_vertex > key ||
 											(input_vector[insert_mid].hub_vertex == key && input_vector[insert_mid].hop > hop))

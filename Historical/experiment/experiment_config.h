@@ -148,6 +148,7 @@ namespace experiment
 		int v2;
 		int weight;
 		int time;
-		change_edge_info(int _v1, int _v2, int _w, int _t) : v1(_v1), v2(_v2), weight(_w), time(_t) {}
+		change_edge_info(){};
+		change_edge_info(int _v1, int _v2, int _w, int _t) : v1(_v1), v2(_v2), weight(_w), time(_t) {};
 	};
 }

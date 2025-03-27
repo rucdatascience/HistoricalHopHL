@@ -59,12 +59,15 @@ namespace experiment
 
 	public:
 		std::vector<std::queue<change_edge_info>> q_list;
+		iteration_info(){
+
+		};
 		iteration_info(int v_num, int iteration, int change_num, int upper, int lower, graph<weight_type> graph) : _v_num(v_num), _iteration(iteration), _change_num(change_num), _upper(upper), _lower(lower), instance_graph(graph)
 		{
 			this->_random_v = boost::random::uniform_int_distribution<>(0, this->_v_num);
 			this->_random_weight = boost::random::uniform_int_distribution<>(this->_lower, this->_upper);
 			q_list = std::vector<std::queue<change_edge_info>>(this->_iteration + 1, std::queue<change_edge_info>());
-		}
+		};
 
 		void build_random_change()
 		{
