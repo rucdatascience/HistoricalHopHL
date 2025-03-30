@@ -743,7 +743,7 @@ int main(int argc, char *argv[])
 					int resb1 = experiment::hop::dijkstra_iterator(graph_list, index_i, index_j, t_1, t_2, hop);
 					timer.endSubtask();
 					timer.startSubtask("baseline 2: traverse graph with time span");
-					int resb2 = experiment::hop::search_shortest_path_in_period_time_naive(graph_time, index_i, index_j, t_1, t_2, hop);
+					int resb2 = experiment::hop::search_shortest_path_in_period_time_naive(graph_time, index_i, index_j, hop, t_1, t_2);
 					timer.endSubtask();
 					timer.startSubtask("search result by ruc maintain algorithm");
 					int ruc_res = hop_info.query(index_i, index_j, t_1, t_2, hop);
