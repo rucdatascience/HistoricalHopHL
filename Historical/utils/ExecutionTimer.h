@@ -83,12 +83,12 @@ namespace experiment
 			currentSubtask = newSubtask;
 		}
 
-		long long int endSubtask()
+		double endSubtask()
 		{
 			if (currentSubtask)
 			{
 				currentSubtask->end();
-				long long res = currentSubtask->getTotalDuration();
+				double res = currentSubtask->getTotalDuration();
 				auto parentTask = currentSubtask->parent.lock();
 				currentSubtask = parentTask ? parentTask : nullptr;
 				return res;

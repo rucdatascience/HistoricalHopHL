@@ -705,10 +705,10 @@ int main(int argc, char *argv[])
 			std::vector<std::future<int>> results; // return typename: xxx
 			if (config.hop_limit != 0)
 			{
-				long long int rucTimeCostAll = 0;
-				long long int a2021TimeCostAll = 0;
-				long long int base1TimeCostAll = 0;
-				long long int base2TimeCostAll = 0;
+				double rucTimeCostAll = 0;
+				double a2021TimeCostAll = 0;
+				double base1TimeCostAll = 0;
+				double base2TimeCostAll = 0;
 				std::string experiment_QUERY_RESULT_res_filename = "QUERY_RESULT_hop_constrained_" + std::to_string(config.hop_limit) + "_result.txt";
 				std::string data_from_filename = "binary_hop_constrained_" + std::to_string(config.hop_limit) + "_2_hop_label_info";
 				std::string dataSource = config.data_source.string() + "//" + data_from_filename;
@@ -780,10 +780,10 @@ int main(int argc, char *argv[])
 			}
 			else
 			{
-				long long int rucTimeCostAll = 0;
-				long long int a2021TimeCostAll = 0;
-				long long int base1TimeCostAll = 0;
-				long long int base2TimeCostAll = 0;
+				double rucTimeCostAll = 0;
+				double a2021TimeCostAll = 0;
+				double base1TimeCostAll = 0;
+				double base2TimeCostAll = 0;
 				std::string experiment_QUERY_RESULT_res_filename = "QUERY_RESULT_nonhop_constrained_" + std::to_string(config.hop_limit) + "_result.txt";
 				std::string data_from_filename = "binary_nonhop_constrained_" + std::to_string(config.hop_limit) + "_2_hop_label_info";
 				std::string dataSource = config.data_source.string() + "//" + data_from_filename;
