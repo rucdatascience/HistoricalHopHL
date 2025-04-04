@@ -59,6 +59,7 @@ namespace experiment
 		// query-result
 		argparse::ArgumentParser query_label("query-result");
 		query_label.add_argument("-f", "--data_source").required();
+		query_label.add_argument("-t", "--threads").required().scan<'i', int>();
 		query_label.add_argument("-c", "--search_count").required().scan<'i', int>();
 		query_label.add_argument("-k", "--hop_limit").required().scan<'i', int>();
 
@@ -113,6 +114,7 @@ namespace experiment
 			config.data_source = query_label.get<std::string>("-f");
 			config.change_count = query_label.get<int>("-c");
 			config.hop_limit = query_label.get<int>("-k");
+			config.threads = query_label.get<int>("-t");
 		}
 		else
 		{

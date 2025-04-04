@@ -83,17 +83,20 @@ namespace experiment
 			currentSubtask = newSubtask;
 		}
 
-		void endSubtask()
+		long long int endSubtask()
 		{
 			if (currentSubtask)
 			{
 				currentSubtask->end();
+				long long res = currentSubtask->getTotalDuration();
 				auto parentTask = currentSubtask->parent.lock();
 				currentSubtask = parentTask ? parentTask : nullptr;
+				return res;
 			}
 			else
 			{
 				std::cerr << "Error: No subtask is currently running.\n";
+				return 0;
 			}
 		}
 

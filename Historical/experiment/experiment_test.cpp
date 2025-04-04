@@ -373,7 +373,7 @@ int main(int argc, char *argv[])
 						timer_baseline1.endSubtask();
 						timer_baseline2.endSubtask();
 					}
-					//std::cout <<" time graph size is "<< graph_time.computeSize() <<" when time is "<< i << std::endl;
+					// std::cout <<" time graph size is "<< graph_time.computeSize() <<" when time is "<< i << std::endl;
 				}
 				std::cout << "finish maintain label" << std::endl;
 				std::ofstream FILE_HOP_LABEL(hopLabelPath.string(), std::ios::out | std::ofstream::binary);
@@ -698,12 +698,18 @@ int main(int argc, char *argv[])
 		else if (config.mode == experiment::QUERY_RESULT)
 		{
 			// random src and dest
-			timer.startTask("query shorest path distance");
 			std::vector<experiment::graph<int>> graph_list;
 			experiment::graph_with_time_span graph_time;
+			std::mutex outMutex;
+			ThreadPool pool(config.threads);
+			std::vector<std::future<int>> results; // return typename: xxx
 			if (config.hop_limit != 0)
 			{
-				std::string experiment_QUERY_RESULT_res_filename = "QUERY_RESULT_nonhop_constrained_" + std::to_string(config.hop_limit) + "_result.txt";
+				long long int rucTimeCostAll = 0;
+				long long int a2021TimeCostAll = 0;
+				long long int base1TimeCostAll = 0;
+				long long int base2TimeCostAll = 0;
+				std::string experiment_QUERY_RESULT_res_filename = "QUERY_RESULT_hop_constrained_" + std::to_string(config.hop_limit) + "_result.txt";
 				std::string data_from_filename = "binary_hop_constrained_" + std::to_string(config.hop_limit) + "_2_hop_label_info";
 				std::string dataSource = config.data_source.string() + "//" + data_from_filename;
 				std::string savePath = config.data_source.string() + "//" + experiment_QUERY_RESULT_res_filename;
@@ -728,37 +734,56 @@ int main(int argc, char *argv[])
 				outFile.open(savePath);
 				for (int i = 0; i < config.change_count; i++)
 				{
-					int index_i = _random_v(boost_random_time_seed);
-					int index_j = _random_v(boost_random_time_seed);
-					int t_1 = _random_time(boost_random_time_seed);
-					int t_2 = _random_time(boost_random_time_seed);
-					int hop = _random_hop(boost_random_time_seed);
-					if (t_1 > t_2)
-					{
-						std::swap(t_1, t_2);
-					}
-					std::cout << "from " << index_i << " to " << index_j << " between " << t_1 << " and " << t_2 << " by " << hop << std::endl;
-					timer.startSubtask("====iteration " + std::to_string(i) + " query result info====");
-					timer.startSubtask("baseline 1: traverse each time graph");
-					int resb1 = experiment::hop::dijkstra_iterator(graph_list, index_i, index_j, t_1, t_2, hop);
-					timer.endSubtask();
-					timer.startSubtask("baseline 2: traverse graph with time span");
-					int resb2 = experiment::hop::search_shortest_path_in_period_time_naive(graph_time, index_i, index_j, hop, t_1, t_2);
-					timer.endSubtask();
-					timer.startSubtask("search result by ruc maintain algorithm");
-					int ruc_res = hop_info.query(index_i, index_j, t_1, t_2, hop);
-					timer.endSubtask();
-					timer.startSubtask("search result by 2021 maintain algorithm");
-					int res_2021 = hop_info_2021.query(index_i, index_j, t_1, t_2, hop);
-					timer.endSubtask();
-					outFile << resb1 << ":" << resb2 << ":" << ruc_res << ":" << res_2021 << std::endl;
-					timer.endSubtask();
+					results.emplace_back(
+						pool.enqueue([&graph_list, &graph_time, &hop_info, &hop_info_2021, i, &outFile, &outMutex, &_random_v, &_random_time, &_random_hop, &rucTimeCostAll, &a2021TimeCostAll, &base1TimeCostAll, &base2TimeCostAll]
+									 {
+							experiment::ExecutionTimer timerQuery;
+							timerQuery.startTask("query shorest path distance");
+							int index_i = _random_v(boost_random_time_seed);
+							int index_j = _random_v(boost_random_time_seed);
+							int t_1 = _random_time(boost_random_time_seed);
+							int t_2 = _random_time(boost_random_time_seed);
+							int hop = _random_hop(boost_random_time_seed);
+							if (t_1 > t_2)
+							{
+								std::swap(t_1, t_2);
+							}
+							timerQuery.startSubtask("====iteration " + std::to_string(i) + " query result info====");
+							timerQuery.startSubtask("baseline 1: traverse each time graph");
+							int resb1 = experiment::hop::dijkstra_iterator(graph_list, index_i, index_j, t_1, t_2, hop);
+							base1TimeCostAll += timerQuery.endSubtask();
+							timerQuery.startSubtask("baseline 2: traverse graph with time span");
+							int resb2 = experiment::hop::search_shortest_path_in_period_time_naive(graph_time, index_i, index_j, hop, t_1, t_2);
+							base2TimeCostAll += timerQuery.endSubtask();
+							timerQuery.startSubtask("search result by ruc maintain algorithm");
+							int ruc_res = hop_info.query(index_i, index_j, t_1, t_2, hop);
+							rucTimeCostAll += timerQuery.endSubtask();
+							timerQuery.startSubtask("search result by 2021 maintain algorithm");
+							int res_2021 = hop_info_2021.query(index_i, index_j, t_1, t_2, hop);
+							a2021TimeCostAll += timerQuery.endSubtask();
+							timerQuery.endSubtask();
+							outMutex.lock();
+							outFile << "from " << index_i << " to " << index_j << " between " << t_1 << " and " << t_2 << " by " << hop << std::endl;
+							outFile << resb1 << ":" << resb2 << ":" << ruc_res << ":" << res_2021 << std::endl;
+							timerQuery.writeStatsToFile(outFile);
+							outMutex.unlock();
+							return 1; }));
 				}
-				timer.writeStatsToFile(outFile);
+				for (auto &&result : results)
+					result.get(); // all threads finish here
+				results.clear();
+				outFile << "ruc1 cost " << rucTimeCostAll << std::endl;
+				outFile << "2021 cost " << a2021TimeCostAll << std::endl;
+				outFile << "baseline1 cost " << base1TimeCostAll << std::endl;
+				outFile << "baseline2 cost " << base2TimeCostAll << std::endl;
 				outFile.close();
 			}
 			else
 			{
+				long long int rucTimeCostAll = 0;
+				long long int a2021TimeCostAll = 0;
+				long long int base1TimeCostAll = 0;
+				long long int base2TimeCostAll = 0;
 				std::string experiment_QUERY_RESULT_res_filename = "QUERY_RESULT_nonhop_constrained_" + std::to_string(config.hop_limit) + "_result.txt";
 				std::string data_from_filename = "binary_nonhop_constrained_" + std::to_string(config.hop_limit) + "_2_hop_label_info";
 				std::string dataSource = config.data_source.string() + "//" + data_from_filename;
@@ -782,32 +807,49 @@ int main(int argc, char *argv[])
 				outFile.open(savePath);
 				for (int i = 0; i < config.change_count; i++)
 				{
-					int index_i = _random_v(boost_random_time_seed);
-					int index_j = _random_v(boost_random_time_seed);
-					int t_1 = _random_time(boost_random_time_seed);
-					int t_2 = _random_time(boost_random_time_seed);
-					if (t_1 > t_2)
-					{
-						std::swap(t_1, t_2);
-					}
-					timer.startSubtask("====iteration " + std::to_string(i) + " query result info====");
-					timer.startSubtask("baseline 1: traverse each time graph");
-					int resb1 = experiment::nonhop::dijkstra_iterator(graph_list, index_i, index_j, t_1, t_2);
-					timer.endSubtask();
-					timer.startSubtask("baseline 2: traverse graph with time span");
-					int resb2 = experiment::nonhop::search_shortest_path_in_period_time_naive(graph_time, index_i, index_j, t_1, t_2);
-					timer.endSubtask();
-					timer.startSubtask("search result by ruc maintain algorithm");
-					int ruc_res = hop_info.query(index_i, index_j, t_1, t_2);
-					timer.endSubtask();
-					timer.startSubtask("search result by 2021 maintain algorithm");
-					int res_2021 = hop_info_2021.query(index_i, index_j, t_1, t_2);
-					timer.endSubtask();
-					outFile << resb1 << ":" << resb2 << ":" << ruc_res << ":" << res_2021 << std::endl;
-					timer.endSubtask();
+					results.emplace_back(
+						pool.enqueue([&graph_list, &graph_time, &hop_info, &hop_info_2021, i, &outFile, &outMutex, &_random_v, &_random_time,
+									  &base1TimeCostAll, &base2TimeCostAll, &rucTimeCostAll, &a2021TimeCostAll]
+									 {
+							experiment::ExecutionTimer timerQuery;
+							timerQuery.startTask("query shorest path distance");
+							int index_i = _random_v(boost_random_time_seed);
+							int index_j = _random_v(boost_random_time_seed);
+							int t_1 = _random_time(boost_random_time_seed);
+							int t_2 = _random_time(boost_random_time_seed);
+							if (t_1 > t_2)
+							{
+								std::swap(t_1, t_2);
+							}
+							timerQuery.startSubtask("====iteration " + std::to_string(i) + " query result info====");
+							timerQuery.startSubtask("baseline 1: traverse each time graph");
+							int resb1 = experiment::nonhop::dijkstra_iterator(graph_list, index_i, index_j, t_1, t_2);
+							base1TimeCostAll += timerQuery.endSubtask();
+							timerQuery.startSubtask("baseline 2: traverse graph with time span");
+							int resb2 = experiment::nonhop::search_shortest_path_in_period_time_naive(graph_time, index_i, index_j, t_1, t_2);
+							base2TimeCostAll +=timerQuery.endSubtask();
+							timerQuery.startSubtask("search result by ruc maintain algorithm");
+							int ruc_res = hop_info.query(index_i, index_j, t_1, t_2);
+							rucTimeCostAll +=timerQuery.endSubtask();
+							timerQuery.startSubtask("search result by 2021 maintain algorithm");
+							int res_2021 = hop_info_2021.query(index_i, index_j, t_1, t_2);
+							base2TimeCostAll +=timerQuery.endSubtask();
+							timerQuery.endSubtask();
+							outMutex.lock();
+							outFile << "from " << index_i << " to " << index_j << " between " << t_1 << " and " << t_2 << std::endl;
+							outFile << resb1 << ":" << resb2 << ":" << ruc_res << ":" << res_2021 << std::endl;
+							timerQuery.writeStatsToFile(outFile);
+							outMutex.unlock();
+							return 1; }));
 				}
-				timer.writeStatsToFile(outFile);
+				for (auto &&result : results)
+					result.get(); // all threads finish here
+				outFile << "ruc1 cost " << rucTimeCostAll << std::endl;
+				outFile << "2021 cost " << a2021TimeCostAll << std::endl;
+				outFile << "baseline1 cost " << base1TimeCostAll << std::endl;
+				outFile << "baseline2 cost " << base2TimeCostAll << std::endl;
 				outFile.close();
+				results.clear();
 			}
 		}
 	}
