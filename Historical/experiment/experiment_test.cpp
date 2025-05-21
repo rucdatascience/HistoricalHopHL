@@ -483,6 +483,7 @@ int main(int argc, char *argv[])
 				graph_list.push_back(init_graph);
 				timer_ruc.endSubtask();
 				timer_2021.endSubtask();
+
 				experiment::iteration_info<int> change_info(
 					graph_time.v_num, config.iterations, config.change_count, config.max_value, config.min_value, init_graph);
 				change_info.build_random_change();
@@ -491,6 +492,11 @@ int main(int argc, char *argv[])
 				experiment::saveBinary(CHANGE_PATH_STREAM, change_info);
 				CHANGE_PATH_STREAM.close();
 				change_info.toString(CHANGE_DETAIL_PATH_STREAM);
+
+				// experiment::iteration_info<int> change_info;
+				// std::ifstream CHANGE_PATH_STREAM(changePath.string(), std::ios::in | std::ofstream::binary);
+				// experiment::loadBinary(CHANGE_PATH_STREAM, change_info);
+				// CHANGE_PATH_STREAM.close();
 
 				std::vector<std::pair<int, int>> path_decrease;
 				std::map<std::pair<int, int>, int> path2Index4Decrease;
@@ -570,7 +576,7 @@ int main(int argc, char *argv[])
 								weight_decrease[path2Index4Decrease[pairPathV]] = weight;
 							}
 						}
-						if (path_decrease.size() > hop_info.thread_num)
+						if (path_decrease.size() > hop_info.thread_num * 10)
 						{
 							for (int index = 0; index < path_decrease.size(); index++)
 							{
@@ -600,7 +606,7 @@ int main(int argc, char *argv[])
 							std::vector<int>().swap(weight_decrease);
 							std::map<std::pair<int, int>, int>().swap(path2Index4Decrease);
 						}
-						if (path_increase.size() > hop_info.thread_num)
+						if (path_increase.size() > hop_info.thread_num * 10)
 						{
 							for (int index = 0; index < path_increase.size(); index++)
 							{
@@ -652,7 +658,11 @@ int main(int argc, char *argv[])
 						std::cout << "decrease ruc maintain" << std::endl;
 						experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);
 						timer_ruc.startSubtask("iteration " + std::to_string(i) + " algorithm ruc decrease maintain");
+						auto start = std::chrono::steady_clock::now();
 						experiment::nonhop::ruc::decrease::decrease_maintain(instance_graph_temp, hop_info, path_decrease, weight_decrease, pool_dynamic, results_dynamic, i);
+						auto end = std::chrono::steady_clock::now();
+						auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
+						std::cout <<"iteration " + std::to_string(i) + " algorithm ruc decrease maintain cost " << duration << std::endl;
 						rucTimeCostAll += timer_ruc.endSubtask();
 						std::cout << "decrease 2021 maintain" << std::endl;
 						experiment::nonhop::initialize_experiment_global_values_dynamic(instance_graph_temp.size(), hop_info.thread_num);

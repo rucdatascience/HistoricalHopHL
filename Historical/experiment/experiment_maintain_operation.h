@@ -86,10 +86,42 @@ namespace experiment
 				Qid_595.push(i);
 			}
 		};
+		struct tript_insert_label{
+			int index;
+			int key;
+			long long int dis;
+			int t;
+			bool operator==(const tript_insert_label& other) const{
+				return (index == other.index && key == other.key && dis == other.dis && t == other.t);	
+			}
+			bool operator<(const tript_insert_label& other) const{ // used to sort/search pair_label2 in set
+				if (index!= other.index)
+					return index < other.index;
+				if (key!= other.key)
+					return key < other.key;
+				if (dis!= other.dis)
+					return dis < other.dis;
+				return t < other.t;
+			}
+		};
+		struct visited_node{
+			int key;
+			long long int dis;
+			bool operator==(const visited_node& other) const{
+				return (key == other.key && dis == other.dis);	
+			}
+			bool operator<(const visited_node& other) const{ // used to sort/search pair_label2 in set
+				if (key!= other.key)
+					return key < other.key;
+				return dis < other.dis;
+			}
+		};
 		namespace ruc
 		{
 			namespace decrease
 			{
+				static long redundant_count = 0;
+				static long Q_Process_Count = 0;
 				void decrease_maintain_step1_batch(std::map<std::pair<int, int>, int> &v_map, std::vector<std::vector<two_hop_label>> *L, PPR_TYPE::PPR_type *PPR, std::vector<affected_label> *CL,
 												   ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int t)
 				{
@@ -105,14 +137,14 @@ namespace experiment
 									}
 									for (auto& it : (*L)[v1]) {
 										if (it.vertex <= v2 && it.distance + w_new < 2e6 && it.t_e == std::numeric_limits<int>::max()) {
-											auto query_result = graph_weighted_two_hop_extract_distance_and_hub_in_current(*L, it.vertex, v2); // query_result is {distance, common hub}
+											auto query_result = graph_weighted_two_hop_extract_distance_and_hub_in_current_mark(*L, it.vertex, v2,true); // query_result is {distance, common hub}
 											if (query_result.first > it.distance + w_new) {
 												mtx_595_1.lock();
 												CL->push_back(affected_label{ v2 , it.vertex, it.distance + w_new });
 												mtx_595_1.unlock();
 											}
 											else {
-												auto search_result = search_sorted_two_hop_label_weight_in_current((*L)[v2], it.vertex);
+												auto search_result = search_sorted_two_hop_label_weight_in_current_mark((*L)[v2], it.vertex, true);
 												// TODO-GPY MAX_VALUE PRUNE 1e7
 												if (search_result > it.distance + w_new && search_result < 1e7) {
 													mtx_595_1.lock();
@@ -121,12 +153,12 @@ namespace experiment
 												}
 												if (query_result.second != it.vertex) {
 													mtx_5952[v2].lock();
-													PPR_TYPE::PPR_insert(*PPR, v2, query_result.second, it.vertex);
+													PPR_TYPE::PPR_insert_mark(*PPR, v2, query_result.second, it.vertex,true);
 													mtx_5952[v2].unlock();
 												}
 												if (query_result.second != v2) {
 													mtx_5952[it.vertex].lock();
-													PPR_TYPE::PPR_insert(*PPR, it.vertex, query_result.second, v2);
+													PPR_TYPE::PPR_insert_mark(*PPR, it.vertex, query_result.second, v2,true);
 													mtx_5952[it.vertex].unlock();
 												}
 											}
@@ -185,7 +217,6 @@ namespace experiment
 					std::vector<std::pair<int, std::vector<std::pair<int, int>>>> CL_map_vec(CL_map.begin(), CL_map.end());
 					sort(CL_map_vec.begin(), CL_map_vec.end(), [](const std::pair<int, std::vector<std::pair<int, int>>> &a, const std::pair<int, std::vector<std::pair<int, int>>> &b)
 						 { return a.first < b.first; });
-
 					// each thread processes one unique hub
 					for (auto &it : CL_map_vec)
 					{
@@ -226,7 +257,7 @@ namespace experiment
 								}
 
 								while (!Q.empty()) {
-
+									Q_Process_Count++;
 									node_for_DIFFUSE temp2 = Q.top();
 									int x = temp2.index;
 									int dx = temp2.disx;
@@ -234,11 +265,11 @@ namespace experiment
 									Q_VALUE[x] = 1e7;
 
 									mtx_595[x].lock_shared();
-									long long int d_old = search_sorted_two_hop_label_weight_and_hub_in_current((*L)[x], v).first;
+									long long int d_old = search_sorted_two_hop_label_weight_and_hub_in_current_mark((*L)[x], v,true).first;
 									mtx_595[x].unlock_shared();
 									if (d_old > dx) {
 										mtx_595[x].lock();
-										insert_sorted_two_hop_label((*L)[x], v, dx, t);
+										insert_sorted_two_hop_label_mark((*L)[x], v, dx, t,true);
 										mtx_595[x].unlock();
 									}
 									else {
@@ -253,7 +284,7 @@ namespace experiment
 										if (v < xnei && d_new < 2e6) {
 											if (DIS[xnei].first == -1) {
 												mtx_595[xnei].lock_shared();
-												DIS[xnei] = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label((*L)[xnei], Lv);
+												DIS[xnei] = graph_weighted_two_hop_extract_distance_and_hub_by_backup_label_mark((*L)[xnei], Lv,true);
 												mtx_595[xnei].unlock_shared();
 												Dis_changed.push_back(xnei);
 											}
@@ -269,7 +300,7 @@ namespace experiment
 											}
 											else {
 												mtx_595[xnei].lock_shared();
-												auto search_result = search_sorted_two_hop_label_weight_and_hub_in_current((*L)[xnei], v);
+												auto search_result = search_sorted_two_hop_label_weight_and_hub_in_current_mark((*L)[xnei], v,true);
 												mtx_595[xnei].unlock_shared();
 												if (search_result.second != -1 && std::min(search_result.first, Q_VALUE[xnei]) > d_new) {
 													if (Q_VALUE[xnei] >= 1e7) {
@@ -282,12 +313,12 @@ namespace experiment
 												}
 												if (DIS[xnei].second != v) {
 													mtx_5952[xnei].lock();
-													PPR_TYPE::PPR_insert(*PPR, xnei, DIS[xnei].second, v);
+													PPR_TYPE::PPR_insert_mark(*PPR, xnei, DIS[xnei].second, v,true);
 													mtx_5952[xnei].unlock();
 												}
 												if (DIS[xnei].second != xnei) {
 													mtx_5952[v].lock();
-													PPR_TYPE::PPR_insert(*PPR, v, DIS[xnei].second, xnei);
+													PPR_TYPE::PPR_insert_mark(*PPR, v, DIS[xnei].second, xnei,true);
 													mtx_5952[v].unlock();
 												}
 											}
@@ -317,6 +348,8 @@ namespace experiment
 				void decrease_maintain(graph<weight_type> &instance_graph, two_hop_case_info &mm, std::vector<std::pair<int, int>> &v, std::vector<int> &w_new,
 									   ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int time)
 				{
+					redundant_count=0;
+					Q_Process_Count = 0;
 					std::map<std::pair<int, int>, int> w_new_map;
 					int batch_size = v.size();
 					for (int i = 0; i < batch_size; i++)
@@ -339,6 +372,12 @@ namespace experiment
 					decrease_maintain_step1_batch(w_new_map, &mm.L, &mm.PPR, &CL, pool_dynamic, results_dynamic, time);
 
 					DIFFUSE_batch(instance_graph, &mm.L, &mm.PPR, CL, pool_dynamic, results_dynamic, time);
+					std::cout <<" ruc current redundant count: " <<redundant_count <<std::endl;
+					std::cout << "ruc current Q_Process_Count: " << Q_Process_Count << std::endl;
+					std::cout <<" ruc current query count: " <<ruc_query_count <<std::endl;
+					std::cout << "ruc current query label count: " << ruc_label_query_count << std::endl;
+					std::cout <<" ruc current insert label: " <<ruc_label_insert_count <<std::endl;
+					std::cout << "ruc current insertPPr: " << PPR_INSERT_RUC << std::endl;
 				}
 			}
 			namespace increase
@@ -731,7 +770,7 @@ namespace experiment
 		{
 			namespace decrease
 			{
-
+				static long Q_Process_size = 0;
 				void ProDecreasep_batch(graph<int> &instance_graph, std::vector<std::vector<two_hop_label>> *L, PPR_TYPE::PPR_type *PPR,
 										std::vector<affected_label> &CL_curr, std::vector<affected_label> *CL_next, ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int time)
 				{
@@ -753,12 +792,13 @@ namespace experiment
 								mtx_595[u].unlock();
 
 								for (auto nei : instance_graph[v]) {
+									Q_Process_size++;
 									int vnei = nei.first;
 									long long dnew = it.dis + nei.second;
 
 									if (u < vnei) {
 										mtx_595[vnei].lock();
-										auto query_result = graph_weighted_two_hop_extract_2hop_label_by_backup_label((*L)[vnei], Lu); // query_result is {distance, common hub}
+										auto query_result = graph_weighted_two_hop_extract_2hop_label_by_backup_label_mark((*L)[vnei], Lu, false); // query_result is {distance, common hub}
 										mtx_595[vnei].unlock();
 										if (query_result.first.t_s == -1 || (query_result.first.distance + query_result.second.distance) > dnew) {
 											mtx_595[vnei].lock();
@@ -767,8 +807,8 @@ namespace experiment
 											//		<< " hop label2 is from " << query_result.second.t_s << " cost " << query_result.second.distance
 											//		<< " and all time is " << query_result.first.distance + query_result.second.distance << " greater than " << dnew << std::endl;
 											//}
-
-											insert_sorted_two_hop_label((*L)[vnei], u, dnew, time);
+											tript_insert_label label = {vnei,u,dnew,time};
+											insert_sorted_two_hop_label_mark((*L)[vnei], u, dnew, time,false);
 											mtx_595[vnei].unlock();
 											mtx_595_1.lock();
 											CL_next->push_back(affected_label(vnei, u, dnew));
@@ -776,12 +816,12 @@ namespace experiment
 										}
 										else {
 											mtx_595[vnei].lock();
-											two_hop_label search_result = search_sorted_two_hop_label_in_current((*L)[vnei], u);
+											two_hop_label search_result = search_sorted_two_hop_label_in_current_mark((*L)[vnei], u,false);
 											mtx_595[vnei].unlock();
 											if (search_result.distance < 1e7 && search_result.distance > dnew) {
 												mtx_595[vnei].lock();
 												// std::cout << "decrease label has better answer : old label is " << vnei << " to " << search_result.vertex << " old value is " << search_result.distance << " to " << dnew << " t_s is " << search_result.t_s << std::endl;
-												insert_sorted_two_hop_label((*L)[vnei], search_result.vertex, dnew, time);
+												insert_sorted_two_hop_label_mark((*L)[vnei], search_result.vertex, dnew, time,false);
 												// (*L)[vnei][search_result.second].distance = dnew;
 												mtx_595[vnei].unlock();
 												mtx_595_1.lock();
@@ -790,12 +830,12 @@ namespace experiment
 											}
 											if (query_result.first.vertex != u) {
 												mtx_5952[vnei].lock();
-												PPR_TYPE::PPR_insert(*PPR, vnei, query_result.first.vertex, u);
+												PPR_TYPE::PPR_insert_mark(*PPR, vnei, query_result.first.vertex, u,false);
 												mtx_5952[vnei].unlock();
 											}
 											if (query_result.first.vertex != vnei) {
 												mtx_5952[u].lock();
-												PPR_TYPE::PPR_insert(*PPR, u, query_result.first.vertex, vnei);
+												PPR_TYPE::PPR_insert_mark(*PPR, u, query_result.first.vertex, vnei,false);
 												mtx_5952[u].unlock();
 											}
 										}
@@ -815,6 +855,7 @@ namespace experiment
 				void decrease_maintain(graph<int> &instance_graph, two_hop_case_info &mm, std::vector<std::pair<int, int>> &v, std::vector<int> &w_new,
 									   ThreadPool &pool_dynamic, std::vector<std::future<int>> &results_dynamic, int time)
 				{
+					Q_Process_size = 0;
 					std::map<std::pair<int, int>, int> w_new_map;
 					int batch_size = v.size();
 					for (int i = 0; i < batch_size; i++)
@@ -841,7 +882,7 @@ namespace experiment
 					the reason is that L is changed below, and as a result, in each following loop, L[v2] or L[v1] is locked at each step,
 					which means that following loops cannot be actually parallized
 					*/
-
+					Q_Process_size+=w_new_map.size();
 					for (auto &it : w_new_map)
 					{
 						int v1 = it.first.first, v2 = it.first.second;
@@ -858,33 +899,33 @@ namespace experiment
 								long long dis = it.distance + w_new;
 								if (v <= v2)
 								{
-									auto query_result = graph_weighted_two_hop_extract_distance_and_hub_in_current(L, v, v2); // query_result is {distance, common hub}
+									auto query_result = graph_weighted_two_hop_extract_distance_and_hub_in_current_mark(L, v, v2,false); // query_result is {distance, common hub}
 									if (query_result.first > dis)
 									{
 										mtx_595[v2].lock();
-										insert_sorted_two_hop_label(L[v2], v, dis, time);
+										insert_sorted_two_hop_label_mark(L[v2], v, dis, time,false);
 										mtx_595[v2].unlock();
 										CL_curr.push_back(affected_label(v2, v, dis));
 									}
 									else
 									{
-										auto search_result = search_sorted_two_hop_label_weight_and_hub_in_current(L[v2], v);
+										auto search_result = search_sorted_two_hop_label_weight_and_hub_in_current_mark(L[v2], v,false);
 										if (search_result.first < 1e7 && search_result.first > dis)
 										{
 											mtx_595[v2].lock();
 											// ����ֱ���滻 ʹ�÷���
-											insert_sorted_two_hop_label(L[v2], search_result.second, dis, time);
+											insert_sorted_two_hop_label_mark(L[v2], search_result.second, dis, time,false);
 											mtx_595[v2].unlock();
 											// L[v2][search_result.second].distance = dis;
 											CL_curr.push_back(affected_label(v2, v, dis));
 										}
 										if (query_result.second != v)
 										{
-											PPR_TYPE::PPR_insert(mm.PPR, v2, query_result.second, v);
+											PPR_TYPE::PPR_insert_mark(mm.PPR, v2, query_result.second, v,false);
 										}
 										if (query_result.second != v2)
 										{
-											PPR_TYPE::PPR_insert(mm.PPR, v, query_result.second, v2);
+											PPR_TYPE::PPR_insert_mark(mm.PPR, v, query_result.second, v2,false);
 										}
 									}
 								}
@@ -899,6 +940,11 @@ namespace experiment
 						CL_curr = CL_next;
 						std::vector<affected_label>().swap(CL_next);
 					}
+					std::cout << "2021 decrease Q_Process_size is " << Q_Process_size << std::endl;
+					std::cout << "2021 decrease query count " << a2021_query_count << std::endl;
+					std::cout << "2021 decrease query label count " << a2021_label_query_count << std::endl;
+					std::cout << "2021 decrease insert label count " << a2021_label_insert_count << std::endl;
+					std::cout << "2021 decrease PPR insert count is " << PPR_INSERT_2021 << std::endl;
 				}
 			}
 			namespace increase
