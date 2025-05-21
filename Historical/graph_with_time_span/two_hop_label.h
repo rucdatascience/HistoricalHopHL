@@ -581,14 +581,26 @@ namespace experiment
 			void serialize(std::ofstream &out) const
 			{
 				experiment::saveBinary(out, thread_num);
-				experiment::saveBinary(out, L);
+				size_t size = L.size();
+				BinarySerializer<size_t>::saveBinary(out, size);
+				for (auto &item : L)
+				{
+					BinarySerializer<std::vector<experiment::nonhop::two_hop_label>>::saveBinary(out, item);
+					out.flush();
+				}
 				experiment::saveBinary(out, PPR);
 			}
 
 			void deserialize(std::ifstream &in)
 			{
 				experiment::loadBinary(in, thread_num);
-				experiment::loadBinary(in, L);
+				size_t size;
+				BinarySerializer<size_t>::loadBinary(in, size);
+				L.resize(size);
+				for (auto &item : L)
+				{
+					BinarySerializer<std::vector<experiment::nonhop::two_hop_label>>::loadBinary(in, item);
+				}
 				experiment::loadBinary(in, PPR);
 			}
 
@@ -1400,6 +1412,7 @@ namespace experiment
 							if (input_vector[mid].distance < new_distance && new_distance != MAX_VALUE)
 							{
 								std::cout << "error input " << std::endl;
+								return;
 							}
 							input_vector[mid].distance = new_distance;
 							input_vector[mid].t_s = t;
@@ -1531,7 +1544,13 @@ namespace experiment
 			{
 				experiment::saveBinary(out, thread_num);
 				experiment::saveBinary(out, upper_k);
-				experiment::saveBinary(out, L);
+				size_t size = L.size();
+				BinarySerializer<size_t>::saveBinary(out, size);
+				for (auto &item : L)
+				{
+					BinarySerializer<std::vector<experiment::hop::two_hop_label>>::saveBinary(out, item);
+					out.flush();
+				}
 				experiment::saveBinary(out, PPR);
 			}
 
@@ -1539,7 +1558,13 @@ namespace experiment
 			{
 				experiment::loadBinary(in, thread_num);
 				experiment::loadBinary(in, upper_k);
-				experiment::loadBinary(in, L);
+				size_t size;
+				BinarySerializer<size_t>::loadBinary(in, size);
+				L.resize(size);
+				for (auto &item : L)
+				{
+					BinarySerializer<std::vector<experiment::hop::two_hop_label>>::loadBinary(in, item);
+				}
 				experiment::loadBinary(in, PPR);
 			}
 

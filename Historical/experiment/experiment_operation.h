@@ -146,6 +146,44 @@ namespace experiment
 				}
 			}
 		}
+		void toString(std::ofstream &out)
+		{
+			out << "Iteration Info:\n";
+			out << "---------------\n";
+			out << "Vertex number (v_num): " << _v_num << "\n";
+			out << "Iteration count: " << _iteration << "\n";
+			out << "Changes per iteration: " << _change_num << "\n";
+			out << "Weight upper bound: " << _upper << "\n";
+			out << "Weight lower bound: " << _lower << "\n\n";
+
+			out << "Graph Information:\n";
+			out << "------------------\n";
+			// You might want to add graph's toString() method if you need detailed graph info
+			out << "Graph with " << instance_graph.size() << " vertices\n\n";
+
+			out << "Change Queues:\n";
+			out << "--------------\n";
+			for (size_t i = 0; i < q_list.size(); ++i)
+			{
+				if (!q_list[i].empty())
+				{
+					out << "Queue for iteration " << i << " (" << q_list[i].size() << " changes):\n";
+
+					// Make a copy of the queue to preserve the original
+					std::queue<change_edge_info> temp = q_list[i];
+					while (!temp.empty())
+					{
+						const auto &change = temp.front();
+						out << "  Edge (" << change.v1 << ", " << change.v2
+							<< ") weight: " << change.weight
+							<< " at time: " << change.time << "\n";
+						temp.pop();
+					}
+				}
+			}
+
+			out.close();
+		}
 	};
 
 	template <typename weight_type>
@@ -178,7 +216,6 @@ namespace experiment
 		typedef typename boost::heap::fibonacci_heap<two_hop_label>::handle_type PLL_handle_t_for_sp;
 		std::vector<std::vector<PLL_handle_t_for_sp>> Q_handles_595;
 		std::queue<int> Qid_595;
-		std::vector<std::vector<two_hop_label>> Lv_final;
 		void PLL_dij_function(int v_k, graph<int> &input_graph)
 		{
 			mtx_595[max_N_ID_for_mtx_595 - 1].lock();
@@ -349,7 +386,7 @@ namespace experiment
 						Qid_595.pop();
 						mtx_595[max_N_ID_for_mtx_595 - 1].unlock();
 
-						std::vector<two_hop_label> &Lv_final_inner = Lv_final[v];
+						std::vector<two_hop_label> Lv_final_inner;
 
 						std::vector<two_hop_label> &Lv = L[v];
 
@@ -365,6 +402,7 @@ namespace experiment
 								T[v] = Lvi.distance;
 								continue;
 							}
+							mtx_595[u].lock_shared();
 							const auto &Lu = L[u];
 
 							int min_dis = std::numeric_limits<int>::max();
@@ -376,7 +414,7 @@ namespace experiment
 									min_dis = query_dis;
 								}
 							}
-
+							mtx_595[u].unlock_shared();
 							if (min_dis > Lvi.distance)
 							{
 								Lv_final_inner.push_back(two_hop_label(Lvi));
@@ -390,6 +428,10 @@ namespace experiment
 							T[label.vertex] = std::numeric_limits<int>::max();
 						}
 
+						mtx_595[v].lock();
+						Lv = std::move(Lv_final_inner);
+						mtx_595[v].unlock();
+
 						mtx_595[max_N_ID_for_mtx_595 - 1].lock();
 						Qid_595.push(used_id);
 						std::cout << "print pll v: " << v  << std::endl;
@@ -401,14 +443,12 @@ namespace experiment
 
 			for (auto &&result : results)
 				result.get(); // all threads finish here
-			case_info.L = std::move(Lv_final);
 			results.clear();
 		}
 
 		void PLL_clear_global_values()
 		{
 			std::vector<std::vector<two_hop_label>>().swap(L_temp_595);
-			std::vector<std::vector<two_hop_label>>().swap(Lv_final);
 			PPR_TYPE::PPR_type().swap(PPR_595);
 			std::queue<int>().swap(Qid_595);
 			std::vector<std::vector<int>>().swap(P_dij_595);
@@ -426,7 +466,6 @@ namespace experiment
 
 			L_temp_595.resize(N);
 			PPR_595.resize(N);
-			Lv_final.resize(N);
 			timer.endSubtask();
 			//---------------------------------------------------------------------------------------------------------------------------------------
 
